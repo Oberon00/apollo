@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 2.8)
 project(cpp-lua)
 
 if (MSVC)
@@ -6,8 +7,8 @@ else()
     list(APPEND CMAKE_CXX_FLAGS "-std=c++11")
 endif()
 
-set (cpplua_HDRS "converters.hpp")
+find_package(Boost 1.53 REQUIRED)
+find_package(Lua52 REQUIRED)
+include_directories(${BOOOST_INCLUDE_DIRS} ${LUA_INCLUDE_DIRS})
 
-add_executable(cpp-lua main.cpp)
-
-install(TARGETS cpp-lua RUNTIME DESTINATION bin)
+add_subdirectory("src")
