@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(apollo)
 
+include(CTest)
+
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
@@ -24,7 +26,12 @@ set(Boost_USE_STATIC_LIBS     ON)
 set(Boost_USE_MULTITHREADED   ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 
-find_package(Boost 1.53 REQUIRED)
+set(Boost_FIND_COMPONENTS "")
+if (BUILD_TESTING)
+    list(APPEND Boost_FIND_COMPONENTS unit_test_framework)
+endif()
+
+find_package(Boost 1.53 REQUIRED ${Boost_FIND_COMPONENTS})
 
 add_definitions("-DBOOST_ALL_NO_LIB")
 
@@ -34,3 +41,6 @@ include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 add_subdirectory("src")
+if (BUILD_TESTING)
+    add_subdirectory("test")
+endif()
