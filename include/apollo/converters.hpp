@@ -5,7 +5,6 @@
 #include <type_traits>
 #include <boost/assert.hpp>
 #include <string>
-#include <cmath> // for floor
 #include <climits>
 #include <functional>
 #include <boost/function/function_fwd.hpp>
@@ -80,14 +79,16 @@ template<typename T>
 struct converter_base {
     typedef T type;
     typedef type to_type;
-    static int const lua_type_id = detail::lua_type_id<T>::value;
-    static bool const is_native = lua_type_id != LUA_TUSERDATA;
+    static int BOOST_CONSTEXPR_OR_CONST lua_type_id =
+        detail::lua_type_id<T>::value;
+    static bool BOOST_CONSTEXPR_OR_CONST is_native =
+        lua_type_id != LUA_TUSERDATA;
 };
 
 // Number converter //
 template<typename T>
 struct converter<T, typename std::enable_if<
-        detail::lua_type_id<T>::value == LUA_TNUMBER>::type>: converter_base<T> {
+    detail::lua_type_id<T>::value == LUA_TNUMBER>::type>: converter_base<T> {
 
     static void push(lua_State* L, T n)
     {
@@ -225,21 +226,7 @@ struct string_conversion_steps {
 
 template <>
 struct string_conversion_steps<char> {
-    static unsigned get(lua_State* L, int idx)
-    {
-        switch(lua_type(L, idx)) {
-        case LUA_TSTRING:
-            return lua_rawlen(L, idx) == 1 ? 0 : no_conversion;
-        case LUA_TNUMBER: {
-            lua_Number n = lua_tonumber(L, idx);
-            return n >= 0 && n < 10 && n == std::floor(n) ?
-                    1 : no_conversion;
-        }
-        default:
-            return no_conversion;
-        }
-        BOOST_UNREACHABLE_RETURN(no_conversion);
-    }
+    static unsigned get(lua_State* L, int idx);
 };
 
 } // namespace detail

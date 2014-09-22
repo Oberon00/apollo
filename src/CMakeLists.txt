@@ -29,6 +29,7 @@ prepend_to_all(apollo_HDRS_DETAIL "../include/apollo/detail/")
 source_group("Internal Headers" FILES ${apollo_HDRS_DETAIL})
 set(apollo_HDRS ${apollo_HDRS_PUBLIC} ${apollo_HDRS_DETAIL})
 set(apollo_SRCS
+    "converters.cpp"
     "reference.cpp"
     "lapi.cpp"
     "class_info.cpp"
