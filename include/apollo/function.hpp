@@ -26,9 +26,6 @@ namespace apollo {
 
 namespace detail {
 
-template <typename F, typename Enable=void>
-struct function_converter;
-
 template <typename F>
 struct unmember_function;
 
@@ -104,30 +101,6 @@ void push_args(lua_State* L, Head&& arg, Tail&&... tail)
     push_args(L, std::forward<Tail>(tail)...);
 }
 
-// Doesn't work with typename here.
-template <template<class> class FObj, typename R, typename... Args>
-struct function_converter<FObj<R(Args...)>> {
-    typedef FObj<R(Args...)> FType;
-    static FType from_stack(lua_State* L_, int idx)
-    {
-        registry_reference luaFunction(
-            L_, idx, registry_reference::ref_mode::copy);
-        return [luaFunction](Args... args) -> R {
-            lua_State* L = luaFunction.L();
-            stack_balance b(L);
-            luaFunction.push();
-            push_args(L, std::forward<Args>(args)...);
-            pcall(L, sizeof...(Args), 1);
-            R r = apollo::from_stack<R>(L, -1);
-            return r;
-        };
-    }
-};
-
-} // namespace detail
-
-namespace detail {
-
 template <typename F> // f returns void
 int call_with_stack_args_and_push_impl(lua_State* L, F&& f, std::true_type)
 {
@@ -174,7 +147,6 @@ int exceptions_to_lua_errors(lua_State* L, F&& f) BOOST_NOEXCEPT
     return lua_error(L);
 }
 
-
 template <typename F, typename Enable=void>
 struct function_dispatch {
     static void push_upvalue(lua_State* L, F const& f)
@@ -220,6 +192,59 @@ struct function_dispatch<F, typename std::enable_if<
         : function_dispatch<detail::mem_fn_wrapper<unmember_function_t<F>>>
 {};
 
+template <typename F, typename Enable=void>
+struct function_converter;
+
+template <template<class> class FObj, typename R, typename... Args>
+struct function_converter<FObj<R(Args...)>> {
+    typedef FObj<R(Args...)> FType;
+
+    static FType from_stack(lua_State* L_, int idx)
+    {
+        registry_reference luaFunction(
+            L_, idx, registry_reference::ref_mode::copy);
+        return [luaFunction](Args... args) -> R {
+            lua_State* L = luaFunction.L();
+            stack_balance b(L);
+            luaFunction.push();
+            push_args(L, std::forward<Args>(args)...);
+            pcall(L, sizeof...(Args), 1);
+            return apollo::from_stack<R>(L, -1);;
+        };
+    }
+
+    static unsigned n_conversion_steps(lua_State* L, int idx)
+    {
+        if (lua_isfunction(L, idx))
+            return 0;
+        if (luaL_getmetafield(L, idx, "__call")) { // TODO: pcall
+            lua_pop(L, 1);
+            return 2;
+        }
+        return no_conversion;
+    }
+};
+
+template <typename F>
+struct function_converter<F, typename std::enable_if<
+        detail::is_plain_function<F>::value>::type>
+{
+    typedef F FType;
+    static FType from_stack(lua_State* L, int idx)
+    {
+        stack_balance balance(L);
+        BOOST_VERIFY(lua_getupvalue(L, idx, 1));
+        BOOST_ASSERT(lua_islightuserdata(L, -1));
+        return reinterpret_cast<FType>(lua_touserdata(L, -1));
+    }
+
+    static unsigned n_conversion_steps(lua_State* L, int idx)
+    {
+        lua_CFunction thunk = lua_tocfunction(L, idx);
+        return thunk == &function_dispatch<F>::entry_point ? 0 : no_conversion;
+    }
+};
+
 template <typename F>
 void pushFunction(lua_State* L, F const& f)
 {
@@ -230,15 +255,19 @@ void pushFunction(lua_State* L, F const& f)
 
 template <typename F>
 struct function_converter<F, typename std::enable_if<
-        detail::is_plain_function<F>::value>::type>:
-        function_converter<std::function<typename std::remove_pointer<F>::type>>
-{ };
+        std::is_member_function_pointer<F>::value>::type>
+{
+    typedef F FType;
+    static FType from_stack(lua_State*, int) {
+        static_assert(!std::is_same<F, F>::value, // Make dependent.
+            "Cannot convert to member function. Use std/boost::function");
+    }
 
-template <typename F>
-struct function_converter<F, typename std::enable_if<
-        std::is_member_function_pointer<F>::value>::type>:
-        function_converter<std::function<unmember_function_t<F>>>
-{ };
+    static unsigned n_conversion_steps(lua_State*, int)
+    {
+        return no_conversion;
+    }
+};
 
 } // namespace detail
 
@@ -258,13 +287,7 @@ public:
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        if (lua_isfunction(L, idx))
-            return 0;
-        if (luaL_getmetafield(L, idx, "__call")) {
-            lua_pop(L, 1);
-            return 1;
-        }
-        return no_conversion;
+        return fconverter::n_conversion_steps(L, idx);
     }
 
     static typename fconverter::FType from_stack(lua_State* L, int idx)
