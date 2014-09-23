@@ -2,6 +2,8 @@
 #include <apollo/detail/light_key.hpp>
 #include <apollo/error.hpp>
 #include <apollo/gc.hpp>
+#include <boost/exception/info.hpp>
+#include <boost/exception/errinfo_type_info_name.hpp>
 #include "unordered_set"
 
 #include <boost/throw_exception.hpp>

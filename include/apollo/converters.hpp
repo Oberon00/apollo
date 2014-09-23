@@ -10,6 +10,7 @@
 #include <boost/function/function_fwd.hpp>
 
 #include <apollo/error.hpp>
+#include <apollo/detail/meta_util.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/exception/info.hpp>
 #include <boost/exception/errinfo_type_info_name.hpp>

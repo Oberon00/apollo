@@ -2,8 +2,9 @@
 #define APOLLO_GC_HPP_INCLUDED APOLLO_GC_HPP_INCLUDED
 
 #include <lua.hpp>
+#include <type_traits>
 #include <boost/assert.hpp>
-#include "converters.hpp"
+#include <apollo/detail/meta_util.hpp>
 
 namespace apollo {
 
