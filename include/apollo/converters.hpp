@@ -30,13 +30,13 @@ struct lua_type_id<T,
         : std::integral_constant<int, LUA_TNUMBER> {};
 
 template <> // boolean
-struct lua_type_id<bool> {
-    static int const value = LUA_TBOOLEAN;
-};
+struct lua_type_id<bool>: std::integral_constant<int, LUA_TBOOLEAN> {};
+
+template <> struct lua_type_id<void>: std::integral_constant<int, LUA_TNIL> {};
 
 // string
-template <> struct lua_type_id<char*>
-        : std::integral_constant<int, LUA_TSTRING> {};
+template <>
+struct lua_type_id<char*>: std::integral_constant<int, LUA_TSTRING> {};
 template <> struct lua_type_id<char const*>: lua_type_id<char*> {};
 template <> struct lua_type_id<char>: lua_type_id<char*> {};
 template <std::size_t N> struct lua_type_id<char[N]>: lua_type_id<char*> {};
@@ -60,14 +60,6 @@ struct lua_type_id<T,
         : std::integral_constant<int, LUA_TFUNCTION> {};
 template <typename T> struct lua_type_id<std::function<T>>: lua_type_id<T> {};
 template <typename T> struct lua_type_id<boost::function<T>>: lua_type_id<T> {};
-
-// Helper type function remove_qualifiers
-template <typename T>
-struct remove_qualifiers {
-    typedef typename std::remove_cv<
-    typename std::remove_reference<T>::type
-    >::type type;
-};
 
 } // namespace detail
 
@@ -140,6 +132,18 @@ struct converter<bool>: converter_base<bool> {
         // ternary operator.
         return lua_toboolean(L, idx) ? true : false;
     }
+};
+
+// void converter //
+template<>
+struct converter<void>: converter_base<void> {
+    static unsigned n_conversion_steps(lua_State*, int)
+    {
+        return no_conversion - 1;
+    }
+
+    static void from_stack(lua_State*, int)
+    { }
 };
 
 
