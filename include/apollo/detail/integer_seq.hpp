@@ -20,9 +20,7 @@ struct gen_iseq : concat_iseq<
     typename gen_iseq<N - N/2, Lo>::type>
     {};
 
-template<int Lo> struct gen_iseq<0, Lo> : iseq<>{
-    static_assert(Lo == 0, "gen_seq: illegal 0 reach");
-};
+template<int Lo> struct gen_iseq<0, Lo> : iseq<>{};
 template<int Lo> struct gen_iseq<1, Lo> : iseq<Lo>{};
 
 template <int N, int Lo = 1>
