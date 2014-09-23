@@ -24,7 +24,7 @@ struct lstate_fixture {
         }
     }
     ~lstate_fixture() {
-        BOOST_CHECK(lua_gettop(L) == 0);
+        BOOST_CHECK_EQUAL(lua_gettop(L), 0);
         lua_close(L);
     }
 };
