@@ -4,7 +4,7 @@
 #define APOLLO_TEST_PREFIX_HPP_INCLUDED APOLLO_TEST_PREFIX_HPP_INCLUDED
 
 #include <boost/preprocessor/cat.hpp>
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <lua.hpp>
 
