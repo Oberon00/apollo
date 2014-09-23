@@ -14,6 +14,9 @@ public:
         int act = pop|debug);
     ~stack_balance();
 
+    // MSVC complained that the assignment operator could not be generated.
+    stack_balance& operator=(stack_balance const&) = delete;
+
 private:
     lua_State* const m_L;
     int const m_desired_top;
