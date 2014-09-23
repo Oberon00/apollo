@@ -45,6 +45,7 @@ using unmember_function_t = typename unmember_function<F>::type;
 template <typename R, typename... Args, int... Is>
 R call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, R(*f)(Args...))
 {
+    (void)L; // Avoid MSVC's complainining when Args is empty.
     return f(from_stack<Args>(L, Is)...);
 }
 
@@ -61,6 +62,7 @@ R call_with_stack_args_impl(
     lua_State* L, detail::iseq<Is...>,
     FObj<R(Args...)> const& f)
 {
+    (void)L; // Avoid MSVC's complainining when Args is empty.
     return f(from_stack<Args>(L, Is)...);
 }
 
@@ -199,17 +201,34 @@ template <template<class> class FObj, typename R, typename... Args>
 struct function_converter<FObj<R(Args...)>> {
     typedef FObj<R(Args...)> FType;
 
-    static FType from_stack(lua_State* L_, int idx)
+    static FType from_stack(lua_State* L, int idx)
     {
+        // Exact same type in Lua? Then copy.
+        lua_CFunction thunk = lua_tocfunction(L, idx);
+        if (thunk == &function_dispatch<FType>::entry_point) {
+            stack_balance balance(L);
+            BOOST_VERIFY(lua_getupvalue(L, idx, 1));
+            BOOST_ASSERT(lua_isuserdata(L, -1));
+            return *static_cast<FType*>(lua_touserdata(L, -1));;
+        }
+
+        // Plain function pointer in Lua? Then construct from it.
+        typedef function_converter<R(*)(Args...)> plainfconv;
+        if (plainfconv::n_conversion_steps(L, idx) != no_conversion)
+            return plainfconv::from_stack(L, idx);
+
+        // TODO?: optimization: Before falling back to the pcall lambda,
+        // try boost::function and std::function.
+
         registry_reference luaFunction(
-            L_, idx, registry_reference::ref_mode::copy);
+            L, idx, registry_reference::ref_mode::copy);
         return [luaFunction](Args... args) -> R {
-            lua_State* L = luaFunction.L();
-            stack_balance b(L);
+            lua_State* L_ = luaFunction.L();
+            stack_balance b(L_);
             luaFunction.push();
-            push_args(L, std::forward<Args>(args)...);
-            pcall(L, sizeof...(Args), 1);
-            return apollo::from_stack<R>(L, -1);;
+            push_args(L_, std::forward<Args>(args)...);
+            pcall(L_, sizeof...(Args), 1);
+            return apollo::from_stack<R>(L_, -1);;
         };
     }
 

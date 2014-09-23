@@ -137,6 +137,13 @@ static void check_proc(lua_State* L)
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
 
     apollo::push(L, proc0obj);
+
+    // Check that the std::function was not wrapped in a pcall lambda:
+    auto proc0obj_copy = apollo::from_stack<decltype(proc0obj)>(L, -1);
+    BOOST_CHECK_EQUAL(
+        proc0obj_copy.target_type().name(),
+        proc0obj.target_type().name());
+
     auto proc0objb = apollo::from_stack<boost::function<void()>>(L, -1);
     proc0objb();
     BOOST_CHECK_EQUAL(g_n_calls, 2u);
@@ -144,6 +151,13 @@ static void check_proc(lua_State* L)
     BOOST_CHECK_EQUAL(g_n_calls, 3u);
 
     apollo::push(L, proc0objb);
+
+    // Check that the boost::function was not wrapped in a pcall lambda:
+    auto proc0objb_copy = apollo::from_stack<decltype(proc0objb)>(L, -1);
+    BOOST_CHECK_EQUAL(
+        proc0objb_copy.target_type().name(),
+        proc0objb.target_type().name());
+
     proc0obj = apollo::from_stack<std::function<void()>>(L, -1);
     proc0obj();
     BOOST_CHECK_EQUAL(g_n_calls, 4u);
@@ -154,6 +168,14 @@ static void check_proc(lua_State* L)
 BOOST_AUTO_TEST_CASE(proc_obj)
 {
     apollo::push(L, &proc0);
+     BOOST_CHECK_EQUAL(
+        *apollo::from_stack<std::function<void()>>(L, -1)
+            .target<void(*)()>(),
+        &proc0);
+    BOOST_CHECK_EQUAL(
+        *apollo::from_stack<boost::function<void()>>(L, -1)
+            .target<void(*)()>(),
+        &proc0);
     check_proc(L);
 
     struct proc_obj {
@@ -177,6 +199,13 @@ static void check_func(lua_State* L)
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
 
     apollo::push(L, func1obj);
+
+    // Check that the std::function was not wrapped in a pcall lambda:
+    auto func1obj_copy = apollo::from_stack<decltype(func1obj)>(L, -1);
+    BOOST_CHECK_EQUAL(
+        func1obj_copy.target_type().name(),
+        func1obj.target_type().name());
+
     auto func1objb = apollo::from_stack<boost::function<char const*(int)>>(L, -1);
     BOOST_CHECK_EQUAL(func1objb(42), std::string("foo"));
     BOOST_CHECK_EQUAL(g_n_calls, 2u);
@@ -187,6 +216,13 @@ static void check_func(lua_State* L)
     BOOST_CHECK_EQUAL(g_n_calls, 3u);
 
     apollo::push(L, func1objb);
+
+    // Check that the boost::function was not wrapped in a pcall lambda:
+    auto func1objb_copy = apollo::from_stack<decltype(func1objb)>(L, -1);
+    BOOST_CHECK_EQUAL(
+        func1objb_copy.target_type().name(),
+        func1objb.target_type().name());
+
     func1obj = apollo::from_stack<std::function<char const*(int)>>(L, -1);
     BOOST_CHECK_EQUAL(func1obj(42), std::string("foo"));
     BOOST_CHECK_EQUAL(g_n_calls, 4u);
@@ -200,6 +236,14 @@ static void check_func(lua_State* L)
 BOOST_AUTO_TEST_CASE(func_obj)
 {
     apollo::push(L, &func1);
+    BOOST_CHECK_EQUAL(
+        *apollo::from_stack<std::function<char const*(int)>>(L, -1)
+            .target<char const*(*)(int)>(),
+        &func1);
+    BOOST_CHECK_EQUAL(
+        *apollo::from_stack<boost::function<char const*(int)>>(L, -1)
+            .target<char const*(*)(int)>(),
+        &func1);
     check_func(L);
 
     struct func_obj {
