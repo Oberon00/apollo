@@ -37,7 +37,7 @@ add_definitions("-DBOOST_ALL_NO_LIB")
 
 find_package(Lua52 REQUIRED)
 include_directories(
-    ${BOOOST_INCLUDE_DIRS} ${LUA_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS} ${LUA_INCLUDE_DIR}
     "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 add_subdirectory("src")
