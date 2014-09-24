@@ -7,7 +7,6 @@ set(apollo_HDRS_PUBLIC
     "reference.hpp"
     "stack_balance.hpp")
 set(apollo_HDRS_DETAIL
-    "function_template.hpp"
     "instance_holder.hpp"
     "class_info.hpp"
     "light_key.hpp"

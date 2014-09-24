@@ -5,9 +5,4 @@
 #define APOLLO_VERSION_MINOR 0
 #define APOLLO_VERSION_PATCH 0
 
-#ifndef APOLLO_MAX_ARITY
-#   define APOLLO_MAX_ARITY 5
-#endif
-
-
 #endif // APOLLO_CONFIG_HPP_INCLUDED
