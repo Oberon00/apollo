@@ -9,8 +9,7 @@
 #    error No C++11 smart pointers.
 #endif
 
-namespace apollo {
-namespace detail {
+namespace apollo { namespace detail {
 
 // Automatically recognize std::shared_ptr, unique_ptr and auto_ptr.
 using boost::get_pointer;
@@ -37,7 +36,7 @@ struct pointer_traits {
     static bool const is_smart = is_valid && !std::is_pointer<T>::value;
     using pointee_type = typename std::remove_pointer<ptr_type>::type;
 };
-}
-} // namespace apollo::detail
+
+} } // namespace apollo::detail
 
 #endif // APOLLO_SMART_PTR_HPP_INCLUDED

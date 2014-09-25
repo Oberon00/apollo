@@ -3,8 +3,7 @@
 
 #include <boost/get_pointer.hpp>
 
-namespace apollo {
-namespace detail {
+namespace apollo { namespace detail {
 
 struct class_info;
 
@@ -34,7 +33,8 @@ public:
         return get_pointer(m_instance);
     }
 
-    class_info const* type() const override {
+    class_info const* type() const override
+    {
         return m_type;
     }
 
@@ -43,7 +43,6 @@ private:
     class_info const* m_type;
 };
 
-}
-} // namespace apollo::detail
+} } // namespace apollo::detail
 
 #endif // APOLLO_INSTANCE_HOLDER_HPP_INCLUDED

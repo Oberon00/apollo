@@ -13,8 +13,7 @@
 #include <typeindex>
 #include <unordered_map>
 
-namespace apollo {
-namespace detail {
+namespace apollo { namespace detail {
 
 template <typename From, typename To>
 void* cast_static(void* src)
@@ -73,8 +72,7 @@ void* cast_class(void* obj, class_info const& cls, class_info const& to);
 
 
 template <typename Derived>
-struct base_adder
-{
+struct base_adder {
     base_adder(
         std::vector<class_info::base_info>& bases,
         class_info_map const& base_infos)
@@ -112,8 +110,7 @@ class_info* registered_class_opt(lua_State* L, std::type_info const& type);
 // Only assert()s that the class is registered.
 class_info& registered_class(lua_State* L, std::type_info const& type);
 
-}
-} // namespace apollo::detail
+} } // namespace apollo::detail
 
 
 #endif // APOLLO_INSTANCE_HOLDER_HPP_INCLUDED
