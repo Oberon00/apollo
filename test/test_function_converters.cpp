@@ -2,9 +2,32 @@
 #include <apollo/function.hpp>
 #include <string>
 
-#include "test_prefix.hpp"
-
 static unsigned g_n_calls = 0;
+
+namespace {
+struct test_struct {
+    void memproc0() { ++g_n_calls; }
+};
+} // anonymous namespace
+
+namespace apollo {
+    template <>
+    struct converter<test_struct&> {
+        using to_type = test_struct&;
+        //static void push(lua_State*) { }
+        static unsigned n_conversion_steps(lua_State*, int)
+        {
+            return no_conversion;
+        }
+
+        static test_struct& from_stack(lua_State*, int)
+        {
+            std::terminate();
+        }
+    };
+} // namespace apollo
+
+#include "test_prefix.hpp"
 
 static void proc0()
 {
@@ -261,6 +284,12 @@ BOOST_AUTO_TEST_CASE(func_obj)
     std::function<char const*(int)> fobj(func_obj{});
     apollo::push(L, fobj);
     check_func(L);
+}
+
+
+BOOST_AUTO_TEST_CASE(mem_func)
+{
+    apollo::push(L, &test_struct::memproc0);
 }
 
 
