@@ -31,12 +31,12 @@ struct unmember_function;
 
 template <typename R, typename C, typename... Args>
 struct unmember_function<R(C::*)(Args...)> {
-    typedef R(type)(C&, Args...);
+    typedef R(type)(C&, Args...); // MSVC chokes on "using" here.
 };
 
 template <typename R, typename C, typename... Args>
 struct unmember_function<R(C::*)(Args...) const> {
-    typedef R(type)(C const&, Args...);
+    typedef R(type)(C const&, Args...); // MSVC chokes on "using" here.
 };
 
 template <typename F>
@@ -199,7 +199,7 @@ struct function_converter;
 
 template <template<class> class FObj, typename R, typename... Args>
 struct function_converter<FObj<R(Args...)>> {
-    typedef FObj<R(Args...)> FType;
+    using FType = FObj<R(Args...)>;
 
     static FType from_stack(lua_State* L, int idx)
     {
@@ -213,7 +213,7 @@ struct function_converter<FObj<R(Args...)>> {
         }
 
         // Plain function pointer in Lua? Then construct from it.
-        typedef function_converter<R(*)(Args...)> plainfconv;
+        using plainfconv = function_converter<R(*)(Args...)>;
         if (plainfconv::n_conversion_steps(L, idx) != no_conversion)
             return plainfconv::from_stack(L, idx);
 
@@ -248,7 +248,7 @@ template <typename F>
 struct function_converter<F, typename std::enable_if<
         detail::is_plain_function<F>::value>::type>
 {
-    typedef F FType;
+    using FType = F;
     static FType from_stack(lua_State* L, int idx)
     {
         stack_balance balance(L);
@@ -267,7 +267,7 @@ struct function_converter<F, typename std::enable_if<
 template <typename F>
 void pushFunction(lua_State* L, F const& f)
 {
-    typedef detail::function_dispatch<F> fdispatch;
+    using fdispatch = detail::function_dispatch<F>;
     fdispatch::push_upvalue(L, f);
     lua_pushcclosure(L, &fdispatch::entry_point, 1);
 }
@@ -276,7 +276,7 @@ template <typename F>
 struct function_converter<F, typename std::enable_if<
         std::is_member_function_pointer<F>::value>::type>
 {
-    typedef F FType;
+    using FType = F;
     static FType from_stack(lua_State*, int) {
         static_assert(!std::is_same<F, F>::value, // Make dependent.
             "Cannot convert to member function. Use std/boost::function");
@@ -296,7 +296,7 @@ struct converter<T, typename std::enable_if<
         detail::lua_type_id<T>::value == LUA_TFUNCTION>::type>: converter_base<T> {
 
 private:
-    typedef detail::function_converter<T> fconverter;
+    using fconverter = detail::function_converter<T>;
 
 public:
     static void push(lua_State* L, T const& f)

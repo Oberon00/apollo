@@ -18,9 +18,9 @@ void push_instance_metatable(
 template <typename Ptr>
 void push_instance(lua_State* L, Ptr&& ptr)
 {
-    typedef typename remove_qualifiers<Ptr>::type ptr_t;
-    typedef ptr_instance_holder<ptr_t> holder_t;
-    typedef typename pointer_traits<Ptr>::pointee_type cls_t;
+    using ptr_t = typename remove_qualifiers<Ptr>::type;
+    using holder_t = ptr_instance_holder<ptr_t>;
+    using cls_t = typename pointer_traits<Ptr>::pointee_type;
 
     class_info const& cls = registered_class(L, typeid(cls_t));
     void* storage = lua_newuserdata(L, sizeof(holder_t));
@@ -35,7 +35,7 @@ bool is_apollo_instance(lua_State* L, int idx);
 template <typename T>
 void push_metatable(lua_State* L)
 {
-    typedef typename detail::remove_qualifiers<T>::type obj_t;
+    using obj_t = typename detail::remove_qualifiers<T>::type;
     detail::push_instance_metatable(
         L,
         detail::registered_class(L, typeid(obj_t)));
@@ -48,7 +48,7 @@ struct converter: converter_base<T> {
 
     static void push(lua_State* L, T const& obj)
     {
-        typedef typename detail::remove_qualifiers<T>::type obj_t;
+        using obj_t = typename detail::remove_qualifiers<T>::type;
         std::unique_ptr<obj_t> ptr(new obj_t(obj));
         detail::push_instance(L, std::move(ptr));
     }

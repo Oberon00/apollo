@@ -20,7 +20,7 @@ template <typename T>
 typename detail::remove_qualifiers<T>::type*
 push_gc_object(lua_State* L, T&& o)
 {
-    typedef typename detail::remove_qualifiers<T>::type obj_t;
+    using obj_t = typename detail::remove_qualifiers<T>::type;
     void* uf = lua_newuserdata(L, sizeof(obj_t));
     try {
         new(uf) obj_t(std::forward<T>(o));

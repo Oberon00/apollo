@@ -25,17 +25,17 @@ private:
 public:
     // The result type of get_pointer(arg) if there exists a get_pointer()
     // overload for Arg (arg's type). void otherwise.
-    typedef decltype(check(std::declval<Arg>())) type;
+    using type = decltype(check(std::declval<Arg>()));
 };
 
 template <typename T>
 struct pointer_traits {
-    typedef typename get_pointer_result<T>::type ptr_type;
+    using ptr_type = typename get_pointer_result<T>::type;
 
     // Exists a get_pointer() overload for T which returns a pointer?
     static bool const is_valid = !std::is_same<ptr_type, void>::value;
     static bool const is_smart = is_valid && !std::is_pointer<T>::value;
-    typedef typename std::remove_pointer<ptr_type>::type pointee_type;
+    using pointee_type = typename std::remove_pointer<ptr_type>::type;
 };
 }
 } // namespace apollo::detail

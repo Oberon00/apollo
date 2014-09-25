@@ -15,8 +15,8 @@ private:
 public:
     // The result type of get_pointer(arg) if there exists a get_pointer()
     // overload for Arg (arg's type). void otherwise.
-    typedef typename std::is_same<
-        decltype(check(std::declval<Derived*>())), void>::type type;
+    using type = typename std::is_same<
+        decltype(check(std::declval<Derived*>())), void>::type;
 };
 
 template <typename Base, typename Derived>

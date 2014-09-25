@@ -7,7 +7,7 @@
 template <int LuaT = LUA_TNUMBER, typename T>
 static void check_roundtrip(lua_State* L, T&& v)
 {
-    typedef typename apollo::detail::remove_qualifiers<T>::type T2;
+    using T2 = typename apollo::detail::remove_qualifiers<T>::type;
     static_assert(apollo::detail::lua_type_id<T2>::value == LuaT,
                   "T not detected as LuaT");
     apollo::stack_balance balance(L);

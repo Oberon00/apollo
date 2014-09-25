@@ -70,8 +70,8 @@ BOOST_CONSTEXPR_OR_CONST unsigned no_conversion = UINT_MAX;
 
 template<typename T>
 struct converter_base {
-    typedef T type;
-    typedef type to_type;
+    using type = T;
+    using to_type = type;
     static int BOOST_CONSTEXPR_OR_CONST lua_type_id =
         detail::lua_type_id<T>::value;
     static bool BOOST_CONSTEXPR_OR_CONST is_native =
@@ -169,7 +169,7 @@ inline char const* push_string(lua_State* L, char const (&s)[N])
 template <typename T>
 inline char const* push_string(lua_State* L, T s)
 {
-    typedef typename remove_qualifiers<T>::type T2;
+    using T2 = typename remove_qualifiers<T>::type;
     static_assert(
         std::is_same<T2, char*>::value || std::is_same<T2, char const*>::value,
         "push_string called with non-string");
@@ -183,7 +183,7 @@ inline char const* push_string(lua_State* L, std::string const& s)
 
 template <typename T>
 struct to_string { // char*, char const*, char[N]
-    typedef char const* type;
+    using type = char const*;
     static type from_stack(lua_State* L, int idx)
     {
         return lua_tostring(L, idx);
@@ -192,7 +192,7 @@ struct to_string { // char*, char const*, char[N]
 
 template <>
 struct to_string<std::string> {
-    typedef std::string type;
+    using type = std::string;
     static type from_stack(lua_State* L, int idx)
     {
         std::size_t len;
@@ -203,7 +203,7 @@ struct to_string<std::string> {
 
 template <>
 struct to_string<char> {
-    typedef char type;
+    using type = char;
     static type from_stack(lua_State* L, int idx)
     {
         std::size_t len;
@@ -239,7 +239,7 @@ struct string_conversion_steps<char> {
 template<typename T>
 struct converter<T, typename std::enable_if<
         detail::lua_type_id<T>::value == LUA_TSTRING>::type>: converter_base<T> {
-    typedef typename detail::to_string<T>::type to_type;
+    using to_type = typename detail::to_string<T>::type;
 
     static char const* push(lua_State* L, T const& s)
     {

@@ -12,8 +12,8 @@ template <typename I, typename End, typename F>
 void for_each_type_i(F f, boost::false_type)
 {
     f.template apply<typename mpl::deref<I>::type>();
-    typedef typename mpl::next<I>::type Next;
-    typedef typename boost::is_same<Next, End>::type AtEnd;
+    using Next = typename mpl::next<I>::type;
+    using AtEnd = typename boost::is_same<Next, End>::type;
     for_each_type_i<Next, End>(f, AtEnd());
 }
 
@@ -26,9 +26,9 @@ void for_each_type_i(F, boost::true_type)
 template <typename Seq, typename F>
 void for_each_type(F f)
 {
-    typedef typename mpl::begin<Seq>::type Beg;
-    typedef typename mpl::end<Seq>::type End;
-    typedef typename boost::is_same<Beg, End>::type AtEnd;
+    using Beg = typename mpl::begin<Seq>::type;
+    using End = typename mpl::end<Seq>::type;
+    using AtEnd = typename boost::is_same<Beg, End>::type;
     for_each_type_i<Beg, End>(f, AtEnd());
 }
 

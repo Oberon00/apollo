@@ -11,7 +11,7 @@
 namespace apollo {
 
 namespace errinfo {
-#define ERRINFO(t, n) typedef boost::error_info<struct tag_##n, t> n
+#define ERRINFO(t, n) using n = boost::error_info<struct tag_##n, t>
 ERRINFO(std::string, lua_msg);
 ERRINFO(std::string, msg);
 ERRINFO(int, stack_index);

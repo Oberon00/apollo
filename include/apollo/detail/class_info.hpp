@@ -22,7 +22,7 @@ void* cast_static(void* src)
     return static_cast<To*>(static_cast<From*>(src));
 }
 
-typedef void*(*cast_function)(void*);
+using cast_function = void*(*)(void*);
 
 struct class_info {
     class_info(std::type_info const* rtti_type_)
@@ -67,7 +67,7 @@ struct class_info {
     std::unordered_map<std::type_index, std::ptrdiff_t> subobject_offsets;
 };
 
-typedef std::unordered_map<std::type_index, class_info> class_info_map;
+using class_info_map = std::unordered_map<std::type_index, class_info>;
 
 void* cast_class(void* obj, class_info const& cls, class_info const& to);
 
