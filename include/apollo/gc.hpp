@@ -28,12 +28,12 @@ push_gc_object(lua_State* L, T&& o)
         lua_pop(L, 1);
         throw;
     }
-#if BOOST_MSVC
+#ifdef BOOST_MSVC
 #   pragma warning(push)
 #   pragma warning(disable:4127) // Conditional expression is constant.
 #endif
     if (!std::is_trivially_destructible<obj_t>::value) {
-#if BOOST_MSVC
+#ifdef BOOST_MSVC
 #   pragma warning(pop)
 #endif
         lua_createtable(L, 0, 1);
