@@ -32,6 +32,12 @@ BOOST_AUTO_TEST_CASE(number_converter)
 
     check_roundtrip(L, 42.0); // double
     check_roundtrip(L, 42.f); // float
+
+    apollo::push(L, 42);
+    apollo::push(L, "foo");
+    BOOST_CHECK_THROW(apollo::from_stack<int>(L, -1), apollo::conversion_error);
+    BOOST_CHECK_EQUAL(apollo::from_stack<int>(L, -2), 42);
+    lua_pop(L, 2);
 }
 
 static void check_bool_fallback(lua_State* L, bool expected = true)
@@ -57,6 +63,12 @@ BOOST_AUTO_TEST_CASE(bool_converter)
 
     lua_pushnumber(L, 1.0);
     check_bool_fallback(L);
+
+    apollo::push(L, true);
+    apollo::push(L, false);
+    BOOST_CHECK_EQUAL(apollo::from_stack<bool>(L, -2), true);
+    BOOST_CHECK_EQUAL(apollo::from_stack<bool>(L, -1), false);
+    lua_pop(L, 2);
 }
 
 template <typename T>
@@ -77,8 +89,6 @@ static void check_streq(lua_State* L, char const* s, std::size_t sz)
 
 BOOST_AUTO_TEST_CASE(string_converter)
 {
-    check_str_roundtrip(L, "abc");
-
     // Literals should preserve embedded zeros and text thereafter.
     auto const& str = "abc\0def";
     apollo::push(L, str);
@@ -95,9 +105,53 @@ BOOST_AUTO_TEST_CASE(string_converter)
 
     std::string stdstr(str, sizeof(str) - 1);
     check_str_roundtrip(L, stdstr);
-
+    check_str_roundtrip(L, "abc");
     check_str_roundtrip(L, 'c');
     check_str_roundtrip(L, '\0');
+
+    apollo::push(L, buf);
+    apollo::push(L, true);
+    BOOST_CHECK_THROW(
+        apollo::from_stack<char const*>(L, -1), apollo::conversion_error);
+    BOOST_CHECK_THROW(
+        apollo::from_stack<std::string>(L, -1), apollo::conversion_error);
+    BOOST_CHECK_EQUAL(apollo::from_stack<std::string>(L, -2), stdstr);
+    BOOST_CHECK_EQUAL(
+        apollo::from_stack<char const*>(L, -2), std::string("abc"));
+
+#define CHECK_THROW_CHAR BOOST_CHECK_THROW( \
+    apollo::from_stack<char>(L, -1), apollo::conversion_error)
+
+    apollo::push(L, 'c');
+    lua_replace(L, -3);
+    CHECK_THROW_CHAR;
+    BOOST_CHECK_EQUAL(apollo::from_stack<char>(L, -2), 'c');
+    lua_pop(L, 2);
+
+    apollo::push(L, 42);
+    BOOST_CHECK_EQUAL(apollo::from_stack<std::string>(L, -1), "42");
+    CHECK_THROW_CHAR;
+    lua_pop(L, 1);
+    apollo::push(L, 4);
+    BOOST_CHECK_EQUAL(apollo::from_stack<char>(L, -1), '4');
+
+    lua_pop(L, 1);
+    apollo::push(L, 9);
+    BOOST_CHECK_EQUAL(apollo::from_stack<char>(L, -1), '9');
+
+    lua_pop(L, 1);
+    apollo::push(L, 4.1);
+    CHECK_THROW_CHAR;
+
+    lua_pop(L, 1);
+    apollo::push(L, -4);
+    CHECK_THROW_CHAR;
+
+    lua_pop(L, 1);
+    apollo::push(L, 10);
+    CHECK_THROW_CHAR;
+
+    lua_pop(L, 1);
 }
 
 #include "test_suffix.hpp"

@@ -30,12 +30,13 @@ BOOST_AUTO_TEST_CASE(plain_proc)
 {
     g_n_calls = 0;
     apollo::push(L, &proc0);
-    lua_pushvalue(L, -1); // Copy, so that one is left after pcall.
+    lua_pushnil(L); // To check that not only idx == -1 works
+    lua_pushvalue(L, -2); // Copy, so that one is left after pcall.
     apollo::pcall(L, 0, 0);
     BOOST_REQUIRE_EQUAL(g_n_calls, 1u);
-    BOOST_REQUIRE(apollo::is_convertible<decltype(&proc0)>(L, -1));
-    auto proc0ptr = apollo::from_stack<decltype(&proc0)>(L, -1);
-    lua_pop(L, 1);
+    BOOST_REQUIRE(apollo::is_convertible<decltype(&proc0)>(L, -2));
+    auto proc0ptr = apollo::from_stack<decltype(&proc0)>(L, -2);
+    lua_pop(L, 2);
     BOOST_CHECK_EQUAL(proc0ptr, &proc0);
 
     apollo::push(L, &proc1);
@@ -88,14 +89,15 @@ BOOST_AUTO_TEST_CASE(plain_func)
 {
     g_n_calls = 0;
     apollo::push(L, &func0);
-    lua_pushvalue(L, -1); // Copy, so that one is left after pcall.
+    lua_pushnil(L);
+    lua_pushvalue(L, -2); // Copy, so that one is left after pcall.
     apollo::pcall(L, 0, 1);
     BOOST_REQUIRE_EQUAL(g_n_calls, 1u);
     BOOST_CHECK_EQUAL(static_cast<unsigned>(lua_tointeger(L, -1)), g_n_calls);
     lua_pop(L, 1);
-    BOOST_REQUIRE(apollo::is_convertible<decltype(&func0)>(L, -1));
-    auto func0ptr = apollo::from_stack<decltype(&func0)>(L, -1);
-    lua_pop(L, 1);
+    BOOST_REQUIRE(apollo::is_convertible<decltype(&func0)>(L, -2));
+    auto func0ptr = apollo::from_stack<decltype(&func0)>(L, -2);
+    lua_pop(L, 2);
     BOOST_CHECK_EQUAL(func0ptr, &func0);
 
     apollo::push(L, &func1);
@@ -137,16 +139,18 @@ static void check_proc(lua_State* L)
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
 
     apollo::push(L, proc0obj);
+    lua_pushnil(L);
 
     // Check that the std::function was not wrapped in a pcall lambda:
-    auto proc0obj_copy = apollo::from_stack<decltype(proc0obj)>(L, -1);
+    auto proc0obj_copy = apollo::from_stack<decltype(proc0obj)>(L, -2);
     BOOST_CHECK_EQUAL(
         proc0obj_copy.target_type().name(),
         proc0obj.target_type().name());
 
-    auto proc0objb = apollo::from_stack<boost::function<void()>>(L, -1);
+    auto proc0objb = apollo::from_stack<boost::function<void()>>(L, -2);
     proc0objb();
     BOOST_CHECK_EQUAL(g_n_calls, 2u);
+    lua_pop(L, 1); // Pop nil.
     apollo::pcall(L, 0, 0);
     BOOST_CHECK_EQUAL(g_n_calls, 3u);
 
@@ -199,16 +203,18 @@ static void check_func(lua_State* L)
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
 
     apollo::push(L, func1obj);
+    lua_pushnil(L);
 
     // Check that the std::function was not wrapped in a pcall lambda:
-    auto func1obj_copy = apollo::from_stack<decltype(func1obj)>(L, -1);
+    auto func1obj_copy = apollo::from_stack<decltype(func1obj)>(L, -2);
     BOOST_CHECK_EQUAL(
         func1obj_copy.target_type().name(),
         func1obj.target_type().name());
 
-    auto func1objb = apollo::from_stack<boost::function<char const*(int)>>(L, -1);
+    auto func1objb = apollo::from_stack<boost::function<char const*(int)>>(L, -2);
     BOOST_CHECK_EQUAL(func1objb(42), std::string("foo"));
     BOOST_CHECK_EQUAL(g_n_calls, 2u);
+    lua_pop(L, 1); // Pop nil.
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 1);
     BOOST_CHECK_EQUAL(lua_tostring(L, -1), std::string("foo"));
