@@ -1,17 +1,12 @@
 #ifndef APOLLO_FUNCTION_HPP_INCLUDED
 #define APOLLO_FUNCTION_HPP_INCLUDED APOLLO_FUNCTION_HPP_INCLUDED
 
-#include <functional>
 #include <boost/function.hpp>
 
 #include <lua.hpp>
 #include <boost/exception/get_error_info.hpp>
 #include <boost/exception/errinfo_type_info_name.hpp>
 #include <type_traits>
-
-#ifdef BOOST_MSVC
-#    include <boost/function.hpp>
-#endif
 
 #include <apollo/lapi.hpp>
 #include <apollo/error.hpp>
@@ -54,7 +49,7 @@ R call_with_stack_args_impl(
     lua_State* L, detail::iseq<Is...>,
     R(C::*f)(Args...))
 {
-    return from_stack<C>.*f(from_stack<Args>(L, Is)...);
+    return (from_stack<C&>(L, 1).*f)(from_stack<Args>(L, Is)...);
 }
 
 template <typename R, template<class> class FObj, typename... Args, int... Is>
@@ -86,7 +81,7 @@ template <class C, typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
 {
     return detail::call_with_stack_args_impl(
-        L, detail::iseq_n_t<sizeof...(Args)>(), f);
+        L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
 }
 
 namespace detail {
@@ -179,20 +174,27 @@ struct function_dispatch<F, typename std::enable_if<
     }
 };
 
-    template <typename F>
-    using mem_fn_wrapper =
-#ifdef BOOST_MSVC
-        boost::function<F>;
-#else
-        std::function<F>;
-#endif
 
+template <typename R, typename C, typename... Args>
+struct function_dispatch<R(C::*)(Args...)>
+{
+private:
+    using FType = R(C::*)(Args...);
+    struct mem_fn_ptr_holder { FType val; };
 
-template <typename F>
-struct function_dispatch<F, typename std::enable_if<
-        std::is_member_function_pointer<F>::value>::type>
-        : function_dispatch<detail::mem_fn_wrapper<unmember_function_t<F>>>
-{};
+public:
+    static void push_upvalue(lua_State* L, FType f)
+    {
+        push_gc_object(L, mem_fn_ptr_holder{ f });
+    }
+
+    static int entry_point(lua_State* L) BOOST_NOEXCEPT
+    {
+        auto f = static_cast<mem_fn_ptr_holder*>(
+            lua_touserdata(L, lua_upvalueindex(1)))->val;
+        return exceptions_to_lua_errors(L, f);
+    }
+};
 
 template <typename F, typename Enable=void>
 struct function_converter;
