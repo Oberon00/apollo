@@ -290,6 +290,7 @@ BOOST_AUTO_TEST_CASE(func_obj)
 BOOST_AUTO_TEST_CASE(mem_func)
 {
     apollo::push(L, &test_struct::memproc0);
+    lua_pop(L, 1);
 }
 
 
