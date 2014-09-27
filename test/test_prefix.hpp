@@ -5,6 +5,8 @@
 
 #include <boost/preprocessor/cat.hpp>
 #include <boost/test/unit_test.hpp>
+#include <boost/test/unit_test_monitor.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 
 #include <lua.hpp>
 
@@ -28,6 +30,25 @@ struct lstate_fixture {
         lua_close(L);
     }
 };
+
+// See http://stackoverflow.com/a/5402543/2128694 for boost::exception support
+
+inline void translateBoostException(const boost::exception &e)
+{
+    BOOST_FAIL(boost::diagnostic_information(e));
+}
+
+struct boost_exception_fixture
+{
+    boost_exception_fixture()
+    {
+        boost::unit_test::unit_test_monitor.register_exception_translator<
+            boost::exception>(&translateBoostException);
+    }
+};
+
+
+BOOST_GLOBAL_FIXTURE(boost_exception_fixture)
 
 BOOST_FIXTURE_TEST_SUITE(
     BOOST_PP_CAT(BOOST_TEST_MODULE, _suite),
