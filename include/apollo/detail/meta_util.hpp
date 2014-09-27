@@ -13,6 +13,12 @@ struct remove_qualifiers {
     >::type type;
 };
 
+template <typename T>
+struct is_const_reference: std::integral_constant<bool,
+    std::is_reference<T>::value &&
+    std::is_const<typename std::remove_reference<T>::type>::value>
+{};
+
 }} // namespace apollo::detail
 
 #endif // APOLLO_DETAIL_META_UTIL_HPP_INCLUDED

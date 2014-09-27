@@ -26,7 +26,9 @@ struct lua_type_id: std::integral_constant<int, LUA_TUSERDATA> {};
 
 template <typename T> // Any arithmetic type except bool is a number.
 struct lua_type_id<T,
-        typename std::enable_if<std::is_arithmetic<T>::value>::type>
+        typename std::enable_if<
+            std::is_same<T, typename detail::remove_qualifiers<T>::type>::value
+            && std::is_arithmetic<T>::value>::type>
         : std::integral_constant<int, LUA_TNUMBER> {};
 
 template <> // boolean
@@ -43,7 +45,7 @@ template <std::size_t N> struct lua_type_id<char[N]>: lua_type_id<char*> {};
 template <> struct lua_type_id<std::string>: lua_type_id<char*> {};
 
 
-template<> // thread (lua_State*)
+template <> // thread (lua_State*)
 struct lua_type_id<lua_State*>: std::integral_constant<int, LUA_TTHREAD> {};
 
 template <typename T>
@@ -64,7 +66,7 @@ template <typename T> struct lua_type_id<boost::function<T>>: lua_type_id<T> {};
 } // namespace detail
 
 template <typename T, typename Enable=void>
-struct converter; // See the converters below for examples.
+struct converter;
 
 BOOST_CONSTEXPR_OR_CONST unsigned no_conversion = UINT_MAX;
 
@@ -236,7 +238,7 @@ struct string_conversion_steps<char> {
 
 } // namespace detail
 
-template<typename T>
+template <typename T>
 struct converter<T, typename std::enable_if<
         detail::lua_type_id<T>::value == LUA_TSTRING>::type>: converter_base<T> {
     using to_type = typename detail::to_string<T>::type;
@@ -263,16 +265,37 @@ void push(lua_State* L, T&& v)
     converter<T>::push(L, std::forward<T>(v));
 }
 
-// For cv and/or reference qualified native types, ignore the qualifiers.
 template<typename T>
 struct converter<T, typename std::enable_if<
     (std::is_const<T>::value ||
-     std::is_volatile<T>::value ||
-     std::is_reference<T>::value) &&
+     std::is_volatile<T>::value) &&
+    !std::is_reference<T>::value &&
+    detail::lua_type_id<typename detail::remove_qualifiers<T>::type>::value
+     != LUA_TUSERDATA>::type
+>: converter<typename std::remove_cv<T>::type>
+{};
+
+template<typename T>
+struct converter<T, typename std::enable_if<
+    detail::is_const_reference<T>::value &&
     detail::lua_type_id<typename detail::remove_qualifiers<T>::type>::value
      != LUA_TUSERDATA>::type
 >: converter<typename detail::remove_qualifiers<T>::type>
 {};
+
+template<typename T>
+struct converter<T, typename std::enable_if<
+    std::is_reference<T>::value &&
+    !detail::is_const_reference<T>::value &&
+    detail::lua_type_id<typename detail::remove_qualifiers<T>::type>::value
+     != LUA_TUSERDATA>::type
+>
+{
+    static void push(lua_State* L, T v)
+    {
+        converter<typename detail::remove_qualifiers<T>::type>::push(L, v);
+    }
+};
 
 
 template <typename T>
