@@ -12,8 +12,8 @@ static void check_roundtrip(lua_State* L, T&& v)
                   "T not detected as LuaT");
     apollo::stack_balance balance(L);
     apollo::push(L, std::forward<T>(v));
-    BOOST_REQUIRE(apollo::is_convertible<T>(L, -1));
-    BOOST_CHECK_EQUAL(v, apollo::from_stack<T>(L, -1));
+    BOOST_REQUIRE(apollo::is_convertible<T2>(L, -1));
+    BOOST_CHECK_EQUAL(v, apollo::from_stack<T2>(L, -1));
 }
 
 BOOST_AUTO_TEST_CASE(number_converter)
@@ -37,6 +37,9 @@ BOOST_AUTO_TEST_CASE(number_converter)
     apollo::push(L, "foo");
     BOOST_CHECK_THROW(apollo::from_stack<int>(L, -1), apollo::conversion_error);
     BOOST_CHECK_EQUAL(apollo::from_stack<int>(L, -2), 42);
+    BOOST_CHECK_EQUAL(apollo::from_stack<int const&>(L, -2), 42);
+    BOOST_CHECK_EQUAL(apollo::from_stack<int const&&>(L, -2), 42);
+    BOOST_CHECK_EQUAL(apollo::from_stack<int const>(L, -2), 42);
     lua_pop(L, 2);
 }
 
@@ -68,13 +71,16 @@ BOOST_AUTO_TEST_CASE(bool_converter)
     apollo::push(L, false);
     BOOST_CHECK_EQUAL(apollo::from_stack<bool>(L, -2), true);
     BOOST_CHECK_EQUAL(apollo::from_stack<bool>(L, -1), false);
+    BOOST_CHECK_EQUAL(apollo::from_stack<bool const&>(L, -1), false);
+    BOOST_CHECK_EQUAL(apollo::from_stack<bool const&&>(L, -1), false);
+    BOOST_CHECK_EQUAL(apollo::from_stack<bool const>(L, -1), false);
     lua_pop(L, 2);
 }
 
 template <typename T>
 static void check_str_roundtrip(lua_State* L, T&& v)
 {
-    check_roundtrip<LUA_TSTRING>(L, v);
+    check_roundtrip<LUA_TSTRING>(L, std::forward<T>(v));
 }
 
 // sz: Length of s inclusive terminating '\0'.
@@ -130,6 +136,10 @@ BOOST_AUTO_TEST_CASE(string_converter)
 
     apollo::push(L, 42);
     BOOST_CHECK_EQUAL(apollo::from_stack<std::string>(L, -1), "42");
+    BOOST_CHECK_EQUAL(apollo::from_stack<std::string const&>(L, -1), "42");
+    BOOST_CHECK_EQUAL(apollo::from_stack<std::string const&&>(L, -1), "42");
+    BOOST_CHECK_EQUAL(apollo::from_stack<std::string const>(L, -1), "42");
+
     CHECK_THROW_CHAR;
     lua_pop(L, 1);
     apollo::push(L, 4);
@@ -138,6 +148,9 @@ BOOST_AUTO_TEST_CASE(string_converter)
     lua_pop(L, 1);
     apollo::push(L, 9);
     BOOST_CHECK_EQUAL(apollo::from_stack<char>(L, -1), '9');
+    BOOST_CHECK_EQUAL(apollo::from_stack<char const&>(L, -1), '9');
+    BOOST_CHECK_EQUAL(apollo::from_stack<char const&&>(L, -1), '9');
+    BOOST_CHECK_EQUAL(apollo::from_stack<char const>(L, -1), '9');
 
     lua_pop(L, 1);
     apollo::push(L, 4.1);
