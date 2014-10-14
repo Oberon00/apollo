@@ -4,6 +4,7 @@
 #include <lua.hpp>
 #include <type_traits>
 #include <boost/assert.hpp>
+#include <boost/config.hpp>
 #include <apollo/detail/meta_util.hpp>
 
 namespace apollo {
