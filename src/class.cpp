@@ -19,7 +19,7 @@ void apollo::detail::push_instance_metatable(
 
         lua_pushliteral(L, "__gc");
         // Destroy through pointer to interface class.
-        lua_pushcfunction(L, &gc_object<instance_holder>);
+        lua_pushcfunction(L, &gc_object_with_mt<instance_holder>);
         lua_rawset(L, -3);
 
         // Copy metatable because we also want to return it.

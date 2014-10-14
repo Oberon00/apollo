@@ -18,6 +18,17 @@ int gc_object(lua_State* L) BOOST_NOEXCEPT
 }
 
 template <typename T>
+int gc_object_with_mt(lua_State* L) BOOST_NOEXCEPT
+{
+    gc_object<T>(L);
+    lua_pushnil(L);
+    lua_setmetatable(L, 1);
+    return 0;
+}
+
+// Note: __gc will not unset metatable.
+// Use for objects that cannot be retrieved from untrusted Lua code only.
+template <typename T>
 typename detail::remove_qualifiers<T>::type*
 push_gc_object(lua_State* L, T&& o)
 {
