@@ -6,6 +6,7 @@
 #include "detail/instance_holder.hpp"
 #include "detail/class_info.hpp"
 #include "detail/light_key.hpp"
+#include <apollo/gc.hpp> // For push_bare_udata().
 #include <memory>
 
 namespace apollo {
@@ -24,13 +25,7 @@ void push_instance(lua_State* L, Ptr&& ptr)
         typename pointer_traits<ptr_t>::pointee_type>::type;
 
     class_info const& cls = registered_class(L, typeid(cls_t));
-    void* storage = lua_newuserdata(L, sizeof(holder_t));
-    try {
-        new(storage) holder_t(std::forward<Ptr>(ptr), cls);
-    } catch (...) {
-        lua_pop(L, 1);
-        throw;
-    }
+    push_bare_udata(L, holder_t(std::forward<Ptr>(ptr), cls));
     push_instance_metatable(L, cls);
     lua_setmetatable(L, -2);
 }

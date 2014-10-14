@@ -27,6 +27,14 @@ public:
         , m_type(&cls)
     {}
 
+    ptr_instance_holder(ptr_instance_holder&& other) // Move ctor
+        : m_instance(std::move(other.m_instance))
+        , m_type(other.m_type)
+    {
+        other.m_instance = static_cast<Ptr>(nullptr);
+        other.m_type = nullptr;
+    }
+
     void* get() override
     {
         using boost::get_pointer;

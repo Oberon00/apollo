@@ -26,6 +26,20 @@ int gc_object_with_mt(lua_State* L) BOOST_NOEXCEPT
     return 0;
 }
 
+template <typename T>
+inline typename detail::remove_qualifiers<T>::type*
+push_bare_udata(lua_State* L, T&& o)
+{
+    using obj_t = typename detail::remove_qualifiers<T>::type;
+    void* uf = lua_newuserdata(L, sizeof(obj_t));
+    try {
+        return new(uf)obj_t(std::forward<T>(o));
+    } catch (...) {
+        lua_pop(L, 1);
+        throw;
+    }
+}
+
 // Note: __gc will not unset metatable.
 // Use for objects that cannot be retrieved from untrusted Lua code only.
 template <typename T>
@@ -33,13 +47,7 @@ typename detail::remove_qualifiers<T>::type*
 push_gc_object(lua_State* L, T&& o)
 {
     using obj_t = typename detail::remove_qualifiers<T>::type;
-    void* uf = lua_newuserdata(L, sizeof(obj_t));
-    try {
-        new(uf) obj_t(std::forward<T>(o));
-    } catch (...) {
-        lua_pop(L, 1);
-        throw;
-    }
+    void* uf = push_bare_udata(L, std::forward<T>(o));
 #ifdef BOOST_MSVC
 #   pragma warning(push)
 #   pragma warning(disable:4127) // Conditional expression is constant.
@@ -48,7 +56,7 @@ push_gc_object(lua_State* L, T&& o)
 #ifdef BOOST_MSVC
 #   pragma warning(pop)
 #endif
-        lua_createtable(L, 0, 1);
+        lua_createtable(L, 0, 1); // 0 sequence entries, 1 dictionary entry
         lua_pushcfunction(L, &gc_object<obj_t>);
         lua_setfield(L, -2, "__gc");
         lua_setmetatable(L, -2);
