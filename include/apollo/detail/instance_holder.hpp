@@ -11,7 +11,7 @@ class instance_holder {
 public:
     virtual ~instance_holder() {}
     virtual void* get() = 0; // Get a pointer to the instance.
-    virtual class_info const* type() const = 0; // The instance's class.
+    virtual class_info const& type() const = 0; // The instance's class.
 };
 
 template <typename Ptr>
@@ -31,11 +31,17 @@ public:
     {
         using boost::get_pointer;
         return get_pointer(m_instance);
+
     }
 
-    class_info const* type() const override
+    class_info const& type() const override
     {
-        return m_type;
+        return *m_type;
+    }
+
+    Ptr& get_outer_ptr()
+    {
+        return m_instance;
     }
 
 private:

@@ -5,7 +5,7 @@ static light_key object_tag = {};
 
 void apollo::detail::push_instance_metatable(
     lua_State* L,
-    class_info const& cls)
+    class_info const& cls) BOOST_NOEXCEPT
 {
     lua_rawgetp(L, LUA_REGISTRYINDEX, &cls);
     if (!lua_istable(L, -1)) {
