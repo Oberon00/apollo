@@ -20,7 +20,7 @@ else()
         add_definitions("-Wno-weak-vtables -Wno-padded")
     endif()
 endif()
-include_directories("src")
+include_directories(BEFORE "src" "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(Boost_USE_STATIC_LIBS     ON)
 set(Boost_USE_MULTITHREADED   ON)
@@ -37,8 +37,7 @@ add_definitions("-DBOOST_ALL_NO_LIB")
 
 find_package(Lua52 REQUIRED)
 include_directories(
-    ${Boost_INCLUDE_DIRS} ${LUA_INCLUDE_DIR}
-    "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    ${Boost_INCLUDE_DIRS} ${LUA_INCLUDE_DIR})
 
 add_subdirectory("src")
 if (BUILD_TESTING)
