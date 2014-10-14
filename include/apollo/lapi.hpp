@@ -2,7 +2,6 @@
 #define APOLLO_LAPI_HPP_INCLUDED APOLLO_LAPI_HPP_INCLUDED
 
 #include <lua.hpp>
-#include "converters.hpp"
 
 namespace apollo {
 
