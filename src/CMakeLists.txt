@@ -33,6 +33,11 @@ set(apollo_SRCS
     "class.cpp"
     "stack_balance.cpp")
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set_source_files_properties("lapi.cpp" PROPERTIES
+        COMPILE_FLAGS "-Wno-shadow") # BOOST_SCOPE_EXIT
+endif()
+
 add_library(apollo ${apollo_HDRS} ${apollo_SRCS})
 target_link_libraries(apollo ${LUA_LIBRARIES})
 
