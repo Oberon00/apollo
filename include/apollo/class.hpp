@@ -1,11 +1,11 @@
 #ifndef APOLLO_CLASS_HPP_INCLUDED
 #define APOLLO_CLASS_HPP_INCLUDED APOLLO_CLASS_HPP_INCLUDED
 
-#include "converters.hpp"
-#include "smart_ptr.hpp"
-#include "detail/instance_holder.hpp"
-#include "detail/class_info.hpp"
-#include "detail/light_key.hpp"
+#include <apollo/converters.hpp>
+#include <apollo/smart_ptr.hpp>
+#include <apollo/detail/instance_holder.hpp>
+#include <apollo/detail/class_info.hpp>
+#include <apollo/detail/light_key.hpp>
 #include <apollo/gc.hpp> // For push_bare_udata().
 #include <memory>
 
