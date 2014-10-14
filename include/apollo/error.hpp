@@ -17,7 +17,7 @@ ERRINFO(std::string, msg);
 ERRINFO(int, stack_index);
 ERRINFO(lua_State*, lua_state);
 ERRINFO(int, lua_error_code);
-ERRINFO(std::type_info, source_typeid);
+ERRINFO(char const*, source_typeid_name);
 #undef ERRINFO
 } // namespace error_info
 
