@@ -9,9 +9,7 @@ set(apollo_HDRS_PUBLIC
 set(apollo_HDRS_DETAIL
     "instance_holder.hpp"
     "class_info.hpp"
-    "light_key.hpp"
-    "for_each_type.hpp"
-    "base_traits.hpp")
+    "light_key.hpp")
 
 # http://stackoverflow.com/a/13104057/2128694
 macro(prepend_to_all _srcs _path)
