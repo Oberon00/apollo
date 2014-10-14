@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(object_converter)
     apollo::register_class<foo_cls>(L);
     apollo::register_class<bar_cls>(L);
     BOOST_CHECK_EQUAL(lua_gettop(L), 0);
-    BOOST_REQUIRE_EQUAL(apollo::detail::registered_classes(L).size(), 2);
+    BOOST_REQUIRE_EQUAL(apollo::detail::registered_classes(L).size(), 2u);
 
     { // Scope for all foo_cls:
         foo_cls foo(42); // Dtor #1
@@ -54,8 +54,8 @@ BOOST_AUTO_TEST_CASE(object_converter)
         {
             auto& pushed_foo = apollo::from_stack<foo_cls&>(L, -1);
             BOOST_CHECK_EQUAL(pushed_foo.i, 42);
-            BOOST_CHECK_EQUAL(pushed_foo.n_copies, 1);
-            BOOST_CHECK_EQUAL(pushed_foo.n_moves, 0);
+            BOOST_CHECK_EQUAL(pushed_foo.n_copies, 1u);
+            BOOST_CHECK_EQUAL(pushed_foo.n_moves, 0u);
         }
         BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls*>(L, -1)->i, 42);
         BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls>(L, -1).i, 42); // Dtor #3
@@ -77,8 +77,8 @@ BOOST_AUTO_TEST_CASE(object_converter)
         {
             auto& pushed_foo = apollo::from_stack<foo_cls&>(L, -1);
             BOOST_CHECK_EQUAL(pushed_foo.i, 42);
-            BOOST_CHECK_EQUAL(pushed_foo.n_copies, 0);
-            BOOST_CHECK_EQUAL(pushed_foo.n_moves, 1);
+            BOOST_CHECK_EQUAL(pushed_foo.n_copies, 0u);
+            BOOST_CHECK_EQUAL(pushed_foo.n_moves, 1u);
         }
         lua_pop(L, 1);
 
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE(object_converter)
 
     lua_gc(L, LUA_GCCOLLECT, 0);
     lua_gc(L, LUA_GCCOLLECT, 0); // Just to be sure, collect a second time.
-    BOOST_CHECK_EQUAL(foo_cls::n_destructions, 5);
+    BOOST_CHECK_EQUAL(foo_cls::n_destructions, 5u);
 }
 
 
