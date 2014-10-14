@@ -145,7 +145,7 @@ typename std::enable_if<pointer_traits<Ptr>::is_valid>::type push_object(
 } // namespace detail
 
 template <typename T>
-void push_metatable(lua_State* L)
+void push_class_metatable(lua_State* L)
 {
     using obj_t = typename detail::remove_qualifiers<T>::type;
     detail::push_instance_metatable(
