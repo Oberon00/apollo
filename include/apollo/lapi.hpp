@@ -15,8 +15,7 @@ void pcall(lua_State* L, int nargs, int nresults);
 template <typename T>
 inline void rawget(lua_State* L, int t, T&& k)
 {
-    if (t < 0)
-        t -= 1;
+    t = lua_absindex(L, t);
     push(L, std::forward<T>(k));
     lua_rawget(L, t);
 }
@@ -35,8 +34,7 @@ inline void rawget(lua_State* L, int t, void const* k)
 template <typename T>
 inline void rawset(lua_State* L, int t, T&& k)
 {
-    if (t < 0)
-        t -= 1;
+    t = lua_absindex(L, t);
     push(L, std::forward<T>(k));
     lua_insert(L, -2); // Move key below value
     lua_rawset(L, t);
