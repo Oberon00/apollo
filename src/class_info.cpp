@@ -10,7 +10,7 @@
 #include <boost/throw_exception.hpp>
 #include <limits>
 
-static light_key const class_info_map_key = {};
+static apollo::detail::light_key const class_info_map_key = {};
 static std::ptrdiff_t const error_ambiguous_base =
     std::numeric_limits<std::ptrdiff_t>::min();
 

@@ -17,7 +17,7 @@
 
 namespace apollo {
 
-static light_key const msghKey = {};
+static apollo::detail::light_key const msghKey = {};
 
 void set_error_msg_handler(lua_State* L)
 {

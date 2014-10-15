@@ -1,7 +1,7 @@
 #include <apollo/class.hpp>
 #include <apollo/gc.hpp>
 
-static light_key object_tag = {};
+static apollo::detail::light_key object_tag = {};
 
 void apollo::detail::push_instance_metatable(
     lua_State* L,
