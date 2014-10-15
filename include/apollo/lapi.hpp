@@ -30,7 +30,18 @@ inline void rawget(lua_State* L, int t, void const* k)
     lua_rawgetp(L, t, k);
 }
 
+inline void rawget(lua_State* L, int t, void* k)
+{
+    lua_rawgetp(L, t, k);
+}
+
+
 inline void rawget(lua_State* L, int t, detail::light_key const& k)
+{
+    lua_rawgetp(L, t, k);
+}
+
+inline void rawget(lua_State* L, int t, detail::light_key& k)
 {
     lua_rawgetp(L, t, k);
 }
@@ -55,7 +66,17 @@ inline void rawset(lua_State* L, int t, void const* k)
     lua_rawsetp(L, t, k);
 }
 
+inline void rawset(lua_State* L, int t, void* k)
+{
+    lua_rawsetp(L, t, k);
+}
+
 inline void rawset(lua_State* L, int t, detail::light_key const& k)
+{
+    lua_rawsetp(L, t, k);
+}
+
+inline void rawset(lua_State* L, int t, detail::light_key& k)
 {
     lua_rawsetp(L, t, k);
 }
