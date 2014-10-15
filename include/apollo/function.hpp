@@ -122,26 +122,10 @@ int call_with_stack_args_and_push(lua_State* L, F&& f)
 }
 
 template <typename F>
-int exceptions_to_lua_errors(lua_State* L, F&& f) BOOST_NOEXCEPT
+int call_with_stack_args_and_push_lerror(lua_State* L, F&& f)
 {
-    int arg = 0;
-    try {
-        return call_with_stack_args_and_push(L, std::forward<F>(f));
-    } catch(to_cpp_conversion_error const& e) {
-        // TODO: Check for nullptr.
-        arg = *boost::get_error_info<errinfo::stack_index>(e);
-        lua_pushfstring(L, "%s [%s -> %s]",
-            boost::get_error_info<errinfo::msg>(e)->c_str(),
-            luaL_typename(L, arg),
-            boost::get_error_info<boost::errinfo_type_info_name>(e)->c_str());
-    } catch(std::exception const& e) {
-        lua_pushfstring(L, "exception: %s", e.what());
-    } catch(...) {
-        lua_pushliteral(L, "unknown exception");
-    }
-    if (arg)
-        return luaL_argerror(L, arg, lua_tostring(L, -1));
-    return lua_error(L);
+    return exceptions_to_lua_errors_L(
+        L, &call_with_stack_args_and_push<F>, std::forward<F>(f));
 }
 
 template <typename F, typename Enable=void>
@@ -154,7 +138,7 @@ struct function_dispatch {
     static int entry_point(lua_State* L) BOOST_NOEXCEPT
     {
         auto& f = *static_cast<F*>(lua_touserdata(L, lua_upvalueindex(1)));
-        return exceptions_to_lua_errors(L, f);
+        return call_with_stack_args_and_push_lerror(L, f);
     }
 };
 
@@ -170,7 +154,7 @@ struct function_dispatch<F, typename std::enable_if<
     static int entry_point(lua_State* L) BOOST_NOEXCEPT
     {
         auto f = reinterpret_cast<F>(lua_touserdata(L, lua_upvalueindex(1)));
-        return exceptions_to_lua_errors(L, f);
+        return call_with_stack_args_and_push_lerror(L, f);
     }
 };
 
@@ -192,7 +176,7 @@ public:
     {
         auto f = static_cast<mem_fn_ptr_holder*>(
             lua_touserdata(L, lua_upvalueindex(1)))->val;
-        return exceptions_to_lua_errors(L, f);
+        return call_with_stack_args_and_push_lerror(L, f);
     }
 };
 
