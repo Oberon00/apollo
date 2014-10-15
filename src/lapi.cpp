@@ -49,7 +49,7 @@ void pcall(lua_State* L, int nargs, int nresults, int msgh)
 
 void pcall(lua_State* L, int nargs, int nresults)
 {
-    int const msgh = push_error_msg_handler(L) ? lua_absindex(L, -nargs - 1) : 0;
+    int const msgh = push_error_msg_handler(L) ? lua_absindex(L, -nargs - 2) : 0;
     if (msgh)
         lua_insert(L, msgh); // move beneath arguments and function
     BOOST_SCOPE_EXIT(&msgh, &L) {
