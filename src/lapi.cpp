@@ -39,6 +39,7 @@ void pcall(lua_State* L, int nargs, int nresults, int msgh)
     int const r = lua_pcall(L, nargs, nresults, msgh);
     if (r != LUA_OK) {
         auto lua_msg = from_stack(L, -1, std::string("(no error message)"));
+        lua_pop(L, 1);
         BOOST_THROW_EXCEPTION(lua_api_error()
                               << errinfo::lua_state(L)
                               << errinfo::lua_msg(lua_msg)
