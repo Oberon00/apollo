@@ -2,6 +2,7 @@
 #define APOLLO_LAPI_HPP_INCLUDED APOLLO_LAPI_HPP_INCLUDED
 
 #include <lua.hpp>
+#include <apollo/detail/light_key.hpp>
 
 namespace apollo {
 
@@ -29,6 +30,11 @@ inline void rawget(lua_State* L, int t, void const* k)
     lua_rawgetp(L, t, k);
 }
 
+inline void rawget(lua_State* L, int t, detail::light_key const& k)
+{
+    lua_rawgetp(L, t, k);
+}
+
 
 template <typename T>
 inline void rawset(lua_State* L, int t, T&& k)
@@ -45,6 +51,11 @@ inline void rawset(lua_State* L, int t, int k)
 }
 
 inline void rawset(lua_State* L, int t, void const* k)
+{
+    lua_rawsetp(L, t, k);
+}
+
+inline void rawset(lua_State* L, int t, detail::light_key const& k)
 {
     lua_rawsetp(L, t, k);
 }
