@@ -21,22 +21,6 @@ namespace apollo {
 
 namespace detail {
 
-template <typename F>
-struct unmember_function;
-
-template <typename R, typename C, typename... Args>
-struct unmember_function<R(C::*)(Args...)> {
-    typedef R(type)(C&, Args...); // MSVC chokes on "using" here.
-};
-
-template <typename R, typename C, typename... Args>
-struct unmember_function<R(C::*)(Args...) const> {
-    typedef R(type)(C const&, Args...); // MSVC chokes on "using" here.
-};
-
-template <typename F>
-using unmember_function_t = typename unmember_function<F>::type;
-
 template <typename R, typename... Args, int... Is>
 R call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, R(*f)(Args...))
 {
