@@ -106,6 +106,7 @@ class_info make_class_info_impl(
 template <typename T, typename... Bases>
 class_info make_class_info(class_info_map const& base_infos)
 {
+    (void)base_infos; // Avoid MSVC warning when Bases is empty.
     std::vector<base_info> bases;
     variadic_pass(add_base_helper<T, Bases>(bases, base_infos)...);
     return make_class_info_impl(&typeid(T), bases);
