@@ -198,7 +198,7 @@ struct function_converter<FObj<R(Args...)>> {
             luaFunction.push();
             push_args(L_, std::forward<Args>(args)...);
             pcall(L_, sizeof...(Args), 1);
-            return apollo::from_stack<R>(L_, -1);;
+            return apollo::from_stack<R>(L_, -1);
         };
     }
 
