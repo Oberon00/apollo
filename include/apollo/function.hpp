@@ -235,7 +235,7 @@ struct function_converter<F, typename std::enable_if<
 };
 
 template <typename F>
-void pushFunction(lua_State* L, F const& f)
+void push_function(lua_State* L, F const& f)
 {
     using fdispatch = detail::function_dispatch<F>;
     fdispatch::push_upvalue(L, f);
@@ -271,7 +271,7 @@ private:
 public:
     static void push(lua_State* L, T const& f)
     {
-        detail::pushFunction(L, f);
+        detail::push_function(L, f);
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
