@@ -1,21 +1,21 @@
 #ifndef APOLLO_FUNCTION_HPP_INCLUDED
 #define APOLLO_FUNCTION_HPP_INCLUDED APOLLO_FUNCTION_HPP_INCLUDED
 
-#include <boost/function.hpp>
-
-#include <lua.hpp>
-#include <boost/exception/get_error_info.hpp>
-#include <boost/exception/errinfo_type_info_name.hpp>
-#include <type_traits>
-
-#include <apollo/lapi.hpp>
-#include <apollo/error.hpp>
-#include <apollo/converters.hpp>
 #include <apollo/config.hpp>
+#include <apollo/converters.hpp>
+#include <apollo/error.hpp>
 #include <apollo/gc.hpp>
+#include <apollo/lapi.hpp>
 #include <apollo/reference.hpp>
 #include <apollo/stack_balance.hpp>
 #include <apollo/detail/integer_seq.hpp>
+
+#include <boost/exception/errinfo_type_info_name.hpp>
+#include <boost/exception/get_error_info.hpp>
+#include <boost/function.hpp>
+#include <lua.hpp>
+
+#include <type_traits>
 
 namespace apollo {
 

@@ -1,11 +1,12 @@
 #ifndef LUABIND_ERROR_HPP_INCLUDED
 #define LUABIND_ERROR_HPP_INCLUDED LUABIND_ERROR_HPP_INCLUDED
 
-#include <boost/exception/exception.hpp>
-#include <boost/exception/error_info.hpp>
 #include <boost/config.hpp>
-#include <exception>
+#include <boost/exception/error_info.hpp>
+#include <boost/exception/exception.hpp>
 #include <lua.hpp>
+
+#include <exception>
 #include <string>
 #include <typeinfo>
 

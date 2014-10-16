@@ -1,13 +1,13 @@
-#include <apollo/detail/class_info.hpp>
-#include <apollo/detail/light_key.hpp>
+#include <apollo/converters.hpp> // Only for no_conversion
 #include <apollo/error.hpp>
 #include <apollo/gc.hpp>
-#include <boost/exception/info.hpp>
-#include <boost/exception/errinfo_type_info_name.hpp>
-#include <apollo/converters.hpp> // Only for no_conversion
-#include <iostream>
+#include <apollo/detail/class_info.hpp>
+#include <apollo/detail/light_key.hpp>
 
+#include <boost/exception/errinfo_type_info_name.hpp>
+#include <boost/exception/info.hpp>
 #include <boost/throw_exception.hpp>
+
 #include <limits>
 
 static apollo::detail::light_key const class_info_map_key = {};

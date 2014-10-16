@@ -1,4 +1,5 @@
 #include <apollo/converters.hpp>
+
 #include <cmath>
 
 unsigned apollo::detail::string_conversion_steps<char>::get(

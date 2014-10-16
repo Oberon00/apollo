@@ -6,11 +6,11 @@
 #include <boost/assert.hpp>
 #include <lua.hpp>
 
-#include <vector>
 #include <type_traits>
-#include <typeinfo>
 #include <typeindex>
+#include <typeinfo>
 #include <unordered_map>
+#include <vector>
 
 namespace apollo { namespace detail {
 

@@ -1,4 +1,5 @@
 #include <apollo/reference.hpp>
+
 #include <boost/assert.hpp>
 
 namespace apollo {

@@ -1,11 +1,13 @@
 #ifndef APOLLO_GC_HPP_INCLUDED
 #define APOLLO_GC_HPP_INCLUDED APOLLO_GC_HPP_INCLUDED
 
-#include <lua.hpp>
-#include <type_traits>
+#include <apollo/detail/meta_util.hpp>
+
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <apollo/detail/meta_util.hpp>
+#include <lua.hpp>
+
+#include <type_traits>
 
 namespace apollo {
 
