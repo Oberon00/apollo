@@ -122,7 +122,7 @@ int call_with_stack_args_and_push(lua_State* L, F&& f)
 }
 
 template <typename F>
-int call_with_stack_args_and_push_lerror(lua_State* L, F&& f)
+int call_with_stack_args_and_push_lerror(lua_State* L, F&& f)  BOOST_NOEXCEPT
 {
     return exceptions_to_lua_errors_L(
         L, &call_with_stack_args_and_push<F>, std::forward<F>(f));
