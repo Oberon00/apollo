@@ -1,12 +1,59 @@
 #include <boost/function.hpp>
+#include <boost/test/test_tools.hpp>
 #include <apollo/function.hpp>
 #include <string>
 
 static unsigned g_n_calls = 0;
 
+static void proc0()
+{
+    ++g_n_calls;
+}
+
+static void proc1(int a)
+{
+    BOOST_CHECK_EQUAL(a, 42);
+    ++g_n_calls;
+}
+
+static void proc4(int a, std::string const& s, double d, bool b)
+{
+    BOOST_CHECK_EQUAL(a, 42);
+    BOOST_CHECK_EQUAL(s, "foo");
+    BOOST_CHECK_EQUAL(d, 3.14);
+    BOOST_CHECK_EQUAL(b, false);
+    ++g_n_calls;
+}
+
+static unsigned func0()
+{
+    return ++g_n_calls;
+}
+
+static char const* func1(int a)
+{
+    ++g_n_calls;
+    BOOST_CHECK_EQUAL(a, 42);
+    return "foo";
+}
+
+static bool func4(int a, std::string const& s, double d, bool b)
+{
+    ++g_n_calls;
+    BOOST_CHECK_EQUAL(a, 42);
+    BOOST_CHECK_EQUAL(s, "foo");
+    BOOST_CHECK_EQUAL(d, 3.14);
+    BOOST_CHECK_EQUAL(b, false);
+    return b;
+}
+
 namespace {
 struct test_struct {
-    void memproc0() { ++g_n_calls; }
+    void memproc0() { proc0(); }
+    bool memfunc4(int a, const std::string& s, double d, bool b)
+    {
+        return func4(a, s, d, b);
+    }
 };
 } // anonymous namespace
 
@@ -28,26 +75,6 @@ namespace apollo {
 } // namespace apollo
 
 #include "test_prefix.hpp"
-
-static void proc0()
-{
-    ++g_n_calls;
-}
-
-static void proc1(int a)
-{
-    BOOST_CHECK_EQUAL(a, 42);
-    ++g_n_calls;
-}
-
-static void proc4(int a, std::string const& s, double d, bool b)
-{
-    BOOST_CHECK_EQUAL(a, 42);
-    BOOST_CHECK_EQUAL(s, "foo");
-    BOOST_CHECK_EQUAL(d, 3.14);
-    BOOST_CHECK_EQUAL(b, false);
-    ++g_n_calls;
-}
 
 BOOST_AUTO_TEST_CASE(plain_proc)
 {
@@ -86,27 +113,6 @@ BOOST_AUTO_TEST_CASE(plain_proc)
     BOOST_CHECK_EQUAL(proc4ptr, &proc4);
 }
 
-static unsigned func0()
-{
-    return ++g_n_calls;
-}
-
-static char const* func1(int a)
-{
-    ++g_n_calls;
-    BOOST_CHECK_EQUAL(a, 42);
-    return "foo";
-}
-
-static bool func4(int a, std::string const& s, double d, bool b)
-{
-    ++g_n_calls;
-    BOOST_CHECK_EQUAL(a, 42);
-    BOOST_CHECK_EQUAL(s, "foo");
-    BOOST_CHECK_EQUAL(d, 3.14);
-    BOOST_CHECK_EQUAL(b, false);
-    return b;
-}
 
 BOOST_AUTO_TEST_CASE(plain_func)
 {
@@ -297,6 +303,22 @@ BOOST_AUTO_TEST_CASE(mem_func)
     apollo::push_gc_object(L, test_struct());
     apollo::pcall(L, 1, 0);
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
+
+    // TODO: Duplicate from plain_func test case.
+    apollo::push(L, &test_struct::memfunc4);
+    BOOST_CHECK_EQUAL(
+        apollo::from_stack<decltype(&test_struct::memfunc4)>(L, -1),
+        &test_struct::memfunc4);
+    apollo::push_gc_object(L, test_struct());
+    lua_pushinteger(L, 42);
+    lua_pushliteral(L, "foo");
+    lua_pushnumber(L, 3.14);
+    lua_pushboolean(L, false);
+    apollo::pcall(L, 5, 1);
+    BOOST_REQUIRE_EQUAL(g_n_calls, 2u);
+    BOOST_CHECK_EQUAL(lua_type(L, -1), LUA_TBOOLEAN);
+    BOOST_CHECK_EQUAL(lua_toboolean(L, -1) ? true : false, false);
+    lua_pop(L, 1);
 }
 
 
