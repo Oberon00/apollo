@@ -15,14 +15,14 @@ namespace apollo {
     struct converter<test_struct&> {
         using to_type = test_struct&;
         //static void push(lua_State*) { }
-        static unsigned n_conversion_steps(lua_State*, int)
+        static unsigned n_conversion_steps(lua_State* L, int idx)
         {
-            return no_conversion;
+            return lua_isuserdata(L, idx) ? 0 : no_conversion;
         }
 
-        static test_struct& from_stack(lua_State*, int)
+        static test_struct& from_stack(lua_State* L, int idx)
         {
-            std::terminate();
+            return *static_cast<test_struct*>(lua_touserdata(L, idx));
         }
     };
 } // namespace apollo
@@ -289,8 +289,14 @@ BOOST_AUTO_TEST_CASE(func_obj)
 
 BOOST_AUTO_TEST_CASE(mem_func)
 {
+    g_n_calls = 0;
     apollo::push(L, &test_struct::memproc0);
-    lua_pop(L, 1);
+    BOOST_CHECK_EQUAL(
+        apollo::from_stack<decltype(&test_struct::memproc0)>(L, -1),
+        &test_struct::memproc0);
+    apollo::push_gc_object(L, test_struct());
+    apollo::pcall(L, 1, 0);
+    BOOST_CHECK_EQUAL(g_n_calls, 1u);
 }
 
 

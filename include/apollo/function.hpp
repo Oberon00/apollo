@@ -142,27 +142,39 @@ struct function_dispatch<F, typename std::enable_if<
     }
 };
 
+template <typename FType>
+struct mem_fn_ptr_holder { FType val; };
 
 template <typename R, typename C, typename... Args>
 struct function_dispatch<R(C::*)(Args...)>
 {
 private:
     using FType = R(C::*)(Args...);
-    struct mem_fn_ptr_holder { FType val; };
 
 public:
     static void push_upvalue(lua_State* L, FType f)
     {
-        push_gc_object(L, mem_fn_ptr_holder{ f });
+        push_gc_object(L, mem_fn_ptr_holder<FType>{ f });
     }
 
     static int entry_point(lua_State* L) BOOST_NOEXCEPT
     {
-        auto f = static_cast<mem_fn_ptr_holder*>(
+        auto f = static_cast<mem_fn_ptr_holder<FType>*>(
             lua_touserdata(L, lua_upvalueindex(1)))->val;
         return call_with_stack_args_and_push_lerror(L, f);
     }
 };
+
+
+template <typename F>
+void push_function(lua_State* L, F const& f)
+{
+    using fdispatch = detail::function_dispatch<F>;
+    fdispatch::push_upvalue(L, f);
+    lua_pushcclosure(L, &fdispatch::entry_point, 1);
+}
+
+// function_converter //
 
 template <typename F, typename Enable=void>
 struct function_converter;
@@ -235,26 +247,26 @@ struct function_converter<F, typename std::enable_if<
 };
 
 template <typename F>
-void push_function(lua_State* L, F const& f)
-{
-    using fdispatch = detail::function_dispatch<F>;
-    fdispatch::push_upvalue(L, f);
-    lua_pushcclosure(L, &fdispatch::entry_point, 1);
-}
-
-template <typename F>
 struct function_converter<F, typename std::enable_if<
         std::is_member_function_pointer<F>::value>::type>
 {
     using FType = F;
-    static FType from_stack(lua_State*, int) {
-        static_assert(!std::is_same<F, F>::value, // Make dependent.
-            "Cannot convert to member function. Use std/boost::function");
+
+    // TODO: Nearly duplicate of plain function converter
+    static FType from_stack(lua_State* L, int idx)
+    {
+        stack_balance balance(L);
+        BOOST_VERIFY(lua_getupvalue(L, idx, 1));
+        BOOST_ASSERT(lua_type(L, -1) == LUA_TUSERDATA);
+        return static_cast<mem_fn_ptr_holder<F>*>(
+            lua_touserdata(L, -1))->val;
     }
 
-    static unsigned n_conversion_steps(lua_State*, int)
+    // TODO: Duplicate of plain function converter
+    static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        return no_conversion;
+        lua_CFunction thunk = lua_tocfunction(L, idx);
+        return thunk == &function_dispatch<F>::entry_point ? 0 : no_conversion;
     }
 };
 
