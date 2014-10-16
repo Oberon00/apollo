@@ -112,6 +112,12 @@ int call_with_stack_args_and_push_lerror(lua_State* L, F&& f)  BOOST_NOEXCEPT
         L, &call_with_stack_args_and_push<F>, std::forward<F>(f));
 }
 
+template <typename F, F FVal>
+static int static_entry_point(lua_State* L) BOOST_NOEXCEPT
+{
+    return call_with_stack_args_and_push_lerror(L, FVal);
+}
+
 template <typename F, typename Enable=void>
 struct function_dispatch {
     static void push_upvalue(lua_State* L, F const& f)
@@ -271,6 +277,15 @@ struct function_converter<F, typename std::enable_if<
 };
 
 } // namespace detail
+
+template <typename F, F FVal>
+static void push_function_static(lua_State* L) BOOST_NOEXCEPT
+{
+    lua_pushcfunction(L, (&detail::static_entry_point<F, FVal>));
+}
+
+#define APOLLO_PUSH_FUNCTION_STATIC(L, f) \
+    apollo::push_function_static<decltype(&f), &f>(L)
 
 // Function converter //
 template<typename T>

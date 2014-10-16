@@ -321,5 +321,29 @@ BOOST_AUTO_TEST_CASE(mem_func)
     lua_pop(L, 1);
 }
 
+void check_zero_nups(lua_State* L)
+{
+    lua_pushvalue(L, -1);
+    lua_Debug debug;
+    BOOST_CHECK_NE(lua_getinfo(L, ">u", &debug), 0);
+    BOOST_CHECK_EQUAL(debug.nups, 0);
+
+}
+
+BOOST_AUTO_TEST_CASE(static_func)
+{
+    g_n_calls = 0;
+    APOLLO_PUSH_FUNCTION_STATIC(L, proc0);
+    check_zero_nups(L);
+    apollo::pcall(L, 0, 0);
+    BOOST_CHECK_EQUAL(g_n_calls, 1u);
+
+    APOLLO_PUSH_FUNCTION_STATIC(L, test_struct::memproc0);
+    check_zero_nups(L);
+    apollo::push_gc_object(L, test_struct());
+    apollo::pcall(L, 1, 0);
+    BOOST_CHECK_EQUAL(g_n_calls, 2u);
+}
+
 
 #include "test_suffix.hpp"
