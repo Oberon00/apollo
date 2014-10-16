@@ -1,14 +1,17 @@
 set(apollo_HDRS_PUBLIC
-    "converters.hpp" "function.hpp" "class.hpp" "smart_ptr.hpp"
-    "error.hpp"
+    "class.hpp"
     "config.hpp"
+    "converters.hpp"
+    "error.hpp"
+    "function.hpp"
     "gc.hpp"
     "lapi.hpp"
     "reference.hpp"
+    "smart_ptr.hpp"
     "stack_balance.hpp")
 set(apollo_HDRS_DETAIL
-    "instance_holder.hpp"
     "class_info.hpp"
+    "instance_holder.hpp"
     "light_key.hpp")
 
 # http://stackoverflow.com/a/13104057/2128694
@@ -26,11 +29,11 @@ prepend_to_all(apollo_HDRS_DETAIL "../include/apollo/detail/")
 source_group("Internal Headers" FILES ${apollo_HDRS_DETAIL})
 set(apollo_HDRS ${apollo_HDRS_PUBLIC} ${apollo_HDRS_DETAIL})
 set(apollo_SRCS
-    "converters.cpp"
-    "reference.cpp"
-    "lapi.cpp"
-    "class_info.cpp"
     "class.cpp"
+    "class_info.cpp"
+    "converters.cpp"
+    "lapi.cpp"
+    "reference.cpp"
     "stack_balance.cpp")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

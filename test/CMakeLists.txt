@@ -1,8 +1,8 @@
 set (TESTS
-    simple_converters
     function_converters
+    lua_utils
     object_converters
-    lua_utils)
+    simple_converters)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     add_definitions("-Wno-global-constructors" "-Wno-exit-time-destructors")
