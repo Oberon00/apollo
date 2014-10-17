@@ -1,4 +1,5 @@
 #include <apollo/reference.hpp>
+#include <apollo/converters.hpp>
 
 #include "test_prefix.hpp"
 
@@ -133,7 +134,7 @@ BOOST_AUTO_TEST_CASE(registry_reference_copy)
     lua_pop(L, 2);
 }
 
-BOOST_AUTO_TEST_CASE(stack_reference)
+BOOST_AUTO_TEST_CASE(stack_reference_all)
 {
     apollo::stack_reference r;
     BOOST_CHECK(r.empty());
@@ -163,6 +164,46 @@ BOOST_AUTO_TEST_CASE(stack_reference)
     BOOST_CHECK(r.empty());
     BOOST_CHECK(!r.valid(L));
     BOOST_CHECK_EQUAL(r.get(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(stackref_converter)
+{
+    apollo::stack_reference r;
+    apollo::push(L, r);
+    BOOST_CHECK(lua_isnil(L, -1));
+    lua_pop(L, 1);
+    lua_pushinteger(L, 42);
+    r.reset(L, -1);
+    apollo::push(L, r);
+    apollo::push(L, std::move(r));
+    BOOST_CHECK_EQUAL(lua_tointeger(L, -1), 42);
+    BOOST_CHECK_EQUAL(lua_tointeger(L, -2), 42);
+    BOOST_CHECK_EQUAL(lua_tointeger(L, -3), 42);
+    r = apollo::from_stack<apollo::stack_reference>(L, -1);
+    BOOST_CHECK_EQUAL(r.get(), lua_gettop(L));
+    lua_pop(L, 3);
+}
+
+BOOST_AUTO_TEST_CASE(regref_converter)
+{
+    apollo::registry_reference r;
+    apollo::push(L, r);
+    BOOST_CHECK(lua_isnil(L, -1));
+    lua_pop(L, 1);
+    lua_pushinteger(L, 42);
+    r.reset(L, -1);
+    apollo::push(L, r);
+    BOOST_CHECK_EQUAL(lua_tointeger(L, -1), 42);
+    lua_pop(L, 1);
+    apollo::push(L, std::move(r));
+    BOOST_CHECK_EQUAL(lua_tointeger(L, -1), 42);
+    r = apollo::from_stack<apollo::registry_reference>(L, -1);
+    BOOST_CHECK_EQUAL(r.L(), L);
+    lua_pop(L, 1);
+    BOOST_CHECK_EQUAL(lua_gettop(L), 0);
+    r.push();
+    BOOST_CHECK_EQUAL(lua_tointeger(L, -1), 42);
+    lua_pop(L, 1);
 }
 
 #include "test_suffix.hpp"
