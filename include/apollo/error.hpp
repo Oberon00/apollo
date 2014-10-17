@@ -1,5 +1,5 @@
-#ifndef LUABIND_ERROR_HPP_INCLUDED
-#define LUABIND_ERROR_HPP_INCLUDED LUABIND_ERROR_HPP_INCLUDED
+#ifndef APOLLO_ERROR_HPP_INCLUDED
+#define APOLLO_ERROR_HPP_INCLUDED APOLLO_ERROR_HPP_INCLUDED
 
 #include <boost/config.hpp>
 #include <boost/exception/error_info.hpp>
@@ -73,4 +73,4 @@ auto exceptions_to_lua_errors_L(lua_State* L, F&& f, Args&&... args)
 
 } // namespace apollo
 
-#endif // LUABIND_ERROR_HPP_INCLUDED
+#endif // APOLLO_ERROR_HPP_INCLUDED
