@@ -279,13 +279,14 @@ struct function_converter<F, typename std::enable_if<
 } // namespace detail
 
 template <typename F, F FVal>
-static void push_function_static(lua_State* L) BOOST_NOEXCEPT
+BOOST_CONSTEXPR static raw_function to_raw_function() BOOST_NOEXCEPT
 {
-    lua_pushcfunction(L, (&detail::static_entry_point<F, FVal>));
+    return &detail::static_entry_point<F, FVal>;
 }
 
+#define APOLLO_TO_RAW_FUNCTION(f) apollo::to_raw_function<decltype(&f), &f>()
 #define APOLLO_PUSH_FUNCTION_STATIC(L, f) \
-    apollo::push_function_static<decltype(&f), &f>(L)
+    lua_pushcfunction(L, APOLLO_TO_RAW_FUNCTION(f))
 
 // Function converter //
 template<typename T>
