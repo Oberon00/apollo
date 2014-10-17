@@ -44,8 +44,12 @@ struct converter<registry_reference>: converter_base<registry_reference> {
 
     static void push(lua_State* L, registry_reference const& r)
     {
-        BOOST_ASSERT(r.L() == L);
-        r.push();
+        if (r.empty()) {
+            lua_pushnil(L);
+        } else {
+            BOOST_ASSERT(r.L() == L);
+            r.push();
+        }
     }
 
     static unsigned n_conversion_steps(lua_State*, int)
@@ -87,7 +91,12 @@ struct converter<stack_reference>: converter_base<stack_reference> {
 
     static void push(lua_State* L, stack_reference const& r)
     {
-        lua_pushvalue(L, r.get());
+        if (r.empty()) {
+            lua_pushnil(L);
+        } else {
+            BOOST_ASSERT(r.valid(L));
+            lua_pushvalue(L, r.get());
+        }
     }
 
     static unsigned n_conversion_steps(lua_State*, int)
