@@ -29,16 +29,20 @@ registry_reference::registry_reference(registry_reference const& rhs):
     m_L(rhs.m_L),
     m_ref(LUA_NOREF)
 {
-    rhs.push();
-    reset(-1);
+    if (!rhs.empty()) {
+        rhs.push();
+        reset(-1);
+    }
 }
 
 registry_reference& registry_reference::operator=(registry_reference const& rhs)
 {
+    if (rhs.empty()) {
+        reset();
+        return *this;
+    }
     rhs.push();
-    m_L = rhs.m_L;
-    m_ref = LUA_NOREF; // Do this after rhs.push() for self assignment safety.
-    reset(-1);
+    reset(rhs.m_L, -1);
     return *this;
 }
 
@@ -50,8 +54,10 @@ registry_reference::registry_reference(registry_reference&& rhs):
     rhs.m_ref = LUA_NOREF;
 }
 
+// Note: Not self-assignment safe
 registry_reference& registry_reference::operator=(registry_reference&& rhs)
 {
+    BOOST_ASSERT(this != &rhs);
     m_L = rhs.m_L;
     m_ref = rhs.m_ref;
     rhs.m_L = nullptr;
@@ -70,13 +76,11 @@ bool registry_reference::empty() const
 
 void registry_reference::reset(int idx, ref_mode mode)
 {
-    if (m_L)
-        luaL_unref(m_L, LUA_REGISTRYINDEX, m_ref);
+    luaL_unref(m_L, LUA_REGISTRYINDEX, m_ref);
 
     if (idx == 0) {
         m_ref = LUA_NOREF;
     } else {
-        BOOST_ASSERT(m_L);
         if (idx == -1 && mode == ref_mode::move) {
             m_ref = luaL_ref(m_L, LUA_REGISTRYINDEX);
         } else {
@@ -90,13 +94,16 @@ void registry_reference::reset(int idx, ref_mode mode)
 
 void registry_reference::reset(lua_State* L, int idx, ref_mode mode)
 {
-    if (!L)
-        BOOST_ASSERT(idx == 0);
-
     if (m_L)
         luaL_unref(m_L, LUA_REGISTRYINDEX, m_ref);
-    m_L = L;
-    reset(idx, mode);
+    if (L) {
+        m_L = L;
+        reset(idx, mode);
+    } else {
+        BOOST_ASSERT(idx == 0);
+        m_L = nullptr;
+        m_ref = LUA_NOREF;
+    }
 }
 
 void registry_reference::push() const

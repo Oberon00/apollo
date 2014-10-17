@@ -3,6 +3,7 @@ set (TESTS
     function_converters
     lua_utils
     object_converters
+    reference
     simple_converters)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
