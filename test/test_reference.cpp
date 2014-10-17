@@ -116,19 +116,19 @@ BOOST_AUTO_TEST_CASE(registry_reference_copy)
 {
     lua_pushinteger(L, 42);
     apollo::registry_reference r(
-        L, -1, apollo::registry_reference::ref_mode::copy);
+        L, -1, apollo::ref_mode::copy);
     BOOST_REQUIRE_EQUAL(lua_gettop(L), 1);
     checkintref(L, r, 42);
     lua_pushinteger(L, 7);
-    r.reset(-1, apollo::registry_reference::ref_mode::copy);
+    r.reset(-1, apollo::ref_mode::copy);
     BOOST_REQUIRE_EQUAL(lua_gettop(L), 2);
     checkintref(L, r, 7);
-    r.reset(-2, apollo::registry_reference::ref_mode::copy);
+    r.reset(-2, apollo::ref_mode::copy);
     BOOST_REQUIRE_EQUAL(lua_gettop(L), 2);
     checkintref(L, r, 42);
     r.reset();
     checkemptyref(r);
-    r.reset(L, -2, apollo::registry_reference::ref_mode::copy);
+    r.reset(L, -2, apollo::ref_mode::copy);
     checkintref(L, r, 42);
     lua_pop(L, 2);
 }

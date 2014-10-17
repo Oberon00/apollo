@@ -5,9 +5,10 @@
 
 namespace apollo {
 
+enum class ref_mode { move, copy };
+
 class registry_reference {
 public:
-    enum class ref_mode { move, copy };
     registry_reference();
     explicit registry_reference(
         lua_State* L, int idx = -1, ref_mode mode = ref_mode::move);

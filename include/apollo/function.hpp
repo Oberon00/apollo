@@ -196,8 +196,7 @@ struct function_converter<FObj<R(Args...)>> {
         // TODO?: optimization: Before falling back to the pcall lambda,
         // try boost::function and std::function.
 
-        registry_reference luaFunction(
-            L, idx, registry_reference::ref_mode::copy);
+        registry_reference luaFunction(L, idx, ref_mode::copy);
         return [luaFunction](Args... args) -> R {
             lua_State* L_ = luaFunction.L();
             stack_balance b(L_);
