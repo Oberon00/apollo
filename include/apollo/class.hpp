@@ -175,7 +175,8 @@ struct converter: detail::object_converter<T>
     template <typename U>
     static void push(lua_State* L, U&& v)
     {
-        static_assert(std::is_same<U, T>::value, "");
+        static_assert(std::is_same<
+            typename detail::remove_qualifiers<U>::type , T>::value, "");
         detail::push_object(L, std::forward<U>(v));
     }
 };

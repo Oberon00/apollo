@@ -272,16 +272,7 @@ struct converter<raw_function>: converter_base<raw_function> {
     }
 };
 
-template<typename T>
-struct converter<T, typename std::enable_if<
-    (std::is_const<T>::value ||
-     std::is_volatile<T>::value) &&
-    !std::is_reference<T>::value &&
-    detail::lua_type_id<typename detail::remove_qualifiers<T>::type>::value
-     != LUA_TUSERDATA>::type
->: converter<typename std::remove_cv<T>::type>
-{};
-
+// Const references to primitive types are handled as non-references.
 template<typename T>
 struct converter<T, typename std::enable_if<
     detail::is_const_reference<T>::value &&
@@ -290,19 +281,6 @@ struct converter<T, typename std::enable_if<
 >: converter<typename detail::remove_qualifiers<T>::type>
 {};
 
-template<typename T>
-struct converter<T, typename std::enable_if<
-    std::is_reference<T>::value &&
-    !detail::is_const_reference<T>::value &&
-    detail::lua_type_id<typename detail::remove_qualifiers<T>::type>::value
-     != LUA_TUSERDATA>::type
->
-{
-    static void push(lua_State* L, T v)
-    {
-        converter<typename detail::remove_qualifiers<T>::type>::push(L, v);
-    }
-};
 
 namespace detail {
 
@@ -312,7 +290,8 @@ inline void push_impl(lua_State*)
 template <typename Head, typename... Tail>
 void push_impl(lua_State* L, Head&& head, Tail&&... tail)
 {
-    converter<Head>::push(L, std::forward<Head>(head));
+    converter<typename detail::remove_qualifiers<Head>::type>::push(
+        L, std::forward<Head>(head));
     push_impl(L, std::forward<Tail>(tail)...);
 }
 
@@ -325,19 +304,22 @@ void push(lua_State* L, T&& v, MoreTs&&... more)
 }
 
 template <typename T>
-typename converter<T>::to_type unchecked_from_stack(lua_State* L, int idx)
+typename converter<typename std::remove_cv<T>::type>::to_type
+unchecked_from_stack(lua_State* L, int idx)
 {
-    return converter<T>::from_stack(L, idx);
+    return converter<typename std::remove_cv<T>::type>::from_stack(L, idx);
 }
 
 template <typename T>
 bool is_convertible(lua_State* L, int idx)
 {
-    return converter<T>::n_conversion_steps(L, idx) != no_conversion;
+    return converter<
+        typename std::remove_cv<T>::type>::n_conversion_steps(L, idx) != no_conversion;
 }
 
 template <typename T>
-typename converter<T>::to_type from_stack(lua_State* L, int idx)
+auto from_stack(lua_State* L, int idx)
+    -> decltype(unchecked_from_stack<T>(L, idx))
 {
     if (!is_convertible<T>(L, idx)) {
         BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
