@@ -2,6 +2,7 @@ set(apollo_HDRS_PUBLIC
     "class.hpp"
     "config.hpp"
     "converters.hpp"
+    "converters_fwd.hpp"
     "create_table.hpp"
     "error.hpp"
     "function.hpp"

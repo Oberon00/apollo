@@ -1,6 +1,7 @@
 #ifndef APOLLO_CONVERTERS_HPP_INCLUDED
 #define APOLLO_CONVERTERS_HPP_INCLUDED APOLLO_CONVERTERS_HPP_INCLUDED
 
+#include <apollo/converters_fwd.hpp>
 #include <apollo/error.hpp>
 #include <apollo/detail/meta_util.hpp>
 
@@ -73,26 +74,6 @@ template <> struct lua_type_id<raw_function>
     : std::integral_constant<int, LUA_TFUNCTION> {};
 
 } // namespace detail
-
-template <typename T, typename Enable=void>
-struct converter;
-
-BOOST_CONSTEXPR_OR_CONST unsigned no_conversion = UINT_MAX;
-
-inline BOOST_CONSTEXPR unsigned add_conversion_step(unsigned n_steps)
-{
-    return n_steps == no_conversion ? no_conversion : n_steps + 1;
-}
-
-template<typename T>
-struct converter_base {
-    using type = T;
-    using to_type = type;
-    static int BOOST_CONSTEXPR_OR_CONST lua_type_id =
-        detail::lua_type_id<T>::value;
-    static bool BOOST_CONSTEXPR_OR_CONST is_native =
-        lua_type_id != LUA_TUSERDATA;
-};
 
 // Number converter //
 template<typename T>
