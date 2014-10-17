@@ -133,4 +133,36 @@ BOOST_AUTO_TEST_CASE(registry_reference_copy)
     lua_pop(L, 2);
 }
 
+BOOST_AUTO_TEST_CASE(stack_reference)
+{
+    apollo::stack_reference r;
+    BOOST_CHECK(r.empty());
+    BOOST_CHECK(!r.valid(L));
+    BOOST_CHECK_EQUAL(r.get(), 0);
+
+    r.reset();
+    BOOST_CHECK(r.empty());
+    BOOST_CHECK(!r.valid(L));
+    BOOST_CHECK_EQUAL(r.get(), 0);
+
+    lua_pushinteger(L, 42);
+    r.reset(L, -1);
+    BOOST_CHECK(!r.empty());
+    BOOST_CHECK(r.valid(L));
+    BOOST_CHECK_EQUAL(r.get(), 1);
+    lua_pop(L, 1);
+    BOOST_CHECK(!r.valid(L));
+
+    r.reset(L, LUA_REGISTRYINDEX);
+    BOOST_CHECK(!r.empty());
+    BOOST_CHECK(r.valid(L));
+    BOOST_CHECK_EQUAL(r.get(), LUA_REGISTRYINDEX);
+
+
+    r.reset(L, 0);
+    BOOST_CHECK(r.empty());
+    BOOST_CHECK(!r.valid(L));
+    BOOST_CHECK_EQUAL(r.get(), 0);
+}
+
 #include "test_suffix.hpp"

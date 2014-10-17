@@ -2,6 +2,7 @@
 #define APOLLO_REFERENCE_HPP_INCLUDED APOLLO_REFERENCE_HPP_INCLUDED
 
 #include <lua.hpp>
+#include <boost/assert.hpp>
 
 namespace apollo {
 
@@ -34,6 +35,26 @@ public:
 private:
     lua_State* m_L;
     int m_ref;
+};
+
+class stack_reference {
+public:
+    stack_reference(lua_State* L = nullptr, int idx = 0) { reset(L, idx); }
+
+    void reset(lua_State* L = nullptr, int idx = 0)
+    {
+        m_idx = idx < 0 ? lua_absindex(L, idx) : idx;
+    }
+
+    bool empty() const { return m_idx == 0; }
+    bool valid(lua_State* L) const {
+        BOOST_ASSERT(m_idx >= 0 || m_idx <= LUA_REGISTRYINDEX);
+        return m_idx < 0 || m_idx > 0 && m_idx <= lua_gettop(L);
+    }
+    int get() const { return m_idx; }
+
+private:
+    int m_idx;
 };
 
 } // namespace apollo
