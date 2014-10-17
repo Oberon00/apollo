@@ -1,8 +1,10 @@
 #ifndef APOLLO_REFERENCE_HPP_INCLUDED
 #define APOLLO_REFERENCE_HPP_INCLUDED APOLLO_REFERENCE_HPP_INCLUDED
 
-#include <lua.hpp>
+#include <apollo/converters_fwd.hpp>
+
 #include <boost/assert.hpp>
+#include <lua.hpp>
 
 namespace apollo {
 
@@ -37,9 +39,32 @@ private:
     int m_ref;
 };
 
+template<>
+struct converter<registry_reference>: converter_base<registry_reference> {
+
+    static void push(lua_State* L, registry_reference const& r)
+    {
+        BOOST_ASSERT(r.L() == L);
+        r.push();
+    }
+
+    static unsigned n_conversion_steps(lua_State*, int)
+    {
+        return no_conversion - 1;
+    }
+
+    static registry_reference from_stack(lua_State* L, int idx)
+    {
+        return registry_reference(L, idx, ref_mode::copy);
+    }
+};
+
 class stack_reference {
 public:
-    stack_reference(lua_State* L = nullptr, int idx = 0) { reset(L, idx); }
+    explicit stack_reference(lua_State* L = nullptr, int idx = 0)
+    {
+        reset(L, idx);
+    }
 
     void reset(lua_State* L = nullptr, int idx = 0)
     {
@@ -55,6 +80,25 @@ public:
 
 private:
     int m_idx;
+};
+
+template<>
+struct converter<stack_reference>: converter_base<stack_reference> {
+
+    static void push(lua_State* L, stack_reference const& r)
+    {
+        lua_pushvalue(L, r.get());
+    }
+
+    static unsigned n_conversion_steps(lua_State*, int)
+    {
+        return no_conversion - 1;
+    }
+
+    static stack_reference from_stack(lua_State* L, int idx)
+    {
+        return stack_reference(L, idx);
+    }
 };
 
 } // namespace apollo
