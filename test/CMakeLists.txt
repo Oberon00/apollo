@@ -1,4 +1,5 @@
 set (TESTS
+    create_table
     function_converters
     lua_utils
     object_converters
