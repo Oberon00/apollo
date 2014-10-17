@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(mem_func)
     lua_pop(L, 1);
 }
 
-void check_zero_nups(lua_State* L)
+static void check_zero_nups(lua_State* L)
 {
     lua_pushvalue(L, -1);
     lua_Debug debug;
