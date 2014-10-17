@@ -70,18 +70,6 @@ R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
 
 namespace detail {
 
-inline void push_args(lua_State*)
-{
-    // Push zero args: NOP.
-}
-
-template <typename Head, typename... Tail>
-void push_args(lua_State* L, Head&& arg, Tail&&... tail)
-{
-    push(L, std::forward<Head>(arg));
-    push_args(L, std::forward<Tail>(tail)...);
-}
-
 template <typename F> // f returns void
 int call_with_stack_args_and_push_impl(lua_State* L, F&& f, std::true_type)
 {
@@ -214,7 +202,8 @@ struct function_converter<FObj<R(Args...)>> {
             lua_State* L_ = luaFunction.L();
             stack_balance b(L_);
             luaFunction.push();
-            push_args(L_, std::forward<Args>(args)...);
+            // Use push_impl to allow empty Args.
+            push_impl(L_, std::forward<Args>(args)...);
             pcall(L_, sizeof...(Args), 1);
             return apollo::from_stack<R>(L_, -1);
         };

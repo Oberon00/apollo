@@ -190,4 +190,15 @@ BOOST_AUTO_TEST_CASE(string_converter)
     lua_pop(L, 1);
 }
 
+BOOST_AUTO_TEST_CASE(multi_push)
+{
+    apollo::push(L, 1.2, false, "foo", 42);
+    BOOST_REQUIRE_EQUAL(lua_gettop(L), 4);
+    BOOST_CHECK_EQUAL(apollo::from_stack<double>(L, 1), 1.2);
+    BOOST_CHECK_EQUAL(apollo::from_stack<bool>(L, 2), false);
+    BOOST_CHECK_EQUAL(apollo::from_stack<std::string>(L, 3), "foo");
+    BOOST_CHECK_EQUAL(apollo::from_stack<int>(L, 4), 42);
+    lua_pop(L, 4);
+}
+
 #include "test_suffix.hpp"

@@ -323,10 +323,24 @@ struct converter<T, typename std::enable_if<
     }
 };
 
-template <typename T>
-void push(lua_State* L, T&& v)
+namespace detail {
+
+inline void push_impl(lua_State*)
+{ }
+
+template <typename Head, typename... Tail>
+void push_impl(lua_State* L, Head&& head, Tail&&... tail)
 {
-    converter<T>::push(L, std::forward<T>(v));
+    converter<Head>::push(L, std::forward<Head>(head));
+    push_impl(L, std::forward<Tail>(tail)...);
+}
+
+} // namespace detail
+
+template <typename T, typename... MoreTs>
+void push(lua_State* L, T&& v, MoreTs&&... more)
+{
+    detail::push_impl(L, std::forward<T>(v), std::forward<MoreTs>(more)...);
 }
 
 template <typename T>
