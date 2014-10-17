@@ -77,6 +77,29 @@ BOOST_AUTO_TEST_CASE(bool_converter)
     lua_pop(L, 2);
 }
 
+static unsigned g_n_calls = 0;
+
+static int test_f(lua_State* L)
+{
+    BOOST_CHECK_EQUAL(lua_gettop(L), 0);
+    ++g_n_calls;
+    return 0;
+}
+
+BOOST_AUTO_TEST_CASE(raw_function_converter)
+{
+    apollo::push(L, apollo::raw_function(test_f));
+    BOOST_REQUIRE(apollo::is_convertible<apollo::raw_function>(L, -1));
+    lua_CFunction f = apollo::from_stack<apollo::raw_function>(L, -1);
+    BOOST_CHECK_EQUAL(&test_f, f);
+    BOOST_CHECK_EQUAL(lua_pcall(L, 0, 0, 0), LUA_OK);
+    BOOST_CHECK_EQUAL(g_n_calls, 1u);
+
+    lua_pushboolean(L, true);
+    BOOST_CHECK(!apollo::is_convertible<apollo::raw_function>(L, -1));
+    lua_pop(L, 1);
+}
+
 template <typename T>
 static void check_str_roundtrip(lua_State* L, T&& v)
 {

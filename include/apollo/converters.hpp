@@ -18,6 +18,11 @@
 
 namespace apollo {
 
+struct raw_function {
+    /* implicit */ BOOST_CONSTEXPR raw_function(lua_CFunction f_) : f(f_) {}
+    /* implicit */ BOOST_CONSTEXPR operator lua_CFunction() const { return f; }
+    lua_CFunction f;
+};
 
 namespace detail {
 // Lua type constants //
@@ -60,9 +65,12 @@ struct lua_type_id<T,
         typename std::enable_if<
         detail::is_plain_function<T>::value ||
         std::is_member_function_pointer<T>::value>::type>
-        : std::integral_constant<int, LUA_TFUNCTION> {};
+    : std::integral_constant<int, LUA_TFUNCTION> {};
 template <typename T> struct lua_type_id<std::function<T>>: lua_type_id<T> {};
-template <typename T> struct lua_type_id<boost::function<T>>: lua_type_id<T> {};
+template <typename T> struct lua_type_id<boost::function<T>>
+    : lua_type_id<T> {};
+template <> struct lua_type_id<raw_function>
+    : std::integral_constant<int, LUA_TFUNCTION> {};
 
 } // namespace detail
 
@@ -265,11 +273,23 @@ struct converter<T, typename std::enable_if<
     }
 };
 
-template <typename T>
-void push(lua_State* L, T&& v)
-{
-    converter<T>::push(L, std::forward<T>(v));
-}
+template <>
+struct converter<raw_function>: converter_base<raw_function> {
+    static void push(lua_State* L, raw_function const& rf)
+    {
+        lua_pushcfunction(L, rf.f);
+    }
+
+    static unsigned n_conversion_steps(lua_State* L, int idx)
+    {
+        return lua_iscfunction(L, idx) ? 0 : no_conversion;
+    }
+
+    static raw_function from_stack(lua_State* L, int idx)
+    {
+        return lua_tocfunction(L, idx);
+    }
+};
 
 template<typename T>
 struct converter<T, typename std::enable_if<
@@ -303,6 +323,11 @@ struct converter<T, typename std::enable_if<
     }
 };
 
+template <typename T>
+void push(lua_State* L, T&& v)
+{
+    converter<T>::push(L, std::forward<T>(v));
+}
 
 template <typename T>
 typename converter<T>::to_type unchecked_from_stack(lua_State* L, int idx)
