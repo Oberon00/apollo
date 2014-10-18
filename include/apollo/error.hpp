@@ -3,7 +3,9 @@
 
 #include <boost/config.hpp>
 #include <boost/exception/error_info.hpp>
+#include <boost/exception/get_error_info.hpp>
 #include <boost/exception/exception.hpp>
+#include <boost/exception/errinfo_type_info_name.hpp>
 #include <lua.hpp>
 
 #include <exception>
@@ -37,7 +39,7 @@ struct ambiguous_base_error: virtual class_conversion_error {};
 
 template <typename F, typename... Args>
 auto exceptions_to_lua_errors(lua_State* L, F&& f, Args&&... args)
-    -> decltype(f(std::forward<Args>(args)...)) BOOST_NOEXCEPT
+    BOOST_NOEXCEPT -> decltype(f(std::forward<Args>(args)...))
 {
     int arg = 0;
     try {
@@ -62,8 +64,7 @@ auto exceptions_to_lua_errors(lua_State* L, F&& f, Args&&... args)
 
 template <typename F, typename... Args>
 auto exceptions_to_lua_errors_L(lua_State* L, F&& f, Args&&... args)
-    -> decltype(f(L, std::forward<Args>(args)...))
-    BOOST_NOEXCEPT
+    BOOST_NOEXCEPT -> decltype(f(L, std::forward<Args>(args)...))
 {
     return exceptions_to_lua_errors(
         L, std::forward<F>(f), L, std::forward<Args>(args)...);
