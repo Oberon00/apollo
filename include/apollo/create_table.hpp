@@ -28,6 +28,7 @@ public:
     }
 
     table_setter(table_setter const&) = default; // Use with care!
+    table_setter& operator=(table_setter const&) = delete; // Silence MSVC.
 
     template <typename K, typename V>
     table_setter&& operator() (K&& key, V&& value)
