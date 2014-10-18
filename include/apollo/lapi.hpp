@@ -1,6 +1,7 @@
 #ifndef APOLLO_LAPI_HPP_INCLUDED
 #define APOLLO_LAPI_HPP_INCLUDED APOLLO_LAPI_HPP_INCLUDED
 
+#include <apollo/converters.hpp>
 #include <apollo/detail/light_key.hpp>
 
 #include <lua.hpp>
