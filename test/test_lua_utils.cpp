@@ -9,7 +9,8 @@ struct test_cls {
     static unsigned n_destructions;
 
     ~test_cls() { ++test_cls::n_destructions; }
-    test_cls(int v): v(v) {}
+    test_cls(int v_): v(v_) {}
+    test_cls(test_cls const&) = default;
 
     int v;
 };
