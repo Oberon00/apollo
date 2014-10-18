@@ -78,7 +78,7 @@ public:
     bool empty() const { return m_idx == 0; }
     bool valid(lua_State* L) const {
         BOOST_ASSERT(m_idx >= 0 || m_idx <= LUA_REGISTRYINDEX);
-        return m_idx < 0 || m_idx > 0 && m_idx <= lua_gettop(L);
+        return m_idx < 0 || (m_idx > 0 && m_idx <= lua_gettop(L));
     }
     int get() const { return m_idx; }
 
