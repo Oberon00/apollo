@@ -1,11 +1,16 @@
 #include <apollo/class.hpp>
+#include <apollo/lapi.hpp>
+#include <apollo/function.hpp>
 
 #include "test_prefix.hpp"
+
+namespace {
 
 struct foo_cls {
     int i;
     unsigned n_copies, n_moves;
     static unsigned n_destructions;
+    static int last_k;
 
     foo_cls(int i_): i(i_), n_copies(0), n_moves(0) {}
     foo_cls(foo_cls const& other):
@@ -16,10 +21,16 @@ struct foo_cls {
         i(other.i), n_copies(other.n_copies), n_moves(other.n_moves + 1)
     {}
 
+    virtual void memfn(int k)
+    {
+        foo_cls::last_k = k + i;
+    }
+
     virtual ~foo_cls() { ++foo_cls::n_destructions; }
 };
 
 unsigned foo_cls::n_destructions = 0;
+int foo_cls::last_k = 0;
 
 struct bar_cls {
     int b;
@@ -30,7 +41,14 @@ struct bar_cls {
 struct derived_cls: foo_cls, bar_cls {
     int j;
     derived_cls(int i_, int j_): foo_cls(i_), j(j_) {}
+
+    void memfn(int k) override
+    {
+        foo_cls::last_k = k + j;
+    }
 };
+
+} // anonymous namespace
 
 BOOST_AUTO_TEST_CASE(object_converter)
 {
@@ -132,6 +150,23 @@ BOOST_AUTO_TEST_CASE(derived_converter)
     BOOST_CHECK(!apollo::is_convertible<foo_cls*>(L, -1));
     BOOST_CHECK_EQUAL(apollo::from_stack<bar_cls*>(L, -1), &drv);
     lua_pop(L, 1);
+}
+
+BOOST_AUTO_TEST_CASE(memfns)
+{
+    apollo::register_class<foo_cls>(L);
+    apollo::register_class<bar_cls>(L);
+    apollo::register_class<derived_cls, foo_cls, bar_cls>(L);
+
+    apollo::push(L, &foo_cls::memfn);
+    lua_pushvalue(L, -1);
+    apollo::push(L, foo_cls(2), 40);
+    apollo::pcall(L, 2, 0);
+    BOOST_CHECK_EQUAL(foo_cls::last_k, 42);
+
+    apollo::push(L, derived_cls(2, -3), 40);
+    apollo::pcall(L, 2, 0);
+    BOOST_CHECK_EQUAL(foo_cls::last_k, 37);
 }
 
 #include "test_suffix.hpp"
