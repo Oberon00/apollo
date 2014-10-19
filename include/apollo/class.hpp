@@ -170,7 +170,9 @@ void register_class(lua_State* L)
 template<typename T, typename Enable>
 struct converter: detail::object_converter<T>
 {
-    static_assert(detail::lua_type_id<T>::value == LUA_TUSERDATA, "");
+    static_assert(detail::lua_type_id<T>::value == LUA_TUSERDATA,
+        "Builtin type treated as object.");
+    // Did you forget to #include <apollo/function.hpp>?
 
     template <typename U>
     static void push(lua_State* L, U&& v)
