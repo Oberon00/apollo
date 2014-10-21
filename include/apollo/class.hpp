@@ -178,6 +178,15 @@ void register_class(lua_State* L)
     registry.insert({index, detail::make_class_info<T, Bases...>(registry)});
 }
 
+template <typename T, typename... Args>
+BOOST_CONSTEXPR auto ctor_of() -> T(*)(Args...) BOOST_NOEXCEPT
+{
+    return [](Args... args) {
+        return T(std::forward<Args>(args)...);
+    };
+}
+
+
 // Userdata converterers //
 
 template<typename T, typename Enable>

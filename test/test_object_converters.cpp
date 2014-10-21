@@ -186,4 +186,16 @@ BOOST_AUTO_TEST_CASE(memfns)
     BOOST_CHECK_EQUAL(foo_cls::last_k, 37);
 }
 
+BOOST_AUTO_TEST_CASE(constructors)
+{
+    apollo::register_class<foo_cls>(L);
+    apollo::push(L, apollo::ctor_of<foo_cls, int>());
+    BOOST_CHECK(apollo::is_convertible<foo_cls(*)(int)>(L, -1));
+    lua_pushinteger(L, 42);
+    apollo::pcall(L, 1, 1);
+    BOOST_REQUIRE(apollo::is_convertible<foo_cls&>(L, -1));
+    BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls&>(L, -1).i, 42);
+    lua_pop(L, -1);
+}
+
 #include "test_suffix.hpp"
