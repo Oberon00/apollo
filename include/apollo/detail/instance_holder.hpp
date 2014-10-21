@@ -1,6 +1,8 @@
 #ifndef APOLLO_INSTANCE_HOLDER_HPP_INCLUDED
 #define APOLLO_INSTANCE_HOLDER_HPP_INCLUDED APOLLO_INSTANCE_HOLDER_HPP_INCLUDED
 
+#include <apollo/smart_ptr.hpp>
+
 #include <boost/get_pointer.hpp>
 
 namespace apollo { namespace detail {
@@ -12,10 +14,12 @@ public:
     virtual ~instance_holder() {}
     virtual void* get() = 0; // Get a pointer to the instance.
     virtual class_info const& type() const = 0; // The instance's class.
+    virtual bool is_const() const = 0;
 };
 
 template <typename Ptr>
 class ptr_instance_holder: public instance_holder {
+    using ptr_traits = pointer_traits<Ptr>;
 public:
     ptr_instance_holder(Ptr&& ptr, class_info const& cls) // Move ptr
         : m_instance(std::move(ptr))
@@ -38,8 +42,14 @@ public:
     void* get() override
     {
         using boost::get_pointer;
-        return get_pointer(m_instance);
+        return const_cast<void*>(
+            static_cast<void const*>(get_pointer(m_instance)));
 
+    }
+
+    bool is_const() const override
+    {
+        return ptr_traits::is_const;
     }
 
     class_info const& type() const override

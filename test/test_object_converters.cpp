@@ -117,6 +117,23 @@ BOOST_AUTO_TEST_CASE(object_converter)
     BOOST_CHECK_EQUAL(foo_cls::n_destructions, 5u);
 }
 
+BOOST_AUTO_TEST_CASE(const_ptr)
+{
+    apollo::register_class<foo_cls>(L);
+    const foo_cls foo(42);
+    apollo::push(L, &foo);
+    BOOST_CHECK(apollo::is_convertible<foo_cls const*>(L, -1));
+    BOOST_CHECK(apollo::is_convertible<foo_cls const&>(L, -1));
+    BOOST_CHECK(!apollo::is_convertible<foo_cls*>(L, -1));
+    BOOST_CHECK(!apollo::is_convertible<foo_cls&>(L, -1));
+    lua_pop(L, 1);
+
+    apollo::push(L, std::unique_ptr<foo_cls const>(new foo_cls(42)));
+    BOOST_CHECK(apollo::is_convertible<std::unique_ptr<foo_cls const>>(L, -1));
+    BOOST_CHECK(!apollo::is_convertible<std::unique_ptr<foo_cls>>(L, -1));
+    lua_pop(L, 1);
+}
+
 
 BOOST_AUTO_TEST_CASE(derived_converter)
 {

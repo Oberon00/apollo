@@ -30,11 +30,13 @@ public:
 template <typename T>
 struct pointer_traits {
     using ptr_type = typename get_pointer_result<T>::type;
+    using pointee_type = typename std::remove_pointer<ptr_type>::type;
 
     // Exists a get_pointer() overload for T which returns a pointer?
     static bool const is_valid = !std::is_same<ptr_type, void>::value;
+
     static bool const is_smart = is_valid && !std::is_pointer<T>::value;
-    using pointee_type = typename std::remove_pointer<ptr_type>::type;
+    static bool const is_const = std::is_const<pointee_type>::value;
 };
 
 } } // namespace apollo::detail

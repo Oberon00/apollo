@@ -106,16 +106,29 @@ struct object_converter<
         typename std::enable_if<std::is_pointer<Ptr>::value>::type
     >: converter_base<Ptr> {
 private:
-        using pointee_t = typename pointer_traits<Ptr>::pointee_type;
-        using obj_t = typename remove_qualifiers<pointee_t>::type;
+    using ptr_traits = pointer_traits<Ptr>;
+    using pointee_t = typename ptr_traits::pointee_type;
+    using obj_t = typename remove_qualifiers<pointee_t>::type;
 public:
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
         if (!is_apollo_instance(L, idx))
             return no_conversion;
 
+        auto holder = as_holder(L, idx);
+
+#ifdef BOOST_MSVC
+#   pragma warning(push)
+#   pragma warning(disable:4127) // conditional expression is constant
+#endif
+        if (!ptr_traits::is_const && holder->is_const())
+            return no_conversion;
+#ifdef BOOST_MSVC
+#   pragma warning(pop)
+#endif
+
         return n_class_conversion_steps(
-            as_holder(L, idx)->type(),
+            holder->type(),
             registered_class(L, typeid(obj_t)));
     }
 
