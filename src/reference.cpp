@@ -5,15 +5,15 @@
 namespace apollo {
 
 
-registry_reference::registry_reference():
-    m_L(nullptr),
-    m_ref(LUA_NOREF)
+registry_reference::registry_reference()
+    : m_L(nullptr)
+    , m_ref(LUA_NOREF)
 {
 }
 
-registry_reference::registry_reference(lua_State* L, int idx, ref_mode mode):
-    m_L(nullptr),
-    m_ref(LUA_NOREF)
+registry_reference::registry_reference(lua_State* L, int idx, ref_mode mode)
+    : m_L(nullptr)
+    , m_ref(LUA_NOREF)
 {
     reset(L, idx, mode);
 }
@@ -46,9 +46,9 @@ registry_reference& registry_reference::operator=(registry_reference const& rhs)
     return *this;
 }
 
-registry_reference::registry_reference(registry_reference&& rhs):
-    m_L(rhs.m_L),
-    m_ref(rhs.m_ref)
+registry_reference::registry_reference(registry_reference&& rhs)
+    : m_L(rhs.m_L)
+    , m_ref(rhs.m_ref)
 {
     rhs.m_L = nullptr;
     rhs.m_ref = LUA_NOREF;

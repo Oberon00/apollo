@@ -4,10 +4,10 @@
 
 namespace apollo {
 
-stack_balance::stack_balance(lua_State* L, int diff, int act):
-    m_L((BOOST_ASSERT(L), L)),
-    m_desired_top(lua_gettop(L) + diff),
-    m_action(act)
+stack_balance::stack_balance(lua_State* L, int diff, int act)
+    : m_L((BOOST_ASSERT(L), L))
+    , m_desired_top(lua_gettop(L) + diff)
+    , m_action(act)
 {
     BOOST_ASSERT(m_desired_top >= 0);
 

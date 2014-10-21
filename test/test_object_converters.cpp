@@ -13,8 +13,8 @@ struct foo_cls {
     static int last_k;
 
     foo_cls(int i_): i(i_), n_copies(0), n_moves(0) {}
-    foo_cls(foo_cls const& other):
-        i(other.i), n_copies(other.n_copies + 1), n_moves(other.n_moves)
+    foo_cls(foo_cls const& other)
+        : i(other.i), n_copies(other.n_copies + 1), n_moves(other.n_moves)
     {}
 
     foo_cls(foo_cls&& other):
