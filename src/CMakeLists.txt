@@ -9,6 +9,7 @@ set(apollo_HDRS_PUBLIC
     "gc.hpp"
     "lapi.hpp"
     "reference.hpp"
+    "class_utility.hpp"
     "smart_ptr.hpp"
     "stack_balance.hpp")
 set(apollo_HDRS_DETAIL
