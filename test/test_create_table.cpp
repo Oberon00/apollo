@@ -51,35 +51,43 @@ static void checktable(lua_State* L)
     }
 }
 
-BOOST_AUTO_TEST_CASE(new_table)
+BOOST_AUTO_TEST_CASE(nested_table)
 {
     luaL_requiref(L, "base", &luaopen_base, true);
     lua_pop(L, 1);
     apollo::new_table(L)
         (1, 2)
         ("foo", "bar")
-        ("sub", apollo::new_table(L)
+        .subtable("sub")
             ("add", &add)
-            (2, 42))
-        ("sub2", apollo::new_table(L)
+            (2, 42)
+        .end_subtable()
+        .subtable("sub2")
             (3, 7)
-            ("nested", apollo::new_table(L)
+            .subtable("nested")
                 ("x", "y")
-                (1, apollo::new_table(L))));
+                .subtable(1)
+                .end_subtable()
+            .end_subtable()
+        .end_subtable();
     checktable(L);
 
-    auto setter = apollo::new_table(L) // Normally not allowed.
-        ("add", &add)
-        (2, 42);
-    apollo::new_table(L)
+    lua_newtable(L);
+    apollo::rawset_table(L, -1)
         (1, 2)
         ("foo", "bar")
-        ("sub", std::move(setter))
-        ("sub2", apollo::new_table(L)
+        .subtable("sub")
+            ("add", &add)
+            (2, 42)
+        .end_subtable()
+        .subtable("sub2")
             (3, 7)
-            ("nested", apollo::new_table(L)
+            .subtable("nested")
                 ("x", "y")
-                (1, apollo::new_table(L))));
+                .subtable(1)
+                .end_subtable()
+            .end_subtable()
+        .end_subtable();
     checktable(L);
 }
 

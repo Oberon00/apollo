@@ -23,10 +23,12 @@ BOOST_AUTO_TEST_CASE(simple)
     lua_pop(L, 1);
 
     lua_pushglobaltable(L);
-    apollo::rawset_table(L, -1) // Executed second: Fails because -1's meaning changed.
-        ("foo_cls", apollo::export_class<foo_cls>(L) // Executed first
+    apollo::export_classes(L, -1)
+        .cls<foo_cls>("foo_cls") // Executed first
             .ctor<>()
-            ("test", APOLLO_TO_RAW_FUNCTION(&foo_cls::test)));
+            ("test", APOLLO_TO_RAW_FUNCTION(&foo_cls::test))
+        .end_cls();
+    lua_pop(L, 1);
 
     if (luaL_dostring(L,
         "local foo = foo_cls.new()\n"
