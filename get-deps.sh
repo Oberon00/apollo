@@ -9,4 +9,4 @@ cd boost_1_56_0
 BOOST_ROOT=$PWD && export BOOST_ROOT
 
 sudo apt-get update
-sudo apt-get install liblua5.2-dev
+sudo apt-get install -q -y liblua5.2-dev
