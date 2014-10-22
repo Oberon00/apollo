@@ -272,7 +272,7 @@ BOOST_CONSTEXPR static raw_function to_raw_function() BOOST_NOEXCEPT
     return &detail::static_entry_point<F, FVal>;
 }
 
-#define APOLLO_TO_RAW_FUNCTION(f) apollo::to_raw_function<decltype(&f), &f>()
+#define APOLLO_TO_RAW_FUNCTION(f) apollo::to_raw_function<decltype(f), f>()
 #define APOLLO_PUSH_FUNCTION_STATIC(L, f) \
     lua_pushcfunction(L, APOLLO_TO_RAW_FUNCTION(f))
 
