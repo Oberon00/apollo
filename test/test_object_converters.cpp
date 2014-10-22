@@ -35,7 +35,8 @@ int foo_cls::last_k = 0;
 struct bar_cls {
     int b;
     bar_cls(): b(111) {}
-    virtual ~bar_cls() {}
+    virtual ~bar_cls() = default;
+    bar_cls(bar_cls const&) = default;
 };
 
 struct derived_cls: foo_cls, bar_cls {

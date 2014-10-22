@@ -34,6 +34,7 @@ public:
             "You forgot a end_subtable()");
     }
 
+    basic_table_setter(basic_table_setter const&) = default; // Use with care!
     basic_table_setter& operator= (basic_table_setter const&) = delete;
 
     template <typename K, typename V>

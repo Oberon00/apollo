@@ -43,7 +43,7 @@ public:
     ~class_creator()
     {
         if (!m_parent)
-            pop_table();
+            this->pop_table();
     }
 
     template<typename... Args>
@@ -70,10 +70,10 @@ template <typename Derived>
 template <typename Cls, typename... Bases, typename K>
 class_creator<Cls, Derived> basic_classes_creator<Derived>::cls(K&& key)
 {
-    register_class<Cls, Bases...>(m_L);
-    push_class_metatable<Cls>(m_L);
-    top_subtable(std::forward<K>(key));
-    return {m_L, static_cast<Derived*>(this)};
+    register_class<Cls, Bases...>(this->m_L);
+    push_class_metatable<Cls>(this->m_L);
+    this->top_subtable(std::forward<K>(key));
+    return {this->m_L, static_cast<Derived*>(this)};
 }
 
 } // namespace detail
