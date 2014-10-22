@@ -8,5 +8,5 @@ cd boost_1_56_0
 sudo ./b2 install --with-test -d0
 
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-sudo apt-get update
+sudo apt-get update -qq -y
 sudo apt-get install -q -y liblua5.2-dev libstdc++-4.8-dev
