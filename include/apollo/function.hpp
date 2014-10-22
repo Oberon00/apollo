@@ -276,6 +276,24 @@ BOOST_CONSTEXPR static raw_function to_raw_function() BOOST_NOEXCEPT
 #define APOLLO_PUSH_FUNCTION_STATIC(L, f) \
     lua_pushcfunction(L, APOLLO_TO_RAW_FUNCTION(f))
 
+template <typename T, typename... Args>
+T ctor_wrapper(Args... args)
+{
+    return T(std::forward<Args>(args)...);
+}
+
+// Because MSVC fails at deducing the type of a (variadic?) template function
+// address (i.e. decltype(&ctor_wrapper<T, Args...> fails), this function
+// is needed.
+template <typename T, typename... Args>
+BOOST_CONSTEXPR raw_function get_raw_ctor_wrapper() BOOST_NOEXCEPT
+{
+    return to_raw_function<
+        T(*)(Args...),
+        &apollo::ctor_wrapper<T, Args...>>();
+}
+
+
 // Function converter //
 template<typename T>
 struct converter<T, typename std::enable_if<

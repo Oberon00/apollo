@@ -178,23 +178,6 @@ void register_class(lua_State* L)
     registry.insert({index, detail::make_class_info<T, Bases...>(registry)});
 }
 
-template <typename T, typename... Args>
-T ctor_wrapper(Args... args)
-{
-    return T(std::forward<Args>(args)...);
-}
-
-// Because MSVC fails at deducing the type of a (variadic?) template function
-// address (i.e. decltype(&ctor_wrapper<T, Args...> fails), this function
-// is needed.
-template <typename T, typename... Args>
-raw_function get_raw_ctor_wrapper(Args... args)
-{
-    return to_raw_function<
-        T(*)(Args...),
-        &apollo::ctor_wrapper<T, Args...>>();
-}
-
 
 // Userdata converterers //
 
