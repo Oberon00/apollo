@@ -189,7 +189,8 @@ BOOST_AUTO_TEST_CASE(memfns)
 BOOST_AUTO_TEST_CASE(constructors)
 {
     apollo::register_class<foo_cls>(L);
-    apollo::push(L, apollo::ctor_of<foo_cls, int>());
+    auto ctor = &apollo::ctor_wrapper<foo_cls, int>; // MSVC cannot do this in
+    apollo::push(L, ctor);                           // in a single expression.
     BOOST_CHECK(apollo::is_convertible<foo_cls(*)(int)>(L, -1));
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 1);
