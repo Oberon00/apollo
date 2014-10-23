@@ -1,5 +1,6 @@
 set(apollo_HDRS_PUBLIC
     "class.hpp"
+    "class_utility.hpp"
     "config.hpp"
     "converters.hpp"
     "converters_fwd.hpp"
@@ -9,13 +10,15 @@ set(apollo_HDRS_PUBLIC
     "gc.hpp"
     "lapi.hpp"
     "reference.hpp"
-    "class_utility.hpp"
     "smart_ptr.hpp"
     "stack_balance.hpp")
 set(apollo_HDRS_DETAIL
     "class_info.hpp"
     "instance_holder.hpp"
-    "light_key.hpp")
+    "integer_seq.hpp"
+    "light_key.hpp"
+    "meta_util.hpp"
+    "variadic_pass.hpp")
 
 # http://stackoverflow.com/a/13104057/2128694
 macro(prepend_to_all _srcs _path)
