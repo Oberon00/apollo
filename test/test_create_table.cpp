@@ -19,20 +19,16 @@ BOOST_AUTO_TEST_CASE(set_table)
         ("mykey", "myvalue")
         ("add", &add);
     lua_pop(L, 1);
-    if (luaL_dostring(L,
+    check_dostring(L,
         "assert(_G[1] == 'somevalue', 'invalid _G[1]')\n"
         "assert(mykey == 'myvalue', 'invalid mykey')\n"
-        "assert(add(2, 3) == 5, 'invalid add return value')\n")
-    ) {
-        BOOST_ERROR(lua_tostring(L, -1));
-        lua_pop(L, 1);
-    }
+        "assert(add(2, 3) == 5, 'invalid add return value')\n");
 }
 
 static void checktable(lua_State* L)
 {
     lua_setglobal(L, "t");
-    if (luaL_dostring(L,
+    check_dostring(L,
         "assert(type(t) == 'table', 't not a table but ' .. tostring(t))\n"
         "assert(t[1] == 2, tostring(t[1]) .. ' ~= 2')\n"
         "assert(t.foo == 'bar', tostring(t.foo) .. ' ~= \"bar\"')\n"
@@ -44,11 +40,7 @@ static void checktable(lua_State* L)
         "assert(type(t.sub2.nested[1]) == 'table',\n"
         "   type(tostring(t.sub2.nested[1])) .. ' ~= \"table\"')\n"
         "assert(t.sub[3] == nil, tostring(t.sub[3]) .. ' ~= nil')\n"
-        "print(t, t.sub, t.sub2)\n")
-    ) {
-        BOOST_ERROR(lua_tostring(L, -1));
-        lua_pop(L, 1);
-    }
+        "print(t, t.sub, t.sub2)\n");
 }
 
 BOOST_AUTO_TEST_CASE(nested_table)

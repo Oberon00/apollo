@@ -71,10 +71,10 @@ BOOST_AUTO_TEST_CASE(lapi_rawgetset)
     // Make sure that nonraw gets and sets cause errors:
     luaL_requiref(L, "base", &luaopen_base, true);
     lua_pop(L, 1);
-    BOOST_REQUIRE(!luaL_dostring(L,
+    require_dostring(L,
         "setmetatable(_G, {\n"
         "__index = function() error('err index') end,\n"
-        "__newindex = function() error('err newindex') end})"));
+        "__newindex = function() error('err newindex') end})");
     BOOST_CHECK(luaL_dostring(L, "x = 0"));
     lua_pop(L, 1); // Pop error message
     BOOST_CHECK(luaL_dostring(L, "print(x)"));

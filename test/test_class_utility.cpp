@@ -30,14 +30,9 @@ BOOST_AUTO_TEST_CASE(simple)
         .end_cls();
     lua_pop(L, 1);
 
-    if (luaL_dostring(L,
+    require_dostring(L,
         "local foo = foo_cls.new()\n"
-        "foo_cls.test(foo)")
-    ) {
-        BOOST_ERROR(lua_tostring(L, -1));
-        lua_pop(L, 1);
-        BOOST_FAIL("The previous error was fatal.");
-    }
+        "foo_cls.test(foo)");
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
 }
 
