@@ -12,6 +12,7 @@ set(apollo_HDRS_PUBLIC
     "reference.hpp"
     "smart_ptr.hpp"
     "stack_balance.hpp"
+    "typeid.hpp"
 )
 set(apollo_HDRS_DETAIL
     "class_info.hpp"
@@ -43,6 +44,7 @@ set(apollo_SRCS
     "lapi.cpp"
     "reference.cpp"
     "stack_balance.cpp"
+    "typeid.cpp"
 )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

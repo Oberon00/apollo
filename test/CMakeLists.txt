@@ -12,6 +12,7 @@ set (TESTS
     object_converters
     reference
     simple_converters
+    typeid
 )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
