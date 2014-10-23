@@ -14,7 +14,10 @@ set (TESTS
     reference
     simple_converters
     typeid
+
+    ex_filesystem
 )
+
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     add_definitions("-Wno-global-constructors" "-Wno-exit-time-destructors")
