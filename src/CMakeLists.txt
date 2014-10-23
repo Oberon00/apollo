@@ -11,14 +11,16 @@ set(apollo_HDRS_PUBLIC
     "lapi.hpp"
     "reference.hpp"
     "smart_ptr.hpp"
-    "stack_balance.hpp")
+    "stack_balance.hpp"
+)
 set(apollo_HDRS_DETAIL
     "class_info.hpp"
     "instance_holder.hpp"
     "integer_seq.hpp"
     "light_key.hpp"
     "meta_util.hpp"
-    "variadic_pass.hpp")
+    "variadic_pass.hpp"
+)
 
 # http://stackoverflow.com/a/13104057/2128694
 macro(prepend_to_all _srcs _path)
@@ -40,7 +42,8 @@ set(apollo_SRCS
     "converters.cpp"
     "lapi.cpp"
     "reference.cpp"
-    "stack_balance.cpp")
+    "stack_balance.cpp"
+)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set_source_files_properties("lapi.cpp" PROPERTIES
