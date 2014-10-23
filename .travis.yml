@@ -1,4 +1,5 @@
 language: cpp
 compiler: clang
-before_install: ./get-deps.sh
+env: CTEST_OUTPUT_ON_FAILURE=1
+install: ./get-deps.sh
 script: cmake . && make && make test
