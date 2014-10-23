@@ -69,6 +69,15 @@ public:
         return move_this();
     }
 
+    // t.__index = t
+    Derived&& thistable_index()
+    {
+        lua_pushliteral(m_L, "__index");
+        lua_pushvalue(m_L, m_table_idx.top());
+        lua_rawset(m_L, m_table_idx.top());
+        return move_this();
+    }
+
 protected:
     void pop_table()
     {
