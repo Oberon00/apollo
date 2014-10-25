@@ -83,9 +83,30 @@ struct object_converter<
     >: converter_base<Ptr> {
 private:
     using ptr_t = typename remove_qualifiers<Ptr>::type;
+    using is_ref = std::is_reference<Ptr>;
+
+    static Ptr make_nil_smart_ptr(std::true_type) {
+        BOOST_ASSERT(false);
+        BOOST_THROW_EXCEPTION(
+            std::logic_error("attempt to convert nil to smart pointer ref"));
+    }
+
+    static Ptr make_nil_smart_ptr(std::false_type) {
+        return Ptr();
+    }
+
 public:
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
+#ifdef BOOST_MSVC
+#   pragma warning(push)
+#   pragma warning(disable:4127) // conditional expression is constant
+#endif
+        if (!is_ref::value && lua_isnil(L, idx))
+            return no_conversion - 1;
+#ifdef BOOST_MSVC
+#   pragma warning(pop)
+#endif
         if (!is_apollo_instance(L, idx))
             return no_conversion;
         if (typeid(ptr_instance_holder<ptr_t>) == typeid(*as_holder(L, idx)))
@@ -95,6 +116,15 @@ public:
 
     static Ptr from_stack(lua_State* L, int idx)
     {
+#ifdef BOOST_MSVC
+#   pragma warning(push)
+#   pragma warning(disable:4127) // conditional expression is constant
+#endif
+        if (is_ref::value && lua_isnil(L, idx))
+            return make_nil_smart_ptr(is_ref());
+#ifdef BOOST_MSVC
+#   pragma warning(pop)
+#endif
         return static_cast<ptr_instance_holder<ptr_t>*>(
             lua_touserdata(L, idx))->get_outer_ptr();
     }
@@ -112,6 +142,8 @@ private:
 public:
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
+        if (lua_isnil(L, idx))
+            return no_conversion - 1;
         if (!is_apollo_instance(L, idx))
             return no_conversion;
 
@@ -134,6 +166,8 @@ public:
 
     static Ptr from_stack(lua_State* L, int idx)
     {
+        if (lua_isnil(L, idx))
+            return nullptr;
         auto holder = as_holder(L, idx);
         return static_cast<Ptr>(cast_class(holder->get(),
             holder->type(),
