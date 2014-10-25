@@ -1,9 +1,11 @@
-#include <apollo/converters.hpp> // Only for no_conversion
+#include <apollo/converters_fwd.hpp> // no_conversion
 #include <apollo/error.hpp>
 #include <apollo/gc.hpp>
 #include <apollo/detail/class_info.hpp>
 #include <apollo/detail/light_key.hpp>
+#include <apollo/typeid.hpp>
 
+#include <boost/any.hpp>
 #include <boost/exception/errinfo_type_info_name.hpp>
 #include <boost/exception/info.hpp>
 #include <boost/throw_exception.hpp>
@@ -119,4 +121,12 @@ apollo::detail::make_class_info_impl(
         }
     }
     return info;
+}
+
+boost::any apollo::detail::construct_implicit(class_info const& cls, lua_State* L, int idx)
+{
+    auto i_ctor = cls.implicit_ctors.find(ltypeid(L, idx));
+    if (i_ctor == cls.implicit_ctors.end())
+        return {};
+    return i_ctor->second->from_stack(L, idx);
 }

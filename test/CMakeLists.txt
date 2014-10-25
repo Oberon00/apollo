@@ -8,6 +8,7 @@ set (TESTS
     class_utility
     create_table
     function_converters
+    implicit_ctor
     lua_utils
     object_converters
     reference

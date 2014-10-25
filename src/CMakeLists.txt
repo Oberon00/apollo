@@ -8,6 +8,7 @@ set(apollo_HDRS_PUBLIC
     "error.hpp"
     "function.hpp"
     "gc.hpp"
+    "implicit_ctor.hpp"
     "lapi.hpp"
     "reference.hpp"
     "smart_ptr.hpp"

@@ -4,9 +4,12 @@
 #include <apollo/converters.hpp>
 #include <apollo/gc.hpp> // For push_bare_udata().
 #include <apollo/smart_ptr.hpp>
+#include <apollo/typeid.hpp>
 #include <apollo/detail/class_info.hpp>
 #include <apollo/detail/instance_holder.hpp>
 #include <apollo/detail/light_key.hpp>
+
+#include <boost/any.hpp>
 
 #include <memory>
 
@@ -44,12 +47,23 @@ struct object_converter: converter_base<T> {
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        return add_conversion_step(
-            object_converter<T&>::n_conversion_steps(L, idx));
+        unsigned ref_steps = object_converter<T&>::n_conversion_steps(L, idx);
+        if (ref_steps == no_conversion) {
+            auto const& ctors = registered_class(L, typeid(T)).implicit_ctors;
+            auto i_ctor = ctors.find(ltypeid(L, idx));
+            return i_ctor == ctors.end() ? no_conversion : 1;
+        }
+        return add_conversion_step(ref_steps);
     }
 
     static T from_stack(lua_State* L, int idx)
     {
+        unsigned ref_steps = object_converter<T&>::n_conversion_steps(L, idx);
+        if (ref_steps == no_conversion) {
+            auto const& ctors = registered_class(L, typeid(T)).implicit_ctors;
+            auto i_ctor = ctors.find(ltypeid(L, idx));
+            return boost::any_cast<T>(i_ctor->second->from_stack(L, idx));
+        }
         return object_converter<T&>::from_stack(L, idx);
     }
 };

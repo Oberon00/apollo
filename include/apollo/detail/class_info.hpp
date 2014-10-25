@@ -6,11 +6,14 @@
 #include <boost/assert.hpp>
 #include <lua.hpp>
 
+#include <memory>
 #include <type_traits>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
 #include <vector>
+
+namespace boost { class any; }
 
 namespace apollo { namespace detail {
 
@@ -21,6 +24,12 @@ void* cast_static(void* src)
 }
 
 using cast_function = void*(*)(void*);
+
+class implicit_ctor {
+public:
+    virtual boost::any from_stack(lua_State* L, int idx) = 0;
+    virtual ~implicit_ctor() {}
+};
 
 struct class_info {
     class_info(std::type_info const* rtti_type_)
@@ -61,12 +70,19 @@ struct class_info {
     std::unordered_map<class_info const*, base_relation> bases;
 
     std::type_info const* rtti_type;
+
+    std::unordered_map<
+        std::type_index,
+        std::unique_ptr<implicit_ctor>
+    > implicit_ctors;
 };
 
 using class_info_map = std::unordered_map<std::type_index, class_info>;
 
 void* cast_class(void* obj, class_info const& cls, class_info const& to);
 unsigned n_class_conversion_steps(class_info const& from, class_info const& to);
+
+boost::any construct_implicit(class_info const& cls, lua_State* L, int idx);
 
 
 class_info_map& registered_classes(lua_State* L);
