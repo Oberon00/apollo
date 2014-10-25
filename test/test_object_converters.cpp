@@ -200,4 +200,13 @@ BOOST_AUTO_TEST_CASE(constructors)
     lua_pop(L, -1);
 }
 
+BOOST_AUTO_TEST_CASE(metatableless)
+{
+    apollo::register_class<foo_cls>(L);
+    lua_pushinteger(L, 42);
+    BOOST_CHECK(!apollo::is_convertible<foo_cls*>(L, -1));
+    BOOST_REQUIRE_EQUAL(lua_gettop(L), 1);
+    lua_pop(L, 1);
+}
+
 #include "test_suffix.hpp"

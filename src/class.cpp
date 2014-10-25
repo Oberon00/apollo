@@ -35,11 +35,9 @@ void apollo::detail::push_instance_metatable(
 
 bool apollo::detail::is_apollo_instance(lua_State* L, int idx)
 {
-    lua_getmetatable(L, idx);
-    if (!lua_istable(L, -1)) {
-        lua_pop(L, 1);
+    if (!lua_getmetatable(L, idx))
         return false;
-    }
+
     lua_rawgeti(L, -1, 1);
     bool r = lua_touserdata(L, -1) == object_tag;
     lua_pop(L, 2);
