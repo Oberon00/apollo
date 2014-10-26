@@ -16,6 +16,11 @@ struct foo_cls {
     int i;
 };
 
+void needs_cref(foo_cls const& foo)
+{
+    BOOST_CHECK_EQUAL(foo.i, 42);
+}
+
 } // anonymous namespace
 
 BOOST_AUTO_TEST_CASE(implicit_ctor_conversion)
@@ -25,11 +30,18 @@ BOOST_AUTO_TEST_CASE(implicit_ctor_conversion)
     apollo::add_implicit_ctor(L, &apollo::ctor_wrapper<foo_cls, int>);
     apollo::add_implicit_ctor(L, &apollo::ctor_wrapper<foo_cls, bar_cls>);
 
+    APOLLO_PUSH_FUNCTION_STATIC(L, &needs_cref);
     lua_pushinteger(L, 42);
+
     BOOST_REQUIRE(apollo::is_convertible<foo_cls>(L, -1));
     auto foo = apollo::from_stack<foo_cls>(L, -1);
-    lua_pop(L, 1);
     BOOST_CHECK_EQUAL(foo.i, 42);
+    BOOST_CHECK(!apollo::is_convertible<foo_cls&>(L, -1));
+    BOOST_REQUIRE(apollo::is_convertible<foo_cls const&>(L, -1));
+    BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls const&>(L, -1).get().i, 42);
+    BOOST_CHECK(apollo::from_stack<foo_cls const&>(L, -1).owns_object());
+
+    apollo::pcall(L, 1, 0);
 
     apollo::push(L, bar_cls());
     BOOST_REQUIRE(apollo::is_convertible<foo_cls>(L, -1));

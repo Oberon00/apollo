@@ -75,6 +75,13 @@ BOOST_AUTO_TEST_CASE(object_converter)
             BOOST_CHECK_EQUAL(pushed_foo.i, 42);
             BOOST_CHECK_EQUAL(pushed_foo.n_copies, 1u);
             BOOST_CHECK_EQUAL(pushed_foo.n_moves, 0u);
+
+            auto foo_cref_binder = apollo::from_stack<foo_cls const&>(L, -1);
+            BOOST_CHECK(!foo_cref_binder.owns_object());
+            foo_cls const& foo_cref = foo_cref_binder;
+            BOOST_CHECK_EQUAL(foo_cref.i, 42);
+            BOOST_CHECK_EQUAL(foo_cref.n_copies, 1u);
+            BOOST_CHECK_EQUAL(foo_cref.n_moves, 0u);
         }
         BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls*>(L, -1)->i, 42);
         BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls>(L, -1).i, 42); // Dtor #3
@@ -125,6 +132,7 @@ BOOST_AUTO_TEST_CASE(const_ptr)
     apollo::push(L, &foo);
     BOOST_CHECK(apollo::is_convertible<foo_cls const*>(L, -1));
     BOOST_CHECK(apollo::is_convertible<foo_cls const&>(L, -1));
+    BOOST_CHECK(!apollo::from_stack<foo_cls const&>(L, -1).owns_object());
     BOOST_CHECK(!apollo::is_convertible<foo_cls*>(L, -1));
     BOOST_CHECK(!apollo::is_convertible<foo_cls&>(L, -1));
     lua_pop(L, 1);

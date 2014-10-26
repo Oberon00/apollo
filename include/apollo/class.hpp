@@ -47,24 +47,85 @@ struct object_converter: converter_base<T> {
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        unsigned ref_steps = object_converter<T&>::n_conversion_steps(L, idx);
-        if (ref_steps == no_conversion) {
-            auto const& ctors = registered_class(L, typeid(T)).implicit_ctors;
-            auto i_ctor = ctors.find(ltypeid(L, idx));
-            return i_ctor == ctors.end() ? no_conversion : 1;
-        }
+        unsigned ref_steps = object_converter<T const&>::n_conversion_steps(L, idx);
         return add_conversion_step(ref_steps);
     }
 
     static T from_stack(lua_State* L, int idx)
     {
-        unsigned ref_steps = object_converter<T&>::n_conversion_steps(L, idx);
-        if (ref_steps == no_conversion) {
-            auto const& ctors = registered_class(L, typeid(T)).implicit_ctors;
-            auto i_ctor = ctors.find(ltypeid(L, idx));
-            return boost::any_cast<T>(i_ctor->second->from_stack(L, idx));
+        return object_converter<T const&>::from_stack(L, idx);
+    }
+};
+
+template <typename T>
+class ref_binder {
+public:
+    ref_binder(T* ptr, bool is_owner)
+        : m_ptr(ptr), m_is_owner(is_owner)
+    {}
+
+    ref_binder(ref_binder&& other)
+        : m_ptr(other.m_ptr), m_is_owner(other.m_is_owner)
+    {
+        other.m_is_owner = false;
+        other.m_ptr = nullptr;
+    }
+
+    ~ref_binder()
+    {
+        if (m_is_owner)
+            delete m_ptr;
+    }
+
+    T& get() const { return *m_ptr; }
+    operator T& () const { return get(); }
+
+    bool owns_object() const { return m_is_owner; }
+
+private:
+    T* m_ptr;
+    bool m_is_owner;
+};
+
+template <typename T>
+struct object_converter<T const&, typename std::enable_if<
+        !detail::pointer_traits<T>::is_valid
+    >::type>: converter_base<T const&> {
+private:
+    static implicit_ctor* get_ctor_opt(lua_State* L, int idx)
+    {
+        auto const& cls = registered_class(L, typeid(T));
+        auto const& ctors = cls.implicit_ctors;
+        auto i_ctor = ctors.find(ltypeid(L, idx));
+        return i_ctor == ctors.end() ? nullptr : i_ctor->second.get();
+    }
+public:
+    using to_type = ref_binder<T const>;
+
+    static unsigned n_conversion_steps(lua_State* L, int idx)
+    {
+        auto n_steps = object_converter<T const*>::n_conversion_steps(L, idx);
+        if (n_steps == no_conversion)
+            return get_ctor_opt(L, idx) ? 1 : no_conversion;
+
+        // Reject null pointers.
+        return object_converter<T const*>::from_stack(L, idx) ?
+            n_steps : no_conversion;
+    }
+
+    static ref_binder<T const> from_stack(lua_State* L, int idx)
+    {
+        auto n_steps = object_converter<T const*>::n_conversion_steps(L, idx);
+        if (n_steps == no_conversion) {
+            return {new T(std::move(
+#ifdef NDEBUG
+                boost::unsafe_any_cast
+#else
+                boost::any_cast
+#endif
+                <T const&>(get_ctor_opt(L, idx)->from_stack(L, idx)))), true};
         }
-        return object_converter<T&>::from_stack(L, idx);
+        return {object_converter<T const*>::from_stack(L, idx), false};
     }
 };
 
@@ -72,6 +133,7 @@ template <typename T>
 struct object_converter<T&, typename std::enable_if<
         !detail::pointer_traits<T>::is_valid
     >::type>: converter_base<T&> {
+public:
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
