@@ -131,7 +131,8 @@ public:
 
 template <typename T>
 struct object_converter<T&, typename std::enable_if<
-        !detail::pointer_traits<T>::is_valid
+           !detail::pointer_traits<T>::is_valid
+        && !std::is_const<T>::value
     >::type>: converter_base<T&> {
 public:
 
