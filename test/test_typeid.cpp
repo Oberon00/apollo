@@ -50,6 +50,11 @@ BOOST_AUTO_TEST_CASE(ltypeid)
     CHECK_TID_EQ(apollo::ltypeid(L, -1), typeid(test_cls));
     lua_pop(L, 1);
 
+    lua_newuserdata(L, sizeof(char));
+    CHECK_TID_EQ(
+        apollo::ltypeid(L, -1), apollo::lbuiltin_typeid(LUA_TUSERDATA));
+    lua_pop(L, 1);
+
     CHECK_TID_EQ(apollo::ltypeid(L, 1), apollo::lbuiltin_typeid(LUA_TNONE));
 }
 
