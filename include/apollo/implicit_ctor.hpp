@@ -39,8 +39,8 @@ void add_implicit_ctor(lua_State* L, To(*ctor)(From))
     auto& cls = detail::registered_class(L, to_tid);
     std::unique_ptr<ctor_impl_t> ctor_impl(new ctor_impl_t(ctor));
     BOOST_VERIFY_MSG(
-        cls.implicit_ctors.insert(
-            {std::type_index(from_tid), std::move(ctor_impl)}).second,
+        cls.implicit_ctors.emplace(
+            std::type_index(from_tid), std::move(ctor_impl)).second,
         "A ctor with From -> To already exists.");
 }
 

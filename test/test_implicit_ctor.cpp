@@ -9,12 +9,14 @@ namespace {
 struct bar_cls {};
 
 struct foo_cls {
-    static int const got_bar_cls = INT_MAX;
+    static int const got_bar_cls;
     foo_cls(int i_): i(i_) {}
     foo_cls(bar_cls): i(got_bar_cls) {}
 
     int i;
 };
+
+int const foo_cls::got_bar_cls = INT_MAX;
 
 void needs_cref(foo_cls const& foo)
 {
