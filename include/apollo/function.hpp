@@ -22,6 +22,7 @@ namespace apollo {
 
 namespace detail {
 
+// Plain function pointer:
 template <typename R, typename... Args, int... Is>
 R call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, R(*f)(Args...))
 {
@@ -29,6 +30,7 @@ R call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, R(*f)(Args...))
     return f(unwrap_bound_ref(from_stack<Args>(L, Is))...);
 }
 
+// Member function pointer:
 template <typename R, typename C, typename... Args, int... Is>
 R call_with_stack_args_impl(
     lua_State* L, detail::iseq<Is...>,
@@ -38,6 +40,7 @@ R call_with_stack_args_impl(
         unwrap_bound_ref(from_stack<Args>(L, Is))...);
 }
 
+// Const member function pointer:
 template <typename R, typename C, typename... Args, int... Is>
 R call_with_stack_args_impl(
     lua_State* L, detail::iseq<Is...>,
@@ -47,6 +50,7 @@ R call_with_stack_args_impl(
         unwrap_bound_ref(from_stack<Args>(L, Is))...);
 }
 
+// Function object (std::function, boost::function, etc.):
 template <typename R, template<class> class FObj, typename... Args, int... Is>
 R call_with_stack_args_impl(
     lua_State* L, detail::iseq<Is...>,
@@ -58,6 +62,7 @@ R call_with_stack_args_impl(
 
 } // namespace detail
 
+// Plain function pointer:
 template <typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(*f)(Args...))
 {
@@ -65,13 +70,7 @@ R call_with_stack_args(lua_State* L, R(*f)(Args...))
         L, detail::iseq_n_t<sizeof...(Args)>(), f);
 }
 
-template <typename R, template<class> class FObj, typename... Args>
-R call_with_stack_args(lua_State* L, FObj<R(Args...)> const& f)
-{
-    return detail::call_with_stack_args_impl(
-        L, detail::iseq_n_t<sizeof...(Args)>(), f);
-}
-
+// Member function pointer:
 template <class C, typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
 {
@@ -79,11 +78,20 @@ R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
         L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
 }
 
+// Const member function pointer:
 template <class C, typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(C::*f)(Args...) const)
 {
     return detail::call_with_stack_args_impl(
         L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
+}
+
+// Function object (std::function, boost::function, etc.):
+template <typename R, template<class> class FObj, typename... Args>
+R call_with_stack_args(lua_State* L, FObj<R(Args...)> const& f)
+{
+    return detail::call_with_stack_args_impl(
+        L, detail::iseq_n_t<sizeof...(Args)>(), f);
 }
 
 namespace detail {
