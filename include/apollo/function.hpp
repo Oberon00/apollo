@@ -38,6 +38,15 @@ R call_with_stack_args_impl(
         unwrap_bound_ref(from_stack<Args>(L, Is))...);
 }
 
+template <typename R, typename C, typename... Args, int... Is>
+R call_with_stack_args_impl(
+    lua_State* L, detail::iseq<Is...>,
+    R(C::*f)(Args...) const)
+{
+    return (unwrap_bound_ref(from_stack<C const&>(L, 1)).*f)(
+        unwrap_bound_ref(from_stack<Args>(L, Is))...);
+}
+
 template <typename R, template<class> class FObj, typename... Args, int... Is>
 R call_with_stack_args_impl(
     lua_State* L, detail::iseq<Is...>,
@@ -65,6 +74,13 @@ R call_with_stack_args(lua_State* L, FObj<R(Args...)> const& f)
 
 template <class C, typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
+{
+    return detail::call_with_stack_args_impl(
+        L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
+}
+
+template <class C, typename R, typename... Args>
+R call_with_stack_args(lua_State* L, R(C::*f)(Args...) const)
 {
     return detail::call_with_stack_args_impl(
         L, detail::iseq_n_t<sizeof...(Args), 2>(), f);

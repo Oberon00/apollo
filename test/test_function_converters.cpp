@@ -50,6 +50,7 @@ static bool func4(int a, std::string const& s, double d, bool b)
 namespace {
 struct test_struct {
     void memproc0() { proc0(); }
+    void memproc0c() const { proc0(); }
     bool memfunc4(int a, const std::string& s, double d, bool b)
     {
         return func4(a, s, d, b);
@@ -71,6 +72,11 @@ namespace apollo {
         {
             return *static_cast<test_struct*>(lua_touserdata(L, idx));
         }
+    };
+
+    template <>
+    struct converter<test_struct const&>: converter<test_struct&> {
+        using to_type = test_struct const&;
     };
 } // namespace apollo
 
@@ -304,6 +310,14 @@ BOOST_AUTO_TEST_CASE(mem_func)
     apollo::pcall(L, 1, 0);
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
 
+    apollo::push(L, &test_struct::memproc0c);
+    BOOST_CHECK_EQUAL(
+        apollo::from_stack<decltype(&test_struct::memproc0c)>(L, -1),
+        &test_struct::memproc0c);
+    apollo::push_gc_object(L, test_struct());
+    apollo::pcall(L, 1, 0);
+    BOOST_CHECK_EQUAL(g_n_calls, 2u);
+
     // TODO: Duplicate from plain_func test case.
     apollo::push(L, &test_struct::memfunc4);
     BOOST_CHECK_EQUAL(
@@ -315,7 +329,7 @@ BOOST_AUTO_TEST_CASE(mem_func)
     lua_pushnumber(L, 3.14);
     lua_pushboolean(L, false);
     apollo::pcall(L, 5, 1);
-    BOOST_REQUIRE_EQUAL(g_n_calls, 2u);
+    BOOST_REQUIRE_EQUAL(g_n_calls, 3u);
     BOOST_CHECK_EQUAL(lua_type(L, -1), LUA_TBOOLEAN);
     BOOST_CHECK_EQUAL(lua_toboolean(L, -1) ? true : false, false);
     lua_pop(L, 1);
@@ -343,6 +357,12 @@ BOOST_AUTO_TEST_CASE(static_func)
     apollo::push_gc_object(L, test_struct());
     apollo::pcall(L, 1, 0);
     BOOST_CHECK_EQUAL(g_n_calls, 2u);
+
+    APOLLO_PUSH_FUNCTION_STATIC(L, &test_struct::memproc0c);
+    check_zero_nups(L);
+    apollo::push_gc_object(L, test_struct());
+    apollo::pcall(L, 1, 0);
+    BOOST_CHECK_EQUAL(g_n_calls, 3u);
 }
 
 
