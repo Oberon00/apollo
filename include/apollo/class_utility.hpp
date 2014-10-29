@@ -4,6 +4,7 @@
 #include <apollo/class.hpp>
 #include <apollo/create_table.hpp>
 #include <apollo/function.hpp>
+#include <apollo/implicit_ctor.hpp>
 
 namespace apollo {
 
@@ -51,6 +52,38 @@ public:
     {
         return (*this)(name, get_raw_ctor_wrapper<T, Args...>());
     }
+
+    // Implicit constructors //
+
+    template<typename... Args>
+    class_creator&& implicit_ctor(char const* name)
+    {
+        implicit_only_ctor<Args...>();
+        return (*this)(name, get_raw_ctor_wrapper<T, Args...>());
+    }
+
+    template<typename F>
+    class_creator&& implicit_ctor_f(char const* name, F f)
+    {
+        implicit_only_ctor_f(f);
+        return (*this)(name, get_raw_ctor_wrapper<T, Args...>());
+    }
+
+    template<typename... Args>
+    class_creator&& implicit_only_ctor()
+    {
+        add_implicit_ctor(m_L, &ctor_wrapper<T, Args...>());
+        return std::move(*this);
+    }
+
+    template<typename F>
+    class_creator&& implicit_only_ctor_f(F f)
+    {
+        add_implicit_ctor(m_L, f);
+        return std::move(*this);
+    }
+
+    // Misc //
 
     typename std::add_rvalue_reference<Parent>::type end_cls()
     {
