@@ -59,20 +59,20 @@ public:
     class_creator&& implicit_ctor(char const* name)
     {
         implicit_only_ctor<Args...>();
-        return (*this)(name, get_raw_ctor_wrapper<T, Args...>());
+        return ctor(name);
     }
 
     template<typename F>
     class_creator&& implicit_ctor_f(char const* name, F f)
     {
         implicit_only_ctor_f(f);
-        return (*this)(name, get_raw_ctor_wrapper<T, Args...>());
+        return (*this)(name, f);
     }
 
     template<typename... Args>
     class_creator&& implicit_only_ctor()
     {
-        add_implicit_ctor(m_L, &ctor_wrapper<T, Args...>());
+        add_implicit_ctor(m_L, &ctor_wrapper<T, Args...>);
         return std::move(*this);
     }
 
