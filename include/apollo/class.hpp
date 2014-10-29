@@ -8,6 +8,7 @@
 #include <apollo/detail/class_info.hpp>
 #include <apollo/detail/instance_holder.hpp>
 #include <apollo/detail/light_key.hpp>
+#include <apollo/detail/ref_binder.hpp>
 
 #include <boost/any.hpp>
 
@@ -53,38 +54,9 @@ struct object_converter: converter_base<T> {
 
     static T from_stack(lua_State* L, int idx)
     {
-        return object_converter<T const&>::from_stack(L, idx);
+        return unwrap_bound_ref(
+            object_converter<T const&>::from_stack(L, idx));
     }
-};
-
-template <typename T>
-class ref_binder {
-public:
-    ref_binder(T* ptr, bool is_owner)
-        : m_ptr(ptr), m_is_owner(is_owner)
-    {}
-
-    ref_binder(ref_binder&& other)
-        : m_ptr(other.m_ptr), m_is_owner(other.m_is_owner)
-    {
-        other.m_is_owner = false;
-        other.m_ptr = nullptr;
-    }
-
-    ~ref_binder()
-    {
-        if (m_is_owner)
-            delete m_ptr;
-    }
-
-    T& get() const { return *m_ptr; }
-    operator T& () const { return get(); }
-
-    bool owns_object() const { return m_is_owner; }
-
-private:
-    T* m_ptr;
-    bool m_is_owner;
 };
 
 template <typename T>

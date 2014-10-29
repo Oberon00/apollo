@@ -9,6 +9,7 @@
 #include <apollo/reference.hpp>
 #include <apollo/stack_balance.hpp>
 #include <apollo/detail/integer_seq.hpp>
+#include <apollo/detail/ref_binder.hpp>
 
 #include <boost/exception/errinfo_type_info_name.hpp>
 #include <boost/exception/get_error_info.hpp>
@@ -25,7 +26,7 @@ template <typename R, typename... Args, int... Is>
 R call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, R(*f)(Args...))
 {
     (void)L; // Avoid MSVC's complainining when Args is empty.
-    return f(from_stack<Args>(L, Is)...);
+    return f(unwrap_bound_ref(from_stack<Args>(L, Is))...);
 }
 
 template <typename R, typename C, typename... Args, int... Is>
@@ -33,7 +34,8 @@ R call_with_stack_args_impl(
     lua_State* L, detail::iseq<Is...>,
     R(C::*f)(Args...))
 {
-    return (from_stack<C&>(L, 1).*f)(from_stack<Args>(L, Is)...);
+    return (unwrap_bound_ref(from_stack<C&>(L, 1)).*f)(
+        unwrap_bound_ref(from_stack<Args>(L, Is))...);
 }
 
 template <typename R, template<class> class FObj, typename... Args, int... Is>
@@ -42,7 +44,7 @@ R call_with_stack_args_impl(
     FObj<R(Args...)> const& f)
 {
     (void)L; // Avoid MSVC's complainining when Args is empty.
-    return f(from_stack<Args>(L, Is)...);
+    return f(unwrap_bound_ref(from_stack<Args>(L, Is))...);
 }
 
 } // namespace detail
