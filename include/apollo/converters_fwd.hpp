@@ -10,7 +10,8 @@ struct converter;
 
 BOOST_CONSTEXPR_OR_CONST unsigned no_conversion = UINT_MAX;
 
-inline BOOST_CONSTEXPR unsigned add_conversion_step(unsigned n_steps)
+inline BOOST_CONSTEXPR unsigned
+add_conversion_step(unsigned n_steps) BOOST_NOEXCEPT
 {
     return n_steps == no_conversion ? no_conversion : n_steps + 1;
 }
