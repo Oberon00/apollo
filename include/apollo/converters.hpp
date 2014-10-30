@@ -32,6 +32,8 @@ struct raw_function {
     lua_CFunction f;
 };
 
+
+
 namespace detail {
 // Lua type constants //
 
@@ -288,6 +290,12 @@ struct converter<T, typename std::enable_if<
 >: converter<typename detail::remove_qualifiers<T>::type>
 {};
 
+template <typename T>
+using push_converter_for = converter<
+    typename detail::remove_qualifiers<T>::type>;
+
+template <typename T>
+using pull_converter_for = converter<typename std::remove_cv<T>::type>;
 
 namespace detail {
 
@@ -297,12 +305,13 @@ inline void push_impl(lua_State*)
 template <typename Head, typename... Tail>
 void push_impl(lua_State* L, Head&& head, Tail&&... tail)
 {
-    converter<typename detail::remove_qualifiers<Head>::type>::push(
+    push_converter_for<Head>::push(
         L, std::forward<Head>(head));
     push_impl(L, std::forward<Tail>(tail)...);
 }
 
 } // namespace detail
+
 
 template <typename T, typename... MoreTs>
 void push(lua_State* L, T&& v, MoreTs&&... more)
@@ -314,32 +323,44 @@ template <typename T>
 typename converter<typename std::remove_cv<T>::type>::to_type
 unchecked_from_stack(lua_State* L, int idx)
 {
-    return converter<typename std::remove_cv<T>::type>::from_stack(L, idx);
+    return pull_converter_for<T>::from_stack(L, idx);
+}
+
+template <typename Converter>
+bool is_convertible_with(lua_State* L, int idx)
+{
+    return Converter::n_conversion_steps(L, idx) != no_conversion;
 }
 
 template <typename T>
 bool is_convertible(lua_State* L, int idx)
 {
-    return converter<
-        typename std::remove_cv<T>::type>::n_conversion_steps(L, idx) != no_conversion;
+    return is_convertible_with<pull_converter_for<T>>(L, idx);
 }
 
-template <typename T>
-auto from_stack(lua_State* L, int idx)
-    -> decltype(unchecked_from_stack<T>(L, idx))
+template <typename Converter>
+typename Converter::to_type from_stack_with(lua_State* L, int idx)
 {
-    if (!is_convertible<T>(L, idx)) {
+    if (!is_convertible_with<Converter>(L, idx)) {
         BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
-            << boost::errinfo_type_info_name(typeid(T).name())
+            << boost::errinfo_type_info_name(
+                typeid(typename Converter::to_type).name())
             << errinfo::msg("conversion from Lua to C++ failed")
             << errinfo::stack_index(idx)
             << errinfo::lua_state(L));
     }
-    return unchecked_from_stack<T>(L, idx);
+    return Converter::from_stack(L, idx);
 }
 
 template <typename T>
-typename converter<T>::to_type from_stack(lua_State* L, int idx, T&& fallback)
+typename pull_converter_for<T>::to_type from_stack(lua_State* L, int idx)
+{
+    return from_stack_with<pull_converter_for<T>>(L, idx);
+}
+
+template <typename T>
+typename pull_converter_for<T>::to_type from_stack(
+    lua_State* L, int idx, T&& fallback)
 {
     if (!is_convertible<T>(L, idx))
         return fallback;

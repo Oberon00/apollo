@@ -22,42 +22,24 @@ namespace apollo {
 
 namespace detail {
 
-// Plain function pointer:
-template <typename R, typename... Args, int... Is>
-R call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, R(*f)(Args...))
+// Plain function pointer or function object:
+template <typename... Converters, int... Is, typename F>
+auto call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, F f)
+    -> decltype(f(unwrap_bound_ref(Converters::from_stack(L, Is))...))
 {
     (void)L; // Avoid MSVC's complainining when Args is empty.
-    return f(unwrap_bound_ref(from_stack<Args>(L, Is))...);
+    return f(unwrap_bound_ref(from_stack_with<Converters>(L, Is))...);
 }
 
-// Member function pointer:
-template <typename R, typename C, typename... Args, int... Is>
-R call_with_stack_args_impl(
-    lua_State* L, detail::iseq<Is...>,
-    R(C::*f)(Args...))
+// (Const) member function pointer:
+template <
+    typename ThisConverter, typename... Converters, int... Is, typename F>
+auto call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, F f)
+    -> decltype((unwrap_bound_ref(ThisConverter::from_stack(L, 1)).*f)(
+        unwrap_bound_ref(from_stack_with<Converters>(L, Is))...))
 {
-    return (unwrap_bound_ref(from_stack<C&>(L, 1)).*f)(
-        unwrap_bound_ref(from_stack<Args>(L, Is))...);
-}
-
-// Const member function pointer:
-template <typename R, typename C, typename... Args, int... Is>
-R call_with_stack_args_impl(
-    lua_State* L, detail::iseq<Is...>,
-    R(C::*f)(Args...) const)
-{
-    return (unwrap_bound_ref(from_stack<C const&>(L, 1)).*f)(
-        unwrap_bound_ref(from_stack<Args>(L, Is))...);
-}
-
-// Function object (std::function, boost::function, etc.):
-template <typename R, template<class> class FObj, typename... Args, int... Is>
-R call_with_stack_args_impl(
-    lua_State* L, detail::iseq<Is...>,
-    FObj<R(Args...)> const& f)
-{
-    (void)L; // Avoid MSVC's complainining when Args is empty.
-    return f(unwrap_bound_ref(from_stack<Args>(L, Is))...);
+    return (unwrap_bound_ref(from_stack_with<ThisConverter>(L, 1)).*f)(
+        unwrap_bound_ref(from_stack_with<Converters>(L, Is))...);
 }
 
 } // namespace detail
@@ -66,7 +48,7 @@ R call_with_stack_args_impl(
 template <typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(*f)(Args...))
 {
-    return detail::call_with_stack_args_impl(
+    return detail::call_with_stack_args_impl<pull_converter_for<Args>...>(
         L, detail::iseq_n_t<sizeof...(Args)>(), f);
 }
 
@@ -74,23 +56,25 @@ R call_with_stack_args(lua_State* L, R(*f)(Args...))
 template <class C, typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
 {
-    return detail::call_with_stack_args_impl(
-        L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
+    return detail::call_with_stack_args_impl<
+            pull_converter_for<C&>, pull_converter_for<Args>...
+        >(L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
 }
 
 // Const member function pointer:
 template <class C, typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(C::*f)(Args...) const)
 {
-    return detail::call_with_stack_args_impl(
-        L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
+    return detail::call_with_stack_args_impl<
+            pull_converter_for<C const&>, pull_converter_for<Args>...
+        >(L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
 }
 
 // Function object (std::function, boost::function, etc.):
 template <typename R, template<class> class FObj, typename... Args>
 R call_with_stack_args(lua_State* L, FObj<R(Args...)> const& f)
 {
-    return detail::call_with_stack_args_impl(
+    return detail::call_with_stack_args_impl<pull_converter_for<Args>...>(
         L, detail::iseq_n_t<sizeof...(Args)>(), f);
 }
 
