@@ -59,7 +59,7 @@ public:
     class_creator&& implicit_ctor(char const* name)
     {
         implicit_only_ctor<Args...>();
-        return ctor(name);
+        return ctor<Args...>(name);
     }
 
     template<typename F>
