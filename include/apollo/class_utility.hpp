@@ -72,14 +72,14 @@ public:
     template<typename... Args>
     class_creator&& implicit_only_ctor()
     {
-        add_implicit_ctor(m_L, &ctor_wrapper<T, Args...>);
+        add_implicit_ctor(this->m_L, &ctor_wrapper<T, Args...>);
         return std::move(*this);
     }
 
     template<typename F>
     class_creator&& implicit_only_ctor_f(F f)
     {
-        add_implicit_ctor(m_L, f);
+        add_implicit_ctor(this->m_L, f);
         return std::move(*this);
     }
 
