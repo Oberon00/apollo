@@ -1,6 +1,8 @@
 #ifndef APOLLO_CONVERTERS_FWD_HPP_INCLUDED
 #define APOLLO_CONVERTERS_FWD_HPP_INCLUDED APOLLO_CONVERTERS_FWD_HPP_INCLUDED
 
+#include <apollo/detail/lua_state.hpp>
+
 #include <boost/config.hpp>
 
 namespace apollo {
@@ -16,9 +18,11 @@ add_conversion_step(unsigned n_steps) BOOST_NOEXCEPT
     return n_steps == no_conversion ? no_conversion : n_steps + 1;
 }
 
-template<typename T>
+template <typename T>
 struct converter_base {
+    using type = T;
     using to_type = T;
+    static BOOST_CONSTEXPR_OR_CONST int n_consumed = 1;
 };
 
 } // namepace apollo

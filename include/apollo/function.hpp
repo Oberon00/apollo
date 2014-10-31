@@ -16,30 +16,63 @@
 #include <boost/function.hpp>
 #include <lua.hpp>
 
+#include <tuple>
 #include <type_traits>
 
 namespace apollo {
 
 namespace detail {
 
+inline std::tuple<> from_stack_as_tuple(lua_State*, int)
+{
+    return {};
+}
+
+// MSVC Workaround
+template <typename T>
+T default_constructed()
+{
+    return {};
+}
+
+template <typename Converter0, typename... Converters>
+std::tuple<typename Converter0::to_type, typename Converters::to_type...>
+from_stack_as_tuple(lua_State* L, int i, Converter0, Converters...)
+{
+    // Keep these statements separate to make sure the
+    // recursive invocation receives the updated i.
+    std::tuple<typename Converter0::to_type> arg0(
+        from_stack_with<Converter0>(L, i, &i));
+    static_assert(std::tuple_size<decltype(arg0)>::value == 1, "");
+    return std::tuple_cat(std::move(arg0), from_stack_as_tuple(
+        L, i, default_constructed<Converters>()...));
+}
+
+
 // Plain function pointer or function object:
 template <typename... Converters, int... Is, typename F>
 auto call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, F f)
-    -> decltype(f(unwrap_bound_ref(Converters::from_stack(L, Is))...))
+    -> decltype(f(unwrap_bound_ref(from_stack_with<Converters>(L, Is))...))
 {
-    (void)L; // Avoid MSVC's complainining when Args is empty.
-    return f(unwrap_bound_ref(from_stack_with<Converters>(L, Is))...);
+    auto args = from_stack_as_tuple(L, 1, default_constructed<Converters>()...);
+    static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
+    return f(unwrap_bound_ref(std::get<Is - 1>(args))...);
 }
 
 // (Const) member function pointer:
 template <
     typename ThisConverter, typename... Converters, int... Is, typename F>
 auto call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, F f)
-    -> decltype((unwrap_bound_ref(ThisConverter::from_stack(L, 1)).*f)(
+    -> decltype((unwrap_bound_ref(from_stack_with<ThisConverter>(L, 1)).*f)(
         unwrap_bound_ref(from_stack_with<Converters>(L, Is))...))
 {
-    return (unwrap_bound_ref(from_stack_with<ThisConverter>(L, 1)).*f)(
-        unwrap_bound_ref(from_stack_with<Converters>(L, Is))...);
+    int i0;
+    typename ThisConverter::to_type instance = from_stack_with<ThisConverter>(
+        L, 1, &i0);
+    auto args = from_stack_as_tuple(
+        L, i0, default_constructed<Converters>()...);
+    return (unwrap_bound_ref(instance).*f)(
+        unwrap_bound_ref(std::get<Is - 2>(args))...);
 }
 
 } // namespace detail

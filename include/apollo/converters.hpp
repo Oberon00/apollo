@@ -319,11 +319,47 @@ void push(lua_State* L, T&& v, MoreTs&&... more)
     detail::push_impl(L, std::forward<T>(v), std::forward<MoreTs>(more)...);
 }
 
+namespace detail {
+
+    void converter_has_idx_param_impl(...);
+
+    template <typename Converter>
+    auto converter_has_idx_param_impl(Converter)
+        -> decltype(Converter::from_stack(
+            std::declval<lua_State*>(), 0, std::declval<int*>()));
+
+    template <typename Converter>
+    struct converter_has_idx_param: std::integral_constant<bool, !std::is_void<
+            decltype(converter_has_idx_param_impl(std::declval<Converter>()))
+        >::value>
+    {};
+}
+
+template <typename Converter>
+typename std::enable_if<
+    !detail::converter_has_idx_param<Converter>::value,
+    typename Converter::to_type>::type
+unchecked_from_stack_with(lua_State* L, int idx, int* next_idx = nullptr)
+{
+    if (next_idx)
+        *next_idx = idx + Converter::n_consumed;
+    return Converter::from_stack(L, idx);
+}
+
+template <typename Converter>
+typename std::enable_if<
+    detail::converter_has_idx_param<Converter>::value,
+    typename Converter::to_type>::type
+unchecked_from_stack_with(lua_State* L, int idx, int* next_idx = nullptr)
+{
+    return Converter::from_stack(L, idx, next_idx);
+}
+
 template <typename T>
-typename converter<typename std::remove_cv<T>::type>::to_type
+typename pull_converter_for<T>::to_type
 unchecked_from_stack(lua_State* L, int idx)
 {
-    return pull_converter_for<T>::from_stack(L, idx);
+    return unchecked_from_stack_with<pull_converter_for<T>>(L, idx);
 }
 
 template <typename Converter>
@@ -339,7 +375,8 @@ bool is_convertible(lua_State* L, int idx)
 }
 
 template <typename Converter>
-typename Converter::to_type from_stack_with(lua_State* L, int idx)
+typename Converter::to_type from_stack_with(
+    lua_State* L, int idx, int* next_idx = nullptr)
 {
     if (!is_convertible_with<Converter>(L, idx)) {
         BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
@@ -349,7 +386,7 @@ typename Converter::to_type from_stack_with(lua_State* L, int idx)
             << errinfo::stack_index(idx)
             << errinfo::lua_state(L));
     }
-    return Converter::from_stack(L, idx);
+    return unchecked_from_stack_with<Converter>(L, idx, next_idx);
 }
 
 template <typename T>

@@ -60,8 +60,7 @@ struct test_struct {
 
 namespace apollo {
     template <>
-    struct converter<test_struct&> {
-        using to_type = test_struct&;
+    struct converter<test_struct&>: converter_base<test_struct&> {
         //static void push(lua_State*) { }
         static unsigned n_conversion_steps(lua_State* L, int idx)
         {
