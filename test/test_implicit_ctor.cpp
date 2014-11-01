@@ -10,8 +10,8 @@ struct bar_cls {};
 
 struct foo_cls {
     static int const got_bar_cls;
-    foo_cls(int i_): i(i_) {}
-    foo_cls(bar_cls): i(got_bar_cls) {}
+    explicit foo_cls(int i_): i(i_) {}
+    explicit foo_cls(bar_cls): i(got_bar_cls) {}
 
     int i;
 };
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(implicit_ctor_conversion)
     lua_pushinteger(L, 42);
 
     BOOST_REQUIRE(apollo::is_convertible<foo_cls>(L, -1));
-    auto foo = apollo::from_stack<foo_cls>(L, -1);
+    auto foo = apollo::unwrap_bound_ref(apollo::from_stack<foo_cls>(L, -1));
     BOOST_CHECK_EQUAL(foo.i, 42);
     BOOST_CHECK(!apollo::is_convertible<foo_cls&>(L, -1));
     BOOST_REQUIRE(apollo::is_convertible<foo_cls const&>(L, -1));

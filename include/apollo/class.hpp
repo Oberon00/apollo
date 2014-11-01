@@ -44,20 +44,8 @@ inline instance_holder* as_holder(lua_State* L, int idx)
 }
 
 template <typename T, typename Enable=void>
-struct object_converter: converter_base<T> {
-
-    static unsigned n_conversion_steps(lua_State* L, int idx)
-    {
-        unsigned ref_steps = object_converter<T const&>::n_conversion_steps(L, idx);
-        return add_conversion_step(ref_steps);
-    }
-
-    static T from_stack(lua_State* L, int idx)
-    {
-        return unwrap_bound_ref(
-            object_converter<T const&>::from_stack(L, idx));
-    }
-};
+struct object_converter: object_converter<T const&>
+{};
 
 template <typename T>
 struct object_converter<T const&, typename std::enable_if<

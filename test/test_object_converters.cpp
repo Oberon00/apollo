@@ -84,7 +84,9 @@ BOOST_AUTO_TEST_CASE(object_converter)
             BOOST_CHECK_EQUAL(foo_cref.n_moves, 0u);
         }
         BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls*>(L, -1)->i, 42);
-        BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls>(L, -1).i, 42); // Dtor #3
+        BOOST_CHECK_EQUAL(
+            apollo::from_stack<foo_cls>(L, -1).get().i,
+            42);
         auto& outer_ptr = apollo::from_stack<std::unique_ptr<foo_cls>&>(L, -1);
         BOOST_CHECK_EQUAL(outer_ptr->i, 42);
         apollo::from_stack<foo_cls&>(L, -1).i = 7;
@@ -99,7 +101,7 @@ BOOST_AUTO_TEST_CASE(object_converter)
         BOOST_CHECK_EQUAL(&apollo::from_stack<foo_cls&>(L, -1), &foo);
         lua_pop(L, 1);
 
-        apollo::push(L, std::move(foo)); // Dtor #4
+        apollo::push(L, std::move(foo)); // Dtor #3
         {
             auto& pushed_foo = apollo::from_stack<foo_cls&>(L, -1);
             BOOST_CHECK_EQUAL(pushed_foo.i, 42);
@@ -108,7 +110,7 @@ BOOST_AUTO_TEST_CASE(object_converter)
         }
         lua_pop(L, 1);
 
-        std::shared_ptr<foo_cls> pfoo(new foo_cls(7)); // Dtor #5
+        std::shared_ptr<foo_cls> pfoo(new foo_cls(7)); // Dtor #4
 
         apollo::push(L, pfoo);
         BOOST_CHECK_EQUAL(&apollo::from_stack<foo_cls&>(L, -1), pfoo.get());
@@ -122,7 +124,7 @@ BOOST_AUTO_TEST_CASE(object_converter)
 
     lua_gc(L, LUA_GCCOLLECT, 0);
     lua_gc(L, LUA_GCCOLLECT, 0); // Just to be sure, collect a second time.
-    BOOST_CHECK_EQUAL(foo_cls::n_destructions, 5u);
+    BOOST_CHECK_EQUAL(foo_cls::n_destructions, 4u);
 }
 
 BOOST_AUTO_TEST_CASE(const_ptr)
