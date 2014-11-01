@@ -339,46 +339,48 @@ template <typename Converter>
 typename std::enable_if<
     !detail::converter_has_idx_param<Converter>::value,
     typename Converter::to_type>::type
-unchecked_from_stack_with(lua_State* L, int idx, int* next_idx = nullptr)
+unchecked_from_stack_with(
+    Converter const& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
     if (next_idx)
-        *next_idx = idx + Converter::n_consumed;
-    return Converter::from_stack(L, idx);
+        *next_idx = idx + conv.n_consumed;
+    return conv.from_stack(L, idx);
 }
 
 template <typename Converter>
 typename std::enable_if<
     detail::converter_has_idx_param<Converter>::value,
     typename Converter::to_type>::type
-unchecked_from_stack_with(lua_State* L, int idx, int* next_idx = nullptr)
+unchecked_from_stack_with(
+    Converter const& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
-    return Converter::from_stack(L, idx, next_idx);
+    return conv.from_stack(L, idx, next_idx);
 }
 
 template <typename T>
 typename pull_converter_for<T>::to_type
 unchecked_from_stack(lua_State* L, int idx)
 {
-    return unchecked_from_stack_with<pull_converter_for<T>>(L, idx);
+    return unchecked_from_stack_with(pull_converter_for<T>(), L, idx);
 }
 
 template <typename Converter>
-bool is_convertible_with(lua_State* L, int idx)
+bool is_convertible_with(Converter const& conv, lua_State* L, int idx)
 {
-    return Converter::n_conversion_steps(L, idx) != no_conversion;
+    return conv.n_conversion_steps(L, idx) != no_conversion;
 }
 
 template <typename T>
 bool is_convertible(lua_State* L, int idx)
 {
-    return is_convertible_with<pull_converter_for<T>>(L, idx);
+    return is_convertible_with(pull_converter_for<T>(), L, idx);
 }
 
 template <typename Converter>
 typename Converter::to_type from_stack_with(
-    lua_State* L, int idx, int* next_idx = nullptr)
+    Converter const& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
-    if (!is_convertible_with<Converter>(L, idx)) {
+    if (!is_convertible_with(conv, L, idx)) {
         BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
             << boost::errinfo_type_info_name(
                 typeid(typename Converter::to_type).name())
@@ -386,13 +388,13 @@ typename Converter::to_type from_stack_with(
             << errinfo::stack_index(idx)
             << errinfo::lua_state(L));
     }
-    return unchecked_from_stack_with<Converter>(L, idx, next_idx);
+    return unchecked_from_stack_with(conv, L, idx, next_idx);
 }
 
 template <typename T>
 typename pull_converter_for<T>::to_type from_stack(lua_State* L, int idx)
 {
-    return from_stack_with<pull_converter_for<T>>(L, idx);
+    return from_stack_with(pull_converter_for<T>(), L, idx);
 }
 
 template <typename T>
@@ -403,8 +405,6 @@ typename pull_converter_for<T>::to_type from_stack(
         return fallback;
     return unchecked_from_stack<T>(L, idx);
 }
-
-
 
 } // namepace apollo
 

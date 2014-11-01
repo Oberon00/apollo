@@ -37,24 +37,27 @@ T default_constructed()
 
 template <typename Converter0, typename... Converters>
 std::tuple<typename Converter0::to_type, typename Converters::to_type...>
-from_stack_as_tuple(lua_State* L, int i, Converter0, Converters...)
+from_stack_as_tuple(lua_State* L, int i, Converter0 conv0, Converters... convs)
 {
     // Keep these statements separate to make sure the
     // recursive invocation receives the updated i.
     std::tuple<typename Converter0::to_type> arg0(
-        from_stack_with<Converter0>(L, i, &i));
+        from_stack_with(conv0, L, i, &i));
     static_assert(std::tuple_size<decltype(arg0)>::value == 1, "");
     return std::tuple_cat(std::move(arg0), from_stack_as_tuple(
-        L, i, default_constructed<Converters>()...));
+        L, i, convs...));
 }
 
 
 // Plain function pointer or function object:
 template <typename... Converters, int... Is, typename F>
-auto call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, F f)
-    -> decltype(f(unwrap_bound_ref(from_stack_with<Converters>(L, Is))...))
+auto call_with_stack_args_impl(
+    lua_State* L, F f,
+    detail::iseq<Is...>,
+    Converters const&... convs
+) -> decltype(f(unwrap_bound_ref(from_stack_with(convs, L, Is))...))
 {
-    auto args = from_stack_as_tuple(L, 1, default_constructed<Converters>()...);
+    auto args = from_stack_as_tuple(L, 1, convs...);
     static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
     return f(unwrap_bound_ref(std::get<Is - 1>(args))...);
 }
@@ -62,15 +65,18 @@ auto call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, F f)
 // (Const) member function pointer:
 template <
     typename ThisConverter, typename... Converters, int... Is, typename F>
-auto call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, F f)
-    -> decltype((unwrap_bound_ref(from_stack_with<ThisConverter>(L, 1)).*f)(
-        unwrap_bound_ref(from_stack_with<Converters>(L, Is))...))
+auto call_with_stack_args_impl(
+    lua_State* L, F f,
+    detail::iseq<Is...>,
+    ThisConverter const& this_conv,
+    Converters const&... convs
+) -> decltype((unwrap_bound_ref(from_stack_with(this_conv, L, 1)).*f)(
+        unwrap_bound_ref(from_stack_with(convs, L, Is))...))
 {
     int i0;
-    typename ThisConverter::to_type instance = from_stack_with<ThisConverter>(
-        L, 1, &i0);
-    auto args = from_stack_as_tuple(
-        L, i0, default_constructed<Converters>()...);
+    typename ThisConverter::to_type instance = from_stack_with(
+        this_conv, L, 1, &i0);
+    auto args = from_stack_as_tuple(L, i0, convs...);
     return (unwrap_bound_ref(instance).*f)(
         unwrap_bound_ref(std::get<Is - 2>(args))...);
 }
@@ -81,34 +87,42 @@ auto call_with_stack_args_impl(lua_State* L, detail::iseq<Is...>, F f)
 template <typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(*f)(Args...))
 {
-    return detail::call_with_stack_args_impl<pull_converter_for<Args>...>(
-        L, detail::iseq_n_t<sizeof...(Args)>(), f);
-}
-
-// Member function pointer:
-template <class C, typename R, typename... Args>
-R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
-{
-    return detail::call_with_stack_args_impl<
-            pull_converter_for<C&>, pull_converter_for<Args>...
-        >(L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
-}
-
-// Const member function pointer:
-template <class C, typename R, typename... Args>
-R call_with_stack_args(lua_State* L, R(C::*f)(Args...) const)
-{
-    return detail::call_with_stack_args_impl<
-            pull_converter_for<C const&>, pull_converter_for<Args>...
-        >(L, detail::iseq_n_t<sizeof...(Args), 2>(), f);
+    return detail::call_with_stack_args_impl(
+        L, f,
+        detail::iseq_n_t<sizeof...(Args)>(),
+        detail::default_constructed<pull_converter_for<Args>>()...);
 }
 
 // Function object (std::function, boost::function, etc.):
 template <typename R, template<class> class FObj, typename... Args>
 R call_with_stack_args(lua_State* L, FObj<R(Args...)> const& f)
 {
-    return detail::call_with_stack_args_impl<pull_converter_for<Args>...>(
-        L, detail::iseq_n_t<sizeof...(Args)>(), f);
+    return detail::call_with_stack_args_impl(
+        L, f,
+        detail::iseq_n_t<sizeof...(Args)>(),
+        detail::default_constructed<pull_converter_for<Args>>()...);
+}
+
+// Member function pointer:
+template <class C, typename R, typename... Args>
+R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
+{
+    return detail::call_with_stack_args_impl(
+        L, f,
+        detail::iseq_n_t<sizeof...(Args), 2>(),
+        pull_converter_for<C&>(),
+        detail::default_constructed<pull_converter_for<Args>>()...);
+}
+
+// Const member function pointer:
+template <class C, typename R, typename... Args>
+R call_with_stack_args(lua_State* L, R(C::*f)(Args...) const)
+{
+    return detail::call_with_stack_args_impl(
+        L, f,
+        detail::iseq_n_t<sizeof...(Args), 2>(),
+        pull_converter_for<C const&>(),
+        detail::default_constructed<pull_converter_for<Args>>()...);
 }
 
 namespace detail {
