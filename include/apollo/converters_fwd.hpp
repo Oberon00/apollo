@@ -1,9 +1,9 @@
 #ifndef APOLLO_CONVERTERS_FWD_HPP_INCLUDED
 #define APOLLO_CONVERTERS_FWD_HPP_INCLUDED APOLLO_CONVERTERS_FWD_HPP_INCLUDED
 
-#include <apollo/detail/lua_state.hpp>
-
 #include <boost/config.hpp>
+
+#include <climits>
 
 namespace apollo {
 
