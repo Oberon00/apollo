@@ -342,6 +342,7 @@ typename std::enable_if<
 unchecked_from_stack_with(
     Converter const& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
+    (void)conv; // Silence MSVC.
     if (next_idx)
         *next_idx = idx + conv.n_consumed;
     return conv.from_stack(L, idx);
@@ -367,6 +368,7 @@ unchecked_from_stack(lua_State* L, int idx)
 template <typename Converter>
 bool is_convertible_with(Converter const& conv, lua_State* L, int idx)
 {
+    (void)conv; // Silence MSVC.
     return conv.n_conversion_steps(L, idx) != no_conversion;
 }
 
