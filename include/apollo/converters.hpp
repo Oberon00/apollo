@@ -323,15 +323,15 @@ void push(lua_State* L, T&& v, MoreTs&&... more)
 
 namespace detail {
 
-    void converter_has_idx_param_impl(...);
+    failure_t converter_has_idx_param_impl(...);
 
     template <typename Converter>
-    auto converter_has_idx_param_impl(Converter)
-        -> decltype(Converter::from_stack(
+    auto converter_has_idx_param_impl(Converter conv)
+        -> decltype(conv.from_stack(
             std::declval<lua_State*>(), 0, std::declval<int*>()));
 
     template <typename Converter>
-    struct converter_has_idx_param: std::integral_constant<bool, !std::is_void<
+    struct converter_has_idx_param: std::integral_constant<bool, !has_failed<
             decltype(converter_has_idx_param_impl(std::declval<Converter>()))
         >::value>
     {};
