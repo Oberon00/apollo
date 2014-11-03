@@ -35,7 +35,7 @@ push_bare_udata(lua_State* L, T&& o)
     using obj_t = typename detail::remove_qualifiers<T>::type;
     void* uf = lua_newuserdata(L, sizeof(obj_t));
     try {
-        return new(uf)obj_t(std::forward<T>(o));
+        return new(uf) obj_t(std::forward<T>(o));
     } catch (...) {
         lua_pop(L, 1);
         throw;
