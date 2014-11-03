@@ -113,7 +113,7 @@ template <typename R, template<class> class FObj, typename... Args>
 R call_with_stack_args(lua_State* L, FObj<R(Args...)> const& f)
 {
     return call_with_stack_args_with(
-        L, FObj<R(Args...)>(f),
+        L, f,
         detail::default_constructed<pull_converter_for<Args>>()...);
 }
 
