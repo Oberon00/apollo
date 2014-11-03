@@ -59,7 +59,7 @@ auto call_with_stack_args_impl(
 {
     auto args = from_stack_as_tuple(L, 1, std::forward<Converters>(convs)...);
     static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
-    return f(unwrap_bound_ref(std::get<Is - 1>(args))...);
+    return f(unwrap_bound_ref(std::get<Is>(args))...);
 }
 
 // (Const) member function pointer:
@@ -81,7 +81,7 @@ auto call_with_stack_args_impl(
         this_conv, L, 1, &i0);
     auto args = from_stack_as_tuple(L, i0, std::forward<Converters>(convs)...);
     return (unwrap_bound_ref(instance).*f)(
-        unwrap_bound_ref(std::get<Is - 1>(args))...);
+        unwrap_bound_ref(std::get<Is>(args))...);
 }
 
 } // namespace detail

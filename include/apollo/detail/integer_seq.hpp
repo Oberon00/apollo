@@ -23,7 +23,7 @@ struct gen_iseq : concat_iseq<
 template<int Lo> struct gen_iseq<0, Lo> : iseq<>{};
 template<int Lo> struct gen_iseq<1, Lo> : iseq<Lo>{};
 
-template <int N, int Lo = 1>
+template <int N, int Lo = 0>
 using iseq_n_t = typename gen_iseq<N, Lo>::type;
 
 }} // namespace apollo::detail
