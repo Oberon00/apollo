@@ -19,6 +19,10 @@ struct is_const_reference: std::integral_constant<bool,
     std::is_const<typename std::remove_reference<T>::type>::value>
 {};
 
+template <typename F>
+using is_mem_fn = std::is_member_function_pointer<
+        typename detail::remove_qualifiers<F>::type>;
+
 struct failure_t;
 
 template <typename T>

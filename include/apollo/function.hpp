@@ -81,18 +81,30 @@ auto call_with_stack_args_impl(
         this_conv, L, 1, &i0);
     auto args = from_stack_as_tuple(L, i0, std::forward<Converters>(convs)...);
     return (unwrap_bound_ref(instance).*f)(
-        unwrap_bound_ref(std::get<Is - 2>(args))...);
+        unwrap_bound_ref(std::get<Is - 1>(args))...);
 }
 
 } // namespace detail
+
+template <typename F, typename... Converters>
+auto call_with_stack_args_with(lua_State* L, F&& f, Converters&&... converters)
+    -> decltype(detail::call_with_stack_args_impl(
+        L, std::forward<F>(f),
+        detail::iseq_n_t<sizeof...(Converters) - detail::is_mem_fn<F>::value>(),
+        std::forward<Converters>(converters)...))
+{
+    return detail::call_with_stack_args_impl(
+        L, std::forward<F>(f),
+        detail::iseq_n_t<sizeof...(Converters) - detail::is_mem_fn<F>::value>(),
+        std::forward<Converters>(converters)...);
+}
 
 // Plain function pointer:
 template <typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(*f)(Args...))
 {
-    return detail::call_with_stack_args_impl(
+    return call_with_stack_args_with(
         L, f,
-        detail::iseq_n_t<sizeof...(Args)>(),
         detail::default_constructed<pull_converter_for<Args>>()...);
 }
 
@@ -100,9 +112,8 @@ R call_with_stack_args(lua_State* L, R(*f)(Args...))
 template <typename R, template<class> class FObj, typename... Args>
 R call_with_stack_args(lua_State* L, FObj<R(Args...)> const& f)
 {
-    return detail::call_with_stack_args_impl(
-        L, f,
-        detail::iseq_n_t<sizeof...(Args)>(),
+    return call_with_stack_args_with(
+        L, FObj<R(Args...)>(f),
         detail::default_constructed<pull_converter_for<Args>>()...);
 }
 
@@ -110,9 +121,8 @@ R call_with_stack_args(lua_State* L, FObj<R(Args...)> const& f)
 template <class C, typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
 {
-    return detail::call_with_stack_args_impl(
+    return call_with_stack_args_with(
         L, f,
-        detail::iseq_n_t<sizeof...(Args), 2>(),
         pull_converter_for<C&>(),
         detail::default_constructed<pull_converter_for<Args>>()...);
 }
@@ -121,9 +131,8 @@ R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
 template <class C, typename R, typename... Args>
 R call_with_stack_args(lua_State* L, R(C::*f)(Args...) const)
 {
-    return detail::call_with_stack_args_impl(
+    return call_with_stack_args_with(
         L, f,
-        detail::iseq_n_t<sizeof...(Args), 2>(),
         pull_converter_for<C const&>(),
         detail::default_constructed<pull_converter_for<Args>>()...);
 }
