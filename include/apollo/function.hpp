@@ -37,27 +37,27 @@ T default_constructed()
 
 template <typename Converter0, typename... Converters>
 std::tuple<to_type_of<Converter0>, to_type_of<Converters>...>
-from_stack_as_tuple(lua_State* L, int i, Converter0 conv0, Converters... convs)
+from_stack_as_tuple(lua_State* L, int i, Converter0&& conv0, Converters&&... convs)
 {
     // Keep these statements separate to make sure the
     // recursive invocation receives the updated i.
     std::tuple<to_type_of<Converter0>> arg0(
-        from_stack_with(conv0, L, i, &i));
+        from_stack_with(std::forward<Converter0>(conv0), L, i, &i));
     static_assert(std::tuple_size<decltype(arg0)>::value == 1, "");
     return std::tuple_cat(std::move(arg0), from_stack_as_tuple(
-        L, i, convs...));
+        L, i, std::forward<Converters>(convs)...));
 }
 
 
 // Plain function pointer or function object:
 template <typename... Converters, int... Is, typename F>
 auto call_with_stack_args_impl(
-    lua_State* L, F f,
+    lua_State* L, F&& f,
     detail::iseq<Is...>,
-    Converters const&... convs
-) -> decltype(f(unwrap_bound_ref(from_stack_with(convs, L, Is))...))
+    Converters&&... convs
+) -> decltype(f(unwrap_bound_ref(from_stack_with(std::forward<Converters>(convs), L, Is))...))
 {
-    auto args = from_stack_as_tuple(L, 1, convs...);
+    auto args = from_stack_as_tuple(L, 1, std::forward<Converters>(convs)...);
     static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
     return f(unwrap_bound_ref(std::get<Is - 1>(args))...);
 }
@@ -66,17 +66,20 @@ auto call_with_stack_args_impl(
 template <
     typename ThisConverter, typename... Converters, int... Is, typename F>
 auto call_with_stack_args_impl(
-    lua_State* L, F f,
+    lua_State* L, F&& f,
     detail::iseq<Is...>,
-    ThisConverter const& this_conv,
-    Converters const&... convs
-) -> decltype((unwrap_bound_ref(from_stack_with(this_conv, L, 1)).*f)(
-        unwrap_bound_ref(from_stack_with(convs, L, Is))...))
+    ThisConverter&& this_conv,
+    Converters&&... convs
+) -> decltype(
+    (unwrap_bound_ref(
+        from_stack_with(std::forward<ThisConverter>(this_conv), L, 1))
+    .*f)(unwrap_bound_ref(
+        from_stack_with(std::forward<Converters>(convs), L, Is))...))
 {
     int i0;
     to_type_of<ThisConverter> instance = from_stack_with(
         this_conv, L, 1, &i0);
-    auto args = from_stack_as_tuple(L, i0, convs...);
+    auto args = from_stack_as_tuple(L, i0, std::forward<Converters>(convs)...);
     return (unwrap_bound_ref(instance).*f)(
         unwrap_bound_ref(std::get<Is - 2>(args))...);
 }

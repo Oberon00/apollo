@@ -342,7 +342,7 @@ typename std::enable_if<
     !detail::converter_has_idx_param<Converter>::value,
     to_type_of<Converter>>::type
 unchecked_from_stack_with(
-    Converter const& conv, lua_State* L, int idx, int* next_idx = nullptr)
+    Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
     (void)conv; // Silence MSVC.
     if (next_idx)
@@ -381,7 +381,7 @@ bool is_convertible(lua_State* L, int idx)
 
 template <typename Converter>
 to_type_of<Converter> from_stack_with(
-    Converter const& conv, lua_State* L, int idx, int* next_idx = nullptr)
+    Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
     if (!is_convertible_with(conv, L, idx)) {
         BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
