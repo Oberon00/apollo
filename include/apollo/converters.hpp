@@ -32,6 +32,8 @@ struct raw_function {
     lua_CFunction f;
 };
 
+template <typename Converter>
+using to_type_of = typename detail::remove_qualifiers<Converter>::type::to_type;
 
 
 namespace detail {
@@ -338,7 +340,7 @@ namespace detail {
 template <typename Converter>
 typename std::enable_if<
     !detail::converter_has_idx_param<Converter>::value,
-    typename Converter::to_type>::type
+    to_type_of<Converter>>::type
 unchecked_from_stack_with(
     Converter const& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
@@ -351,16 +353,15 @@ unchecked_from_stack_with(
 template <typename Converter>
 typename std::enable_if<
     detail::converter_has_idx_param<Converter>::value,
-    typename Converter::to_type>::type
+    to_type_of<Converter>>::type
 unchecked_from_stack_with(
-    Converter const& conv, lua_State* L, int idx, int* next_idx = nullptr)
+    Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
     return conv.from_stack(L, idx, next_idx);
 }
 
 template <typename T>
-typename pull_converter_for<T>::to_type
-unchecked_from_stack(lua_State* L, int idx)
+to_type_of<pull_converter_for<T>> unchecked_from_stack(lua_State* L, int idx)
 {
     return unchecked_from_stack_with(pull_converter_for<T>(), L, idx);
 }
@@ -379,13 +380,13 @@ bool is_convertible(lua_State* L, int idx)
 }
 
 template <typename Converter>
-typename Converter::to_type from_stack_with(
+to_type_of<Converter> from_stack_with(
     Converter const& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
     if (!is_convertible_with(conv, L, idx)) {
         BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
             << boost::errinfo_type_info_name(
-                typeid(typename Converter::to_type).name())
+                typeid(to_type_of<Converter>).name())
             << errinfo::msg("conversion from Lua to C++ failed")
             << errinfo::stack_index(idx)
             << errinfo::lua_state(L));
@@ -394,13 +395,13 @@ typename Converter::to_type from_stack_with(
 }
 
 template <typename T>
-typename pull_converter_for<T>::to_type from_stack(lua_State* L, int idx)
+to_type_of<pull_converter_for<T>> from_stack(lua_State* L, int idx)
 {
     return from_stack_with(pull_converter_for<T>(), L, idx);
 }
 
 template <typename T>
-typename pull_converter_for<T>::to_type from_stack(
+to_type_of<pull_converter_for<T>> from_stack(
     lua_State* L, int idx, T&& fallback)
 {
     if (!is_convertible<T>(L, idx))

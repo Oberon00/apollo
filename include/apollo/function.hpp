@@ -36,12 +36,12 @@ T default_constructed()
 }
 
 template <typename Converter0, typename... Converters>
-std::tuple<typename Converter0::to_type, typename Converters::to_type...>
+std::tuple<to_type_of<Converter0>, to_type_of<Converters>...>
 from_stack_as_tuple(lua_State* L, int i, Converter0 conv0, Converters... convs)
 {
     // Keep these statements separate to make sure the
     // recursive invocation receives the updated i.
-    std::tuple<typename Converter0::to_type> arg0(
+    std::tuple<to_type_of<Converter0>> arg0(
         from_stack_with(conv0, L, i, &i));
     static_assert(std::tuple_size<decltype(arg0)>::value == 1, "");
     return std::tuple_cat(std::move(arg0), from_stack_as_tuple(
@@ -74,7 +74,7 @@ auto call_with_stack_args_impl(
         unwrap_bound_ref(from_stack_with(convs, L, Is))...))
 {
     int i0;
-    typename ThisConverter::to_type instance = from_stack_with(
+    to_type_of<ThisConverter> instance = from_stack_with(
         this_conv, L, 1, &i0);
     auto args = from_stack_as_tuple(L, i0, convs...);
     return (unwrap_bound_ref(instance).*f)(
