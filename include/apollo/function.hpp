@@ -48,7 +48,8 @@ T default_constructed()
 
 template <typename Converter0, typename... Converters>
 std::tuple<to_type_of<Converter0>, to_type_of<Converters>...>
-from_stack_as_tuple(lua_State* L, int i, Converter0&& conv0, Converters&&... convs)
+from_stack_as_tuple(
+    lua_State* L, int i, Converter0&& conv0, Converters&&... convs)
 {
     // Keep these statements separate to make sure the
     // recursive invocation receives the updated i.
@@ -66,7 +67,8 @@ auto call_with_stack_args_impl(
     lua_State* L, F&& f,
     detail::iseq<Is...>,
     Converters&&... convs
-) -> decltype(f(unwrap_bound_ref(from_stack_with(std::forward<Converters>(convs), L, Is))...))
+) -> decltype(f(unwrap_bound_ref(
+        from_stack_with(std::forward<Converters>(convs), L, Is))...))
 {
     auto args = from_stack_as_tuple(L, 1, std::forward<Converters>(convs)...);
     static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
@@ -278,12 +280,14 @@ public:
     }
 };
 
+} // namespace detail
+
 template <typename F, typename ResultConverter, typename... ArgConverters>
-converted_function<
-    typename remove_qualifiers<F>::type,
-    typename remove_qualifiers<ResultConverter>::type,
-    typename remove_qualifiers<ArgConverters>::type...>
-make_converted_function(
+detail::converted_function<
+    typename detail::remove_qualifiers<F>::type,
+    typename detail::remove_qualifiers<ResultConverter>::type,
+    typename detail::remove_qualifiers<ArgConverters>::type...>
+make_funtion_with(
     F&& f, ResultConverter&& rconv, ArgConverters&&... aconvs)
 {
     return {
@@ -291,6 +295,25 @@ make_converted_function(
         std::forward<ResultConverter>(rconv),
         std::forward<ArgConverters>(aconvs)...};
 }
+
+template<typename F, typename ResultConverter, typename... Converters>
+struct converter<detail::converted_function<F, ResultConverter, Converters...>>
+    : converter_base<
+        detail::converted_function<F, ResultConverter, Converters...>> {
+public:
+    using type = detail::converted_function<F, ResultConverter, Converters...>;
+
+    template <typename FunctionWith>
+    static void push(lua_State* L, FunctionWith&& f)
+    {
+        push_gc_object(L, std::move(f));
+        detail::push_function_tag(L, type::is_light);
+        lua_pushlightuserdata(L, const_cast<std::type_info*>(&typeid(F)));
+        lua_pushcclosure(L, &f.entry_point, 3);
+    }
+};
+
+namespace detail {
 
 template <typename F, F FVal, int... Is>
 inline int static_entry_point_impl(lua_State* L, iseq<Is...>) BOOST_NOEXCEPT
@@ -311,12 +334,8 @@ template <typename F, int... Is>
 void push_function_impl(lua_State* L, F&& f, iseq<Is...>)
 {
     auto def_converters = default_converters(f);
-    auto cf = make_converted_function(
-        std::forward<F>(f), std::move(std::get<Is>(def_converters))...);
-    push_gc_object(L, std::move(cf));
-    push_function_tag(L);
-    lua_pushlightuserdata(L, const_cast<std::type_info*>(&typeid(F)));
-    lua_pushcclosure(L, &cf.entry_point, 3);
+    push(L, make_funtion_with(
+        std::forward<F>(f), std::move(std::get<Is>(def_converters))...));
 }
 
 template <typename F>
@@ -432,7 +451,8 @@ BOOST_CONSTEXPR raw_function get_raw_ctor_wrapper() BOOST_NOEXCEPT
 // Function converter //
 template<typename T>
 struct converter<T, typename std::enable_if<
-        detail::lua_type_id<T>::value == LUA_TFUNCTION>::type>: converter_base<T> {
+        detail::lua_type_id<T>::value == LUA_TFUNCTION>::type>
+    : converter_base<T> {
 
 private:
     using fconverter = detail::function_converter<T>;
@@ -453,7 +473,6 @@ public:
         return fconverter::from_stack(L, idx);
     }
 };
-
 
 } // namespace apollo
 
