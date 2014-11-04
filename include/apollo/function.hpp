@@ -18,10 +18,21 @@
 
 #include <tuple>
 #include <type_traits>
+#include <typeinfo>
+#include <boost/mpl/and.hpp>
 
 namespace apollo {
 
 namespace detail {
+
+std::type_info const& function_type(lua_State* L, int idx);
+void push_function_tag(lua_State* L);
+
+template <typename Tuple>
+using tuple_seq = iseq_n_t<std::tuple_size<Tuple>::value>;
+
+template <typename... Ts>
+using all_empty = boost::mpl::and_<std::is_empty<Ts>...>;
 
 inline std::tuple<> from_stack_as_tuple(lua_State*, int)
 {
@@ -84,6 +95,63 @@ auto call_with_stack_args_impl(
         unwrap_bound_ref(std::get<Is>(args))...);
 }
 
+// Plain function pointer:
+template <typename R, typename... Args>
+std::tuple<push_converter_for<R>, pull_converter_for<Args>...>
+default_converters(R(*)(Args...))
+{
+    return {};
+}
+
+// Function object (std::function, boost::function, etc.):
+template <typename R, template<class> class FObj, typename... Args>
+std::tuple<push_converter_for<R>, pull_converter_for<Args>...>
+default_converters(FObj<R(Args...)> const&)
+{
+    return {};
+}
+
+// Member function pointer:
+template <class C, typename R, typename... Args>
+std::tuple<
+    push_converter_for<R>,
+    pull_converter_for<C&>,
+    pull_converter_for<Args>...>
+default_converters(R(C::*)(Args...))
+{
+    return {};
+}
+
+// Const member function pointer:
+template <class C, typename R, typename... Args>
+std::tuple<
+    push_converter_for<R>,
+    pull_converter_for<C const&>,
+    pull_converter_for<Args>...>
+default_converters(R(C::*)(Args...) const)
+{
+    return {};
+}
+
+// Plain function pointer:
+template <typename R, typename... Args>
+R return_type_of_impl(R(*)(Args...));
+
+// Function object (std::function, boost::function, etc.):
+template <template <class> class FObj, typename R, typename... Args>
+R return_type_of_impl(FObj<R(Args...)> const&);
+
+// Member function pointer:
+template <class C, typename R, typename... Args>
+R return_type_of_impl(R(C::*)(Args...));
+
+// Const member function pointer:
+template <class C, typename R,  typename... Args>
+R return_type_of_impl(R(C::*)(Args...) const);
+
+template <typename F>
+using return_type_of = decltype(return_type_of_impl(std::declval<F>()));
+
 } // namespace detail
 
 template <typename F, typename... Converters>
@@ -99,142 +167,163 @@ auto call_with_stack_args_with(lua_State* L, F&& f, Converters&&... converters)
         std::forward<Converters>(converters)...);
 }
 
+namespace detail {
+
+template <typename F, int... Is>
+return_type_of<F> call_with_stack_args_def(lua_State* L, F&& f, iseq<Is...>)
+{
+    return call_with_stack_args_with(
+        L, f,
+        std::move(std::get<Is>(default_converters(f)))...);
+}
+
+} // namespace detail
+
 // Plain function pointer:
-template <typename R, typename... Args>
-R call_with_stack_args(lua_State* L, R(*f)(Args...))
+template <typename F>
+detail::return_type_of<F> call_with_stack_args(lua_State* L, F&& f)
 {
-    return call_with_stack_args_with(
+    using all_converter_tuple = decltype(detail::default_converters(f));
+    return detail::call_with_stack_args_def(
         L, f,
-        detail::default_constructed<pull_converter_for<Args>>()...);
-}
-
-// Function object (std::function, boost::function, etc.):
-template <typename R, template<class> class FObj, typename... Args>
-R call_with_stack_args(lua_State* L, FObj<R(Args...)> const& f)
-{
-    return call_with_stack_args_with(
-        L, f,
-        detail::default_constructed<pull_converter_for<Args>>()...);
-}
-
-// Member function pointer:
-template <class C, typename R, typename... Args>
-R call_with_stack_args(lua_State* L, R(C::*f)(Args...))
-{
-    return call_with_stack_args_with(
-        L, f,
-        pull_converter_for<C&>(),
-        detail::default_constructed<pull_converter_for<Args>>()...);
-}
-
-// Const member function pointer:
-template <class C, typename R, typename... Args>
-R call_with_stack_args(lua_State* L, R(C::*f)(Args...) const)
-{
-    return call_with_stack_args_with(
-        L, f,
-        pull_converter_for<C const&>(),
-        detail::default_constructed<pull_converter_for<Args>>()...);
+        // Skip result converter tuple:
+        detail::iseq_n_t<std::tuple_size<all_converter_tuple>::value, 1>());
 }
 
 namespace detail {
 
-template <typename F> // f returns void
-int call_with_stack_args_and_push_impl(lua_State* L, F&& f, std::true_type)
+// void-returning f
+template <typename F, typename ResultConverter, typename... Converters>
+int call_with_stack_args_and_push_impl(
+    lua_State* L, F&& f, std::true_type,
+    ResultConverter&&, Converters&&... converters)
 {
-    call_with_stack_args(L, std::forward<F>(f));
+    call_with_stack_args_with(
+        L, std::forward<F>(f),
+        std::forward<Converters>(converters)...);
     return 0;
 }
 
-template <typename F> // f returns non-void
-int call_with_stack_args_and_push_impl(lua_State* L, F&& f, std::false_type)
+// non-void returning f
+template <typename F, typename ResultConverter, typename... Converters>
+int call_with_stack_args_and_push_impl(
+    lua_State* L, F&& f, std::false_type,
+    ResultConverter&& rconverter, Converters&&... converters)
 {
-    push(L, call_with_stack_args(L, std::forward<F>(f)));
+     rconverter.push(L, call_with_stack_args_with(
+        L, std::forward<F>(f),
+        std::forward<Converters>(converters)...));
     return 1;
 }
 
-template <typename F>
-int call_with_stack_args_and_push(lua_State* L, F&& f)
+template <typename F, typename ResultConverter, typename... Converters>
+int call_with_stack_args_and_push(
+    lua_State* L, F&& f,
+    ResultConverter&& rconverter, Converters&&... converters)
 {
     return call_with_stack_args_and_push_impl(
         L, std::forward<F>(f),
-        typename std::is_void<decltype(
-            call_with_stack_args(L, std::forward<F>(f)))>::type());
+        typename std::is_void<to_type_of<ResultConverter>>::type(),
+        std::forward<ResultConverter>(rconverter),
+        std::forward<Converters>(converters)...);
+}
+
+template <typename F, typename ResultConverter, typename... Converters>
+int call_with_stack_args_and_push_lerror(
+    lua_State* L, F&& f,
+    ResultConverter&& rconverter, Converters&&... converters)  BOOST_NOEXCEPT
+{
+    return exceptions_to_lua_errors_L(
+        L, &call_with_stack_args_and_push<F, ResultConverter, Converters...>,
+        std::forward<F>(f),
+        std::forward<ResultConverter>(rconverter),
+        std::forward<Converters>(converters)...);
 }
 
 template <typename F>
-int call_with_stack_args_and_push_lerror(lua_State* L, F&& f)  BOOST_NOEXCEPT
+struct converted_function_base {
+    template <typename FArg>
+    explicit converted_function_base(FArg&& f_): f(f_) {}
+    F f;
+};
+
+template <typename F, typename ResultConverter, typename... ArgConverters>
+struct converted_function
+        // Make use of Empty Base Optimization if all converters are empty:
+        : private std::tuple<ResultConverter, ArgConverters...>
+        , public converted_function_base<F>{
+private:
+    using tuple_t = std::tuple<ResultConverter, ArgConverters...>;
+    using this_t = converted_function<F, ResultConverter, ArgConverters...>;
+
+    template <int... Is>
+    static int entry_point_impl(lua_State* L, iseq<Is...>) BOOST_NOEXCEPT
+    {
+        auto& this_ = *static_cast<this_t*>(
+            lua_touserdata(L, lua_upvalueindex(1)));
+        return call_with_stack_args_and_push_lerror(
+            L, this_.f, std::get<Is>(this_)...);
+    }
+
+public:
+    template <typename FArg, typename... AllConverters>
+    converted_function(FArg&& f_, AllConverters&&... converters)
+        : tuple_t(std::forward<AllConverters>(converters)...)
+        , converted_function_base<F>(std::forward<FArg>(f_))
+    {}
+
+    static int entry_point(lua_State* L) BOOST_NOEXCEPT
+    {
+        return entry_point_impl(L, tuple_seq<tuple_t>());
+    }
+};
+
+template <typename F, typename ResultConverter, typename... ArgConverters>
+converted_function<
+    typename remove_qualifiers<F>::type,
+    typename remove_qualifiers<ResultConverter>::type,
+    typename remove_qualifiers<ArgConverters>::type...>
+make_converted_function(
+    F&& f, ResultConverter&& rconv, ArgConverters&&... aconvs)
 {
-    return exceptions_to_lua_errors_L(
-        L, &call_with_stack_args_and_push<F>, std::forward<F>(f));
+    return {
+        std::forward<F>(f),
+        std::forward<ResultConverter>(rconv),
+        std::forward<ArgConverters>(aconvs)...};
+}
+
+template <typename F, F FVal, int... Is>
+inline int static_entry_point_impl(lua_State* L, iseq<Is...>) BOOST_NOEXCEPT
+{
+    auto def_converters = default_converters(FVal);
+    return call_with_stack_args_and_push_lerror(
+        L, FVal, std::move(std::get<Is>(def_converters))...);
 }
 
 template <typename F, F FVal>
-static int static_entry_point(lua_State* L) BOOST_NOEXCEPT
+inline int static_entry_point(lua_State* L) BOOST_NOEXCEPT
 {
-    return call_with_stack_args_and_push_lerror(L, FVal);
+    return static_entry_point_impl<F, FVal>(
+        L, tuple_seq<decltype(default_converters(FVal))>());
 }
 
-template <typename F, typename Enable=void>
-struct function_dispatch {
-    static void push_upvalue(lua_State* L, F const& f)
-    {
-        push_gc_object(L, f);
-    }
-
-    static int entry_point(lua_State* L) BOOST_NOEXCEPT
-    {
-        auto& f = *static_cast<F*>(lua_touserdata(L, lua_upvalueindex(1)));
-        return call_with_stack_args_and_push_lerror(L, f);
-    }
-};
+template <typename F, int... Is>
+void push_function_impl(lua_State* L, F&& f, iseq<Is...>)
+{
+    auto def_converters = default_converters(f);
+    auto cf = make_converted_function(
+        std::forward<F>(f), std::move(std::get<Is>(def_converters))...);
+    push_gc_object(L, std::move(cf));
+    push_function_tag(L);
+    lua_pushlightuserdata(L, const_cast<std::type_info*>(&typeid(F)));
+    lua_pushcclosure(L, &cf.entry_point, 3);
+}
 
 template <typename F>
-struct function_dispatch<F, typename std::enable_if<
-        detail::is_plain_function<F>::value>::type> {
-
-    static void push_upvalue(lua_State* L, F f)
-    {
-        lua_pushlightuserdata(L, reinterpret_cast<void*>(f));
-    }
-
-    static int entry_point(lua_State* L) BOOST_NOEXCEPT
-    {
-        auto f = reinterpret_cast<F>(lua_touserdata(L, lua_upvalueindex(1)));
-        return call_with_stack_args_and_push_lerror(L, f);
-    }
-};
-
-template <typename FType>
-struct mem_fn_ptr_holder { FType val; };
-
-template <typename R, typename C, typename... Args>
-struct function_dispatch<R(C::*)(Args...)>
+void push_function(lua_State* L, F&& f)
 {
-private:
-    using FType = R(C::*)(Args...);
-
-public:
-    static void push_upvalue(lua_State* L, FType f)
-    {
-        push_gc_object(L, mem_fn_ptr_holder<FType>{ f });
-    }
-
-    static int entry_point(lua_State* L) BOOST_NOEXCEPT
-    {
-        auto f = static_cast<mem_fn_ptr_holder<FType>*>(
-            lua_touserdata(L, lua_upvalueindex(1)))->val;
-        return call_with_stack_args_and_push_lerror(L, f);
-    }
-};
-
-
-template <typename F>
-void push_function(lua_State* L, F const& f)
-{
-    using fdispatch = detail::function_dispatch<F>;
-    fdispatch::push_upvalue(L, f);
-    lua_pushcclosure(L, &fdispatch::entry_point, 1);
+   push_function_impl(
+       L, std::forward<F>(f), tuple_seq<decltype(default_converters(f))>());
 }
 
 // function_converter //
@@ -244,22 +333,22 @@ struct function_converter;
 
 template <template<class> class FObj, typename R, typename... Args>
 struct function_converter<FObj<R(Args...)>> {
-    using FType = FObj<R(Args...)>;
+    using type = FObj<R(Args...)>;
 
-    static FType from_stack(lua_State* L, int idx)
+    static type from_stack(lua_State* L, int idx)
     {
-        // Exact same type in Lua? Then copy.
-        lua_CFunction thunk = lua_tocfunction(L, idx);
-        if (thunk == &function_dispatch<FType>::entry_point) {
+        auto const& fty = function_type(L, idx);
+        if (fty == typeid(type)) {
             stack_balance balance(L);
             BOOST_VERIFY(lua_getupvalue(L, idx, 1));
             BOOST_ASSERT(lua_isuserdata(L, -1));
-            return *static_cast<FType*>(lua_touserdata(L, -1));;
+            return static_cast<converted_function_base<type>*>(
+                lua_touserdata(L, -1))->f;
         }
 
         // Plain function pointer in Lua? Then construct from it.
         using plainfconv = function_converter<R(*)(Args...)>;
-        if (plainfconv::n_conversion_steps(L, idx) != no_conversion)
+        if (fty == typeid(typename plainfconv::type))
             return plainfconv::from_stack(L, idx);
 
         // TODO?: optimization: Before falling back to the pcall lambda,
@@ -291,45 +380,22 @@ struct function_converter<FObj<R(Args...)>> {
 
 template <typename F>
 struct function_converter<F, typename std::enable_if<
-        detail::is_plain_function<F>::value>::type>
-{
-    using FType = F;
-    static FType from_stack(lua_State* L, int idx)
-    {
-        stack_balance balance(L);
-        BOOST_VERIFY(lua_getupvalue(L, idx, 1));
-        BOOST_ASSERT(lua_islightuserdata(L, -1));
-        return reinterpret_cast<FType>(lua_touserdata(L, -1));
-    }
-
-    static unsigned n_conversion_steps(lua_State* L, int idx)
-    {
-        lua_CFunction thunk = lua_tocfunction(L, idx);
-        return thunk == &function_dispatch<F>::entry_point ? 0 : no_conversion;
-    }
-};
-
-template <typename F>
-struct function_converter<F, typename std::enable_if<
+        detail::is_plain_function<F>::value ||
         std::is_member_function_pointer<F>::value>::type>
 {
-    using FType = F;
-
-    // TODO: Nearly duplicate of plain function converter
-    static FType from_stack(lua_State* L, int idx)
+    using type = F;
+    static type from_stack(lua_State* L, int idx)
     {
         stack_balance balance(L);
         BOOST_VERIFY(lua_getupvalue(L, idx, 1));
-        BOOST_ASSERT(lua_type(L, -1) == LUA_TUSERDATA);
-        return static_cast<mem_fn_ptr_holder<F>*>(
-            lua_touserdata(L, -1))->val;
+        BOOST_ASSERT(lua_isuserdata(L, -1));
+        return static_cast<converted_function_base<type>*>(
+            lua_touserdata(L, -1))->f;
     }
 
-    // TODO: Duplicate of plain function converter
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        lua_CFunction thunk = lua_tocfunction(L, idx);
-        return thunk == &function_dispatch<F>::entry_point ? 0 : no_conversion;
+        return function_type(L, idx) == typeid(type);
     }
 };
 
@@ -382,7 +448,7 @@ public:
         return fconverter::n_conversion_steps(L, idx);
     }
 
-    static typename fconverter::FType from_stack(lua_State* L, int idx)
+    static typename fconverter::type from_stack(lua_State* L, int idx)
     {
         return fconverter::from_stack(L, idx);
     }

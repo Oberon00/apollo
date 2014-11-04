@@ -43,6 +43,7 @@ set(apollo_SRCS
     "class.cpp"
     "class_info.cpp"
     "converters.cpp"
+    "function.cpp"
     "lapi.cpp"
     "reference.cpp"
     "stack_balance.cpp"

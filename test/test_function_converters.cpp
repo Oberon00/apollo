@@ -206,7 +206,7 @@ static void check_proc(lua_State* L)
 BOOST_AUTO_TEST_CASE(proc_obj)
 {
     apollo::push(L, &proc0);
-     BOOST_CHECK_EQUAL(
+    BOOST_CHECK_EQUAL(
         *apollo::from_stack<std::function<void()>>(L, -1)
             .target<void(*)()>(),
         &proc0);
