@@ -2,22 +2,34 @@
 #include <apollo/detail/light_key.hpp>
 
 static apollo::detail::light_key function_tag = {};
+static apollo::detail::light_key light_function_tag = {};
 
-std::type_info const& apollo::detail::function_type(lua_State* L, int idx)
+std::pair<bool, std::type_info const*> apollo::detail::function_type(
+    lua_State* L, int idx)
 {
     if (!lua_getupvalue(L, idx, 2))
-        return typeid(void);
+        return {false, &typeid(void)};
     void* tag = lua_touserdata(L, -1);
     lua_pop(L, 1);
-    if (tag != function_tag)
-        return typeid(void);
+    bool const is_light = tag == light_function_tag;
+    if (!is_light && tag != function_tag)
+        return {false, &typeid(void)};
     BOOST_VERIFY(lua_getupvalue(L, idx, 3));
     auto pr = static_cast<std::type_info const*>(lua_touserdata(L, -1));
     lua_pop(L, 1);
-    return *pr;
+    return {is_light, pr};
 }
 
-void apollo::detail::push_function_tag(lua_State* L)
+bool apollo::detail::is_light_function(lua_State* L, int idx)
 {
-    lua_pushlightuserdata(L, function_tag);
+    if (!lua_getupvalue(L, idx, 2))
+        return false;
+    void* tag = lua_touserdata(L, -1);
+    lua_pop(L, 1);
+    return tag == light_function_tag;
+}
+
+void apollo::detail::push_function_tag(lua_State* L, bool is_light)
+{
+    lua_pushlightuserdata(L, is_light ? light_function_tag : function_tag);
 }

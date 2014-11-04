@@ -25,8 +25,9 @@ namespace apollo {
 
 namespace detail {
 
-std::type_info const& function_type(lua_State* L, int idx);
-void push_function_tag(lua_State* L);
+std::pair<bool, std::type_info const*> function_type(lua_State* L, int idx);
+bool is_light_function(lua_State* L, int idx);
+void push_function_tag(lua_State* L, bool is_light);
 
 template <typename Tuple>
 using tuple_seq = iseq_n_t<std::tuple_size<Tuple>::value>;
@@ -259,7 +260,8 @@ private:
     using this_t = converted_function<F, ResultConverter, ArgConverters...>;
 
     template <int... Is>
-    static int entry_point_impl(lua_State* L, iseq<Is...>) BOOST_NOEXCEPT
+    static int entry_point_impl(
+        lua_State* L, iseq<Is...>, std::false_type) BOOST_NOEXCEPT
     {
         auto& this_ = *static_cast<this_t*>(
             lua_touserdata(L, lua_upvalueindex(1)));
@@ -267,7 +269,22 @@ private:
             L, this_.f, std::get<Is>(this_)...);
     }
 
+    template <int... Is>
+    static int entry_point_impl(
+        lua_State* L, iseq<Is...>, std::true_type) BOOST_NOEXCEPT
+    {
+        auto f = reinterpret_cast<F>(
+            lua_touserdata(L, lua_upvalueindex(1)));
+        return call_with_stack_args_and_push_lerror(
+            L, f, ResultConverter(), default_constructed<ArgConverters>()...);
+    }
+
 public:
+    using is_light_t = std::integral_constant<bool,
+        detail::is_plain_function<F>::value
+        && std::is_empty<tuple_t>::value>;
+    static bool BOOST_CONSTEXPR_OR_CONST is_light = is_light_t::value;
+    
     template <typename FArg, typename... AllConverters>
     converted_function(FArg&& f_, AllConverters&&... converters)
         : tuple_t(std::forward<AllConverters>(converters)...)
@@ -276,7 +293,7 @@ public:
 
     static int entry_point(lua_State* L) BOOST_NOEXCEPT
     {
-        return entry_point_impl(L, tuple_seq<tuple_t>());
+        return entry_point_impl(L, tuple_seq<tuple_t>(), is_light_t());
     }
 };
 
@@ -306,10 +323,23 @@ public:
     template <typename FunctionWith>
     static void push(lua_State* L, FunctionWith&& f)
     {
-        push_gc_object(L, std::move(f));
+        push_impl(L, std::forward<FunctionWith>(f),
+                  typename type::is_light_t());
         detail::push_function_tag(L, type::is_light);
         lua_pushlightuserdata(L, const_cast<std::type_info*>(&typeid(F)));
         lua_pushcclosure(L, &f.entry_point, 3);
+    }
+
+private:
+    template <typename FunctionWith>
+    static void push_impl(lua_State* L, FunctionWith&& f, std::false_type)
+    {
+        push_gc_object(L, std::move(f));
+    }
+
+    static void push_impl(lua_State* L, type const& f, std::true_type)
+    {
+        lua_pushlightuserdata(L, reinterpret_cast<void*>(f.f));
     }
 };
 
@@ -357,7 +387,8 @@ struct function_converter<FObj<R(Args...)>> {
     static type from_stack(lua_State* L, int idx)
     {
         auto const& fty = function_type(L, idx);
-        if (fty == typeid(type)) {
+        if (*fty.second == typeid(type)) {
+            BOOST_ASSERT(!fty.first);
             stack_balance balance(L);
             BOOST_VERIFY(lua_getupvalue(L, idx, 1));
             BOOST_ASSERT(lua_isuserdata(L, -1));
@@ -367,7 +398,7 @@ struct function_converter<FObj<R(Args...)>> {
 
         // Plain function pointer in Lua? Then construct from it.
         using plainfconv = function_converter<R(*)(Args...)>;
-        if (fty == typeid(typename plainfconv::type))
+        if (*fty.second == typeid(typename plainfconv::type))
             return plainfconv::from_stack(L, idx);
 
         // TODO?: optimization: Before falling back to the pcall lambda,
@@ -408,13 +439,24 @@ struct function_converter<F, typename std::enable_if<
         stack_balance balance(L);
         BOOST_VERIFY(lua_getupvalue(L, idx, 1));
         BOOST_ASSERT(lua_isuserdata(L, -1));
-        return static_cast<converted_function_base<type>*>(
-            lua_touserdata(L, -1))->f;
+        void* ud = lua_touserdata(L, -1);
+        return from_stack_impl(ud, detail::is_plain_function<F>());
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        return function_type(L, idx) == typeid(type);
+        return *function_type(L, idx).second == typeid(type);
+    }
+
+private:
+    static type from_stack_impl(void* ud, std::true_type)
+    {
+        return reinterpret_cast<F>(ud);
+    }
+
+    static type from_stack_impl(void* ud, std::false_type)
+    {
+        return static_cast<converted_function_base<type>*>(ud)->f;
     }
 };
 
