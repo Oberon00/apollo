@@ -61,43 +61,6 @@ from_stack_as_tuple(
         L, i, std::forward<Converters>(convs)...));
 }
 
-
-// Plain function pointer or function object:
-template <typename... Converters, int... Is, typename F>
-auto call_with_stack_args_impl(
-    lua_State* L, F&& f,
-    detail::iseq<Is...>,
-    Converters&&... convs
-) -> decltype(f(unwrap_bound_ref(
-        from_stack_with(std::forward<Converters>(convs), L, Is))...))
-{
-    auto args = from_stack_as_tuple(L, 1, std::forward<Converters>(convs)...);
-    static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
-    return f(unwrap_bound_ref(std::get<Is>(args))...);
-}
-
-// (Const) member function pointer:
-template <
-    typename ThisConverter, typename... Converters, int... Is, typename F>
-auto call_with_stack_args_impl(
-    lua_State* L, F&& f,
-    detail::iseq<Is...>,
-    ThisConverter&& this_conv,
-    Converters&&... convs
-) -> decltype(
-    (unwrap_bound_ref(
-        from_stack_with(std::forward<ThisConverter>(this_conv), L, 1))
-    .*f)(unwrap_bound_ref(
-        from_stack_with(std::forward<Converters>(convs), L, Is))...))
-{
-    int i0;
-    to_type_of<ThisConverter> instance = from_stack_with(
-        this_conv, L, 1, &i0);
-    auto args = from_stack_as_tuple(L, i0, std::forward<Converters>(convs)...);
-    return (unwrap_bound_ref(instance).*f)(
-        unwrap_bound_ref(std::get<Is>(args))...);
-}
-
 // Plain function pointer:
 template <typename R, typename... Args>
 std::tuple<push_converter_for<R>, pull_converter_for<Args>...>
@@ -155,18 +118,50 @@ R return_type_of_impl(R(C::*)(Args...) const);
 template <typename F>
 using return_type_of = decltype(return_type_of_impl(std::declval<F>()));
 
+// Plain function pointer or function object:
+template <typename F, int... Is, typename... Converters>
+typename std::enable_if<!detail::is_mem_fn<F>::value, return_type_of<F>>::type
+call_with_stack_args_impl(
+    lua_State* L, F&& f,
+    detail::iseq<Is...>,
+    Converters&&... convs
+)
+{
+    auto args = from_stack_as_tuple(L, 1, std::forward<Converters>(convs)...);
+    static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
+    return f(unwrap_bound_ref(std::get<Is>(args))...);
+}
+
+// (Const) member function pointer:
+template <
+    typename ThisConverter, typename... Converters, int... Is, typename F>
+typename std::enable_if<detail::is_mem_fn<F>::value, return_type_of<F>>::type
+call_with_stack_args_impl(
+    lua_State* L, F&& f,
+    detail::iseq<Is...>,
+    ThisConverter&& this_conv,
+    Converters&&... convs
+)
+{
+    int i0;
+    to_type_of<ThisConverter> instance = from_stack_with(
+        this_conv, L, 1, &i0);
+    auto args = from_stack_as_tuple(L, i0, std::forward<Converters>(convs)...);
+    return (unwrap_bound_ref(instance).*f)(
+        unwrap_bound_ref(std::get<Is>(args))...);
+}
+
 } // namespace detail
 
 template <typename F, typename... Converters>
-auto call_with_stack_args_with(lua_State* L, F&& f, Converters&&... converters)
-    -> decltype(detail::call_with_stack_args_impl(
-        L, std::forward<F>(f),
-        detail::iseq_n_t<sizeof...(Converters) - detail::is_mem_fn<F>::value>(),
-        std::forward<Converters>(converters)...))
+detail::return_type_of<F> call_with_stack_args_with(
+    lua_State* L, F&& f, Converters&&... converters)
 {
+    auto arg_seq = detail::iseq_n_t
+        <sizeof...(Converters) - detail::is_mem_fn<F>::value>();
     return detail::call_with_stack_args_impl(
         L, std::forward<F>(f),
-        detail::iseq_n_t<sizeof...(Converters) - detail::is_mem_fn<F>::value>(),
+        arg_seq,
         std::forward<Converters>(converters)...);
 }
 
@@ -213,6 +208,7 @@ int call_with_stack_args_and_push_impl(
     lua_State* L, F&& f, std::false_type,
     ResultConverter&& rconverter, Converters&&... converters)
 {
+    (void)rconverter; // Avoid MSVC warning if push is static.
      rconverter.push(L, call_with_stack_args_with(
         L, std::forward<F>(f),
         std::forward<Converters>(converters)...));
@@ -224,9 +220,10 @@ int call_with_stack_args_and_push(
     lua_State* L, F&& f,
     ResultConverter&& rconverter, Converters&&... converters)
 {
+    auto is_void_returning = std::is_void<to_type_of<ResultConverter>>();
     return call_with_stack_args_and_push_impl(
         L, std::forward<F>(f),
-        typename std::is_void<to_type_of<ResultConverter>>::type(),
+        is_void_returning,
         std::forward<ResultConverter>(rconverter),
         std::forward<Converters>(converters)...);
 }
@@ -243,10 +240,13 @@ int call_with_stack_args_and_push_lerror(
         std::forward<Converters>(converters)...);
 }
 
+struct init_fn_tag {}; // To avoid being as for move/copy ctor.
+
 template <typename F>
 struct converted_function_base {
     template <typename FArg>
-    explicit converted_function_base(FArg&& f_): f(f_) {}
+    converted_function_base(FArg&& f_, init_fn_tag)
+        : f(std::forward<FArg>(f_)) {}
     F f;
 };
 
@@ -285,10 +285,14 @@ public:
         && std::is_empty<tuple_t>::value>;
     static bool BOOST_CONSTEXPR_OR_CONST is_light = is_light_t::value;
     
-    template <typename FArg, typename... AllConverters>
-    converted_function(FArg&& f_, AllConverters&&... converters)
+    template <
+        typename FArg,
+        typename = typename std::enable_if<
+            std::is_convertible<FArg, F>::value>::type,
+        typename... AllConverters>
+    explicit converted_function(FArg&& f_, init_fn_tag, AllConverters&&... converters)
         : tuple_t(std::forward<AllConverters>(converters)...)
-        , converted_function_base<F>(std::forward<FArg>(f_))
+        , converted_function_base<F>(std::forward<FArg>(f_), init_fn_tag())
     {}
 
     static int entry_point(lua_State* L) BOOST_NOEXCEPT
@@ -307,10 +311,14 @@ detail::converted_function<
 make_funtion_with(
     F&& f, ResultConverter&& rconv, ArgConverters&&... aconvs)
 {
-    return {
+    return detail::converted_function<
+            typename detail::remove_qualifiers<F>::type,
+            typename detail::remove_qualifiers<ResultConverter>::type,
+            typename detail::remove_qualifiers<ArgConverters>::type...>(
         std::forward<F>(f),
+        detail::init_fn_tag(),
         std::forward<ResultConverter>(rconv),
-        std::forward<ArgConverters>(aconvs)...};
+        std::forward<ArgConverters>(aconvs)...);
 }
 
 template<typename F, typename ResultConverter, typename... Converters>
