@@ -19,7 +19,6 @@
 #include <tuple>
 #include <type_traits>
 #include <typeinfo>
-#include <boost/mpl/and.hpp>
 
 namespace apollo {
 
@@ -29,11 +28,21 @@ std::pair<bool, std::type_info const*> function_type(lua_State* L, int idx);
 bool is_light_function(lua_State* L, int idx);
 void push_function_tag(lua_State* L, bool is_light);
 
+int const
+    fn_upval_fn = 1,
+    fn_upval_tag = 2,
+    fn_upval_type = 3,
+    fn_upval_converters = 4;
+
+
 template <typename Tuple>
 using tuple_seq = iseq_n_t<std::tuple_size<Tuple>::value>;
 
+template<bool... Bs> // http://stackoverflow.com/a/24687161/2128694
+struct bool_and: std::is_same<iseq<Bs...>, iseq<(Bs || true)... >> {};
+
 template <typename... Ts>
-using all_empty = boost::mpl::and_<std::is_empty<Ts>...>;
+struct all_empty: bool_and<std::is_empty<Ts>::value...> {};
 
 inline std::tuple<> from_stack_as_tuple(lua_State*, int)
 {
@@ -242,62 +251,72 @@ int call_with_stack_args_and_push_lerror(
 
 struct init_fn_tag {}; // To avoid being as for move/copy ctor.
 
-template <typename F>
-struct converted_function_base {
-    template <typename FArg>
-    converted_function_base(FArg&& f_, init_fn_tag)
-        : f(std::forward<FArg>(f_)) {}
-    F f;
-};
-
 template <typename F, typename ResultConverter, typename... ArgConverters>
-struct converted_function
-        // Make use of Empty Base Optimization if all converters are empty:
-        : private std::tuple<ResultConverter, ArgConverters...>
-        , public converted_function_base<F>{
-private:
-    using tuple_t = std::tuple<ResultConverter, ArgConverters...>;
-    using this_t = converted_function<F, ResultConverter, ArgConverters...>;
-
-    template <int... Is>
-    static int entry_point_impl(
-        lua_State* L, iseq<Is...>, std::false_type) BOOST_NOEXCEPT
-    {
-        auto& this_ = *static_cast<this_t*>(
-            lua_touserdata(L, lua_upvalueindex(1)));
-        return call_with_stack_args_and_push_lerror(
-            L, this_.f, std::get<Is>(this_)...);
-    }
-
-    template <int... Is>
-    static int entry_point_impl(
-        lua_State* L, iseq<Is...>, std::true_type) BOOST_NOEXCEPT
-    {
-        auto f = reinterpret_cast<F>(
-            lua_touserdata(L, lua_upvalueindex(1)));
-        return call_with_stack_args_and_push_lerror(
-            L, f, ResultConverter(), default_constructed<ArgConverters>()...);
-    }
-
+struct converted_function {
 public:
-    using is_light_t = std::integral_constant<bool,
-        detail::is_plain_function<F>::value
-        && std::is_empty<tuple_t>::value>;
-    static bool BOOST_CONSTEXPR_OR_CONST is_light = is_light_t::value;
-    
+    using stores_converters_t = std::integral_constant<bool,
+        !all_empty<ResultConverter, ArgConverters...>::value>;
+    static bool const stores_converters = stores_converters_t::value;
+    using fn_is_light_t = std::integral_constant<bool,
+        detail::is_plain_function<F>::value>;
+    static bool const fn_is_light = fn_is_light_t::value;
+
+    using tuple_t = std::tuple<ResultConverter, ArgConverters...>;
+
+    tuple_t converters;
+    F f;
+
     template <
         typename FArg,
         typename = typename std::enable_if<
             std::is_convertible<FArg, F>::value>::type,
         typename... AllConverters>
     explicit converted_function(FArg&& f_, init_fn_tag, AllConverters&&... converters)
-        : tuple_t(std::forward<AllConverters>(converters)...)
-        , converted_function_base<F>(std::forward<FArg>(f_), init_fn_tag())
+        : converters(std::forward<AllConverters>(converters)...)
+        , f(std::forward<FArg>(f_))
     {}
 
     static int entry_point(lua_State* L) BOOST_NOEXCEPT
     {
-        return entry_point_impl(L, tuple_seq<tuple_t>(), is_light_t());
+        return entry_point_impl(L, fn_is_light_t());
+    }
+
+private:
+
+    template <int... Is> // No stored convertes:
+    static int call_with_stored_converters(
+        lua_State* L, F& f, iseq<Is...>, std::false_type)
+    {
+        return call_with_stack_args_and_push_lerror(
+            L, f, ResultConverter(), default_constructed<ArgConverters>()...);
+    }
+
+    template <int... Is> // Stored convertes:
+    static int call_with_stored_converters(
+        lua_State* L, F& f, iseq<Is...>, std::true_type)
+    {
+        auto& stored_converters = *static_cast<tuple_t*>(
+            lua_touserdata(L, lua_upvalueindex(fn_upval_converters)));
+        return call_with_stack_args_and_push_lerror(
+            L, f, std::get<Is>(stored_converters)...);
+    }
+
+    // Non-light function:
+    static int entry_point_impl(lua_State* L, std::false_type) BOOST_NOEXCEPT
+    {
+        auto& f = *static_cast<F*>(
+            lua_touserdata(L, lua_upvalueindex(fn_upval_fn)));
+        return call_with_stored_converters(
+            L, f, tuple_seq<tuple_t>(), stores_converters_t());
+    }
+
+    // Light function:
+    static int entry_point_impl(lua_State* L, std::true_type) BOOST_NOEXCEPT
+    {
+        auto f = reinterpret_cast<F>(
+            lua_touserdata(L, lua_upvalueindex(fn_upval_fn)));
+        return call_with_stored_converters(
+            L, f, tuple_seq<tuple_t>(), stores_converters_t());
     }
 };
 
@@ -328,26 +347,39 @@ struct converter<detail::converted_function<F, ResultConverter, Converters...>>
 public:
     using type = detail::converted_function<F, ResultConverter, Converters...>;
 
-    template <typename FunctionWith>
-    static void push(lua_State* L, FunctionWith&& f)
+    static void push(lua_State* L, type&& f)
     {
-        push_impl(L, std::forward<FunctionWith>(f),
-                  typename type::is_light_t());
-        detail::push_function_tag(L, type::is_light);
+        push_impl(L, std::move(f.f), typename type::fn_is_light_t());
+        static_assert(detail::fn_upval_fn == 1, "");
+        detail::push_function_tag(L, type::fn_is_light);
+        static_assert(detail::fn_upval_tag == 2, "");
         lua_pushlightuserdata(L, const_cast<std::type_info*>(&typeid(F)));
-        lua_pushcclosure(L, &f.entry_point, 3);
+        static_assert(detail::fn_upval_type == 3, "");
+        int nups = 3;
+#ifdef BOOST_MSVC
+#   pragma warning(push)
+#   pragma warning(disable:4127) // Conditional expression is constant.
+#endif
+        if (type::stores_converters) {
+#ifdef BOOST_MSVC
+#   pragma warning(pop)
+#endif
+            push_gc_object(L, std::move(f.converters));
+            static_assert(detail::fn_upval_converters == 4, "");
+            ++nups;
+        }
+        lua_pushcclosure(L, &f.entry_point, nups);
     }
 
 private:
-    template <typename FunctionWith>
-    static void push_impl(lua_State* L, FunctionWith&& f, std::false_type)
+    static void push_impl(lua_State* L, F&& f, std::false_type)
     {
         push_gc_object(L, std::move(f));
     }
 
-    static void push_impl(lua_State* L, type const& f, std::true_type)
+    static void push_impl(lua_State* L, F const& f, std::true_type)
     {
-        lua_pushlightuserdata(L, reinterpret_cast<void*>(f.f));
+        lua_pushlightuserdata(L, reinterpret_cast<void*>(f));
     }
 };
 
@@ -398,10 +430,9 @@ struct function_converter<FObj<R(Args...)>> {
         if (*fty.second == typeid(type)) {
             BOOST_ASSERT(!fty.first);
             stack_balance balance(L);
-            BOOST_VERIFY(lua_getupvalue(L, idx, 1));
+            BOOST_VERIFY(lua_getupvalue(L, idx, detail::fn_upval_fn));
             BOOST_ASSERT(lua_isuserdata(L, -1));
-            return static_cast<converted_function_base<type>*>(
-                lua_touserdata(L, -1))->f;
+            return *static_cast<type*>(lua_touserdata(L, -1));
         }
 
         // Plain function pointer in Lua? Then construct from it.
@@ -442,13 +473,21 @@ struct function_converter<F, typename std::enable_if<
         std::is_member_function_pointer<F>::value>::type>
 {
     using type = F;
-    static type from_stack(lua_State* L, int idx)
+
+    using is_plain = detail::is_plain_function<F>;
+
+    static typename std::conditional<
+        detail::is_plain_function<F>::value, F, F&>::type
+    from_stack(lua_State* L, int idx)
     {
         stack_balance balance(L);
-        BOOST_VERIFY(lua_getupvalue(L, idx, 1));
+        bool const is_light =
+               is_plain::value
+            && detail::is_light_function(L, idx);
+        BOOST_VERIFY(lua_getupvalue(L, idx, fn_upval_fn));
         BOOST_ASSERT(lua_isuserdata(L, -1));
         void* ud = lua_touserdata(L, -1);
-        return from_stack_impl(ud, detail::is_plain_function<F>());
+        return from_stack_impl(is_light, ud, is_plain());
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
@@ -457,14 +496,18 @@ struct function_converter<F, typename std::enable_if<
     }
 
 private:
-    static type from_stack_impl(void* ud, std::true_type)
+    // Plain function can be light:
+    static F from_stack_impl(bool is_light, void* ud, std::true_type)
     {
-        return reinterpret_cast<F>(ud);
+        if (is_light)
+            return reinterpret_cast<F>(ud);
+        return from_stack_impl(is_light, ud, std::false_type());
     }
 
-    static type from_stack_impl(void* ud, std::false_type)
+    // Non-plain functions are never light:
+    static F& from_stack_impl(bool, void* ud, std::false_type)
     {
-        return static_cast<converted_function_base<type>*>(ud)->f;
+        return *static_cast<F*>(ud);
     }
 };
 
