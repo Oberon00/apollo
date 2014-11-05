@@ -24,9 +24,8 @@ namespace apollo {
 
 namespace detail {
 
-std::pair<bool, std::type_info const*> function_type(lua_State* L, int idx);
-bool is_light_function(lua_State* L, int idx);
-void push_function_tag(lua_State* L, bool is_light);
+std::type_info const& function_type(lua_State* L, int idx);
+void push_function_tag(lua_State* L);
 
 int const
     fn_upval_fn = 1,
@@ -351,7 +350,7 @@ public:
     {
         push_impl(L, std::move(f.f), typename type::fn_is_light_t());
         static_assert(detail::fn_upval_fn == 1, "");
-        detail::push_function_tag(L, type::fn_is_light);
+        detail::push_function_tag(L);
         static_assert(detail::fn_upval_tag == 2, "");
         lua_pushlightuserdata(L, const_cast<std::type_info*>(&typeid(F)));
         static_assert(detail::fn_upval_type == 3, "");
@@ -427,17 +426,16 @@ struct function_converter<FObj<R(Args...)>> {
     static type from_stack(lua_State* L, int idx)
     {
         auto const& fty = function_type(L, idx);
-        if (*fty.second == typeid(type)) {
-            BOOST_ASSERT(!fty.first);
+        if (fty == typeid(type)) {
             stack_balance balance(L);
             BOOST_VERIFY(lua_getupvalue(L, idx, detail::fn_upval_fn));
-            BOOST_ASSERT(lua_isuserdata(L, -1));
+            BOOST_ASSERT(lua_type(L, -1) == LUA_TUSERDATA); // Not light!
             return *static_cast<type*>(lua_touserdata(L, -1));
         }
 
         // Plain function pointer in Lua? Then construct from it.
         using plainfconv = function_converter<R(*)(Args...)>;
-        if (*fty.second == typeid(typename plainfconv::type))
+        if (fty == typeid(typename plainfconv::type))
             return plainfconv::from_stack(L, idx);
 
         // TODO?: optimization: Before falling back to the pcall lambda,
@@ -481,18 +479,18 @@ struct function_converter<F, typename std::enable_if<
     from_stack(lua_State* L, int idx)
     {
         stack_balance balance(L);
-        bool const is_light =
-               is_plain::value
-            && detail::is_light_function(L, idx);
         BOOST_VERIFY(lua_getupvalue(L, idx, fn_upval_fn));
         BOOST_ASSERT(lua_isuserdata(L, -1));
+        bool const is_light =
+               is_plain::value
+            && lua_islightuserdata(L, -1);
         void* ud = lua_touserdata(L, -1);
         return from_stack_impl(is_light, ud, is_plain());
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        return *function_type(L, idx).second == typeid(type);
+        return function_type(L, idx) == typeid(type);
     }
 
 private:
