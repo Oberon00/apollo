@@ -111,7 +111,7 @@ private:
     static F from_stack_impl(bool is_light, void* ud, std::true_type)
     {
         if (is_light)
-            return reinterpret_cast<F>(ud);
+            return reinterpret_cast<light_function_holder<F>&>(ud).f;
         return from_stack_impl(is_light, ud, std::false_type());
     }
 

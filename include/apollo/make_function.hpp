@@ -19,6 +19,11 @@ int const
     fn_upval_type = 3,
     fn_upval_converters = 4;
 
+template <typename F>
+struct light_function_holder {
+    F f;
+};
+
 // void-returning f
 template <typename F, typename ResultConverter, typename... Converters>
 int call_with_stack_args_and_push_impl(
@@ -78,7 +83,8 @@ public:
         !all_empty<ResultConverter, ArgConverters...>::value>;
     static bool const stores_converters = stores_converters_t::value;
     using fn_is_light_t = std::integral_constant<bool,
-        detail::is_plain_function<F>::value>;
+        (is_plain_function<F>::value || is_mem_fn<F>::value)
+        && sizeof(light_function_holder<F>) <= sizeof(void*)>;
     static bool const fn_is_light = fn_is_light_t::value;
 
     using tuple_t = std::tuple<ResultConverter, ArgConverters...>;
@@ -133,8 +139,8 @@ private:
     // Light function:
     static int entry_point_impl(lua_State* L, std::true_type) BOOST_NOEXCEPT
     {
-        auto f = reinterpret_cast<F>(
-            lua_touserdata(L, lua_upvalueindex(fn_upval_fn)));
+        auto voidholder = lua_touserdata(L, lua_upvalueindex(fn_upval_fn));
+        auto f = reinterpret_cast<light_function_holder<F>&>(voidholder).f;
         return call_with_stored_converters(
             L, f, tuple_seq<tuple_t>(), stores_converters_t());
     }
@@ -189,14 +195,17 @@ public:
     }
 
 private:
+    // Nonlight function
     static void push_impl(lua_State* L, F&& f, std::false_type)
     {
         push_gc_object(L, std::move(f));
     }
 
+    // Light function
     static void push_impl(lua_State* L, F const& f, std::true_type)
     {
-        lua_pushlightuserdata(L, reinterpret_cast<void*>(f));
+        detail::light_function_holder<F> holder{f};
+        lua_pushlightuserdata(L, reinterpret_cast<void*&>(holder));
     }
 };
 
