@@ -91,7 +91,7 @@ public:
         typename = typename std::enable_if<
             std::is_convertible<FArg, F>::value>::type,
         typename... AllConverters>
-    explicit converted_function(FArg&& f_, init_fn_tag, AllConverters&&... converters)
+    converted_function(FArg&& f_, init_fn_tag, AllConverters&&... converters)
         : converters(std::forward<AllConverters>(converters)...)
         , f(std::forward<FArg>(f_))
     {}
@@ -150,14 +150,11 @@ detail::converted_function<
 make_funtion_with(
     F&& f, ResultConverter&& rconv, ArgConverters&&... aconvs)
 {
-    return detail::converted_function<
-            typename detail::remove_qualifiers<F>::type,
-            typename detail::remove_qualifiers<ResultConverter>::type,
-            typename detail::remove_qualifiers<ArgConverters>::type...>(
+    return {
         std::forward<F>(f),
         detail::init_fn_tag(),
         std::forward<ResultConverter>(rconv),
-        std::forward<ArgConverters>(aconvs)...);
+        std::forward<ArgConverters>(aconvs)...};
 }
 
 template<typename F, typename ResultConverter, typename... Converters>
