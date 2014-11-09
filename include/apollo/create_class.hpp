@@ -1,11 +1,12 @@
 #ifndef APOLLO_CREATE_CLASS_HPP_INCLUDED
 #define APOLLO_CREATE_CLASS_HPP_INCLUDED APOLLO_CREATE_CLASS_HPP_INCLUDED
 
+#include <apollo/builtin_types.hpp>
 #include <apollo/class.hpp>
 #include <apollo/create_table.hpp>
 #include <apollo/function.hpp>
-#include <apollo/raw_function.hpp>
 #include <apollo/implicit_ctor.hpp>
+#include <apollo/raw_function.hpp>
 
 namespace apollo {
 

@@ -1,4 +1,5 @@
 set(apollo_HDRS_PUBLIC
+    "builtin_types.hpp"
     "class.hpp"
     "create_class.hpp"
     "config.hpp"
@@ -43,9 +44,9 @@ prepend_to_all(apollo_HDRS_DETAIL "../include/apollo/detail/")
 source_group("Internal Headers" FILES ${apollo_HDRS_DETAIL})
 set(apollo_HDRS ${apollo_HDRS_PUBLIC} ${apollo_HDRS_DETAIL})
 set(apollo_SRCS
+    "builtin_types.cpp"
     "class.cpp"
     "class_info.cpp"
-    "converters.cpp"
     "function.cpp"
     "lapi.cpp"
     "reference.cpp"
