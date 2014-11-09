@@ -2,6 +2,10 @@
 #include <boost/assert.hpp>
 #include <apollo/class.hpp>
 
+namespace {
+    struct table_tag {};
+}
+
 std::type_info const& apollo::lbuiltin_typeid(int id)
 {
     switch (id) {
@@ -12,7 +16,7 @@ std::type_info const& apollo::lbuiltin_typeid(int id)
         case LUA_TNONE: return typeid(void);
         case LUA_TNUMBER: return typeid(lua_Number);
         case LUA_TSTRING: return typeid(char const*);
-        case LUA_TTABLE: return typeid(char const*);
+        case LUA_TTABLE: return typeid(table_tag);
         case LUA_TTHREAD: return typeid(lua_State*);
         case LUA_TUSERDATA: return typeid(void*);
     }
