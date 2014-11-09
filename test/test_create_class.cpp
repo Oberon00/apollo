@@ -1,4 +1,4 @@
-#include <apollo/class_utility.hpp>
+#include <apollo/create_class.hpp>
 
 #include "test_prefix.hpp"
 

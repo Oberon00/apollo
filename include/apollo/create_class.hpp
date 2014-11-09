@@ -1,5 +1,5 @@
-#ifndef APOLLO_CLASS_UTILITY_HPP_INCLUDED
-#define APOLLO_CLASS_UTILITY_HPP_INCLUDED APOLLO_CLASS_UTILITY_HPP_INCLUDED
+#ifndef APOLLO_CREATE_CLASS_HPP_INCLUDED
+#define APOLLO_CREATE_CLASS_HPP_INCLUDED APOLLO_CREATE_CLASS_HPP_INCLUDED
 
 #include <apollo/class.hpp>
 #include <apollo/create_table.hpp>
@@ -135,4 +135,4 @@ detail::class_creator<T> export_class(lua_State* L)
 
 } // namespace apollo
 
-#endif // APOLLO_CLASS_UTILITY_HPP_INCLUDED
+#endif // APOLLO_CREATE_CLASS_HPP_INCLUDED

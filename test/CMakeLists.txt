@@ -5,7 +5,7 @@ target_link_libraries(testutil
     apollo ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
 set (TESTS
-    class_utility
+    create_class
     create_table
     function_converters
     implicit_ctor
