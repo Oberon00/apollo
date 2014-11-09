@@ -24,6 +24,15 @@ struct light_function_holder {
     F f;
 };
 
+template <typename F>
+struct light_function_traits
+{
+     using ok_t = std::integral_constant<bool,
+        (is_plain_function<F>::value || is_mem_fn<F>::value)
+        && sizeof(light_function_holder<F>) <= sizeof(void*)>;
+    static bool const ok = ok_t::value;
+};
+
 // void-returning f
 template <typename F, typename ResultConverter, typename... Converters>
 int call_with_stack_args_and_push_impl(
@@ -82,10 +91,6 @@ public:
     using stores_converters_t = std::integral_constant<bool,
         !all_empty<ResultConverter, ArgConverters...>::value>;
     static bool const stores_converters = stores_converters_t::value;
-    using fn_is_light_t = std::integral_constant<bool,
-        (is_plain_function<F>::value || is_mem_fn<F>::value)
-        && sizeof(light_function_holder<F>) <= sizeof(void*)>;
-    static bool const fn_is_light = fn_is_light_t::value;
 
     using tuple_t = std::tuple<ResultConverter, ArgConverters...>;
 
@@ -104,7 +109,7 @@ public:
 
     static int entry_point(lua_State* L) BOOST_NOEXCEPT
     {
-        return entry_point_impl(L, fn_is_light_t());
+        return entry_point_impl(L, typename light_function_traits<F>::ok_t());
     }
 
 private:
@@ -172,7 +177,8 @@ public:
 
     static void push(lua_State* L, type&& f)
     {
-        push_impl(L, std::move(f.f), typename type::fn_is_light_t());
+        push_impl(L, std::move(f.f),
+            typename detail::light_function_traits<F>::ok_t());
         static_assert(detail::fn_upval_fn == 1, "");
         detail::push_function_tag(L);
         static_assert(detail::fn_upval_tag == 2, "");

@@ -85,20 +85,15 @@ struct function_converter<F, typename std::enable_if<
 {
     using type = F;
 
-    using is_plain = detail::is_plain_function<F>;
+    using is_light = typename light_function_traits<F>::ok_t;
 
-    static typename std::conditional<
-        detail::is_plain_function<F>::value, F, F&>::type
-    from_stack(lua_State* L, int idx)
+    static F from_stack(lua_State* L, int idx)
     {
         stack_balance balance(L);
         BOOST_VERIFY(lua_getupvalue(L, idx, fn_upval_fn));
         BOOST_ASSERT(lua_isuserdata(L, -1));
-        bool const is_light =
-               is_plain::value
-            && lua_islightuserdata(L, -1);
         void* ud = lua_touserdata(L, -1);
-        return from_stack_impl(is_light, ud, is_plain());
+        return from_stack_impl(ud, is_light());
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
@@ -107,16 +102,14 @@ struct function_converter<F, typename std::enable_if<
     }
 
 private:
-    // Plain function can be light:
-    static F from_stack_impl(bool is_light, void* ud, std::true_type)
+    // Light function:
+    static F from_stack_impl(void* ud, std::true_type)
     {
-        if (is_light)
-            return reinterpret_cast<light_function_holder<F>&>(ud).f;
-        return from_stack_impl(is_light, ud, std::false_type());
+        return reinterpret_cast<light_function_holder<F>&>(ud).f;
     }
 
-    // Non-plain functions are never light:
-    static F& from_stack_impl(bool, void* ud, std::false_type)
+    // Non-light function:
+    static F& from_stack_impl(void* ud, std::false_type)
     {
         return *static_cast<F*>(ud);
     }
