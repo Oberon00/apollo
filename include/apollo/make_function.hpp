@@ -91,8 +91,8 @@ public:
         typename = typename std::enable_if<
             std::is_convertible<FArg, F>::value>::type,
         typename... AllConverters>
-    converted_function(FArg&& f_, init_fn_tag, AllConverters&&... converters)
-        : converters(std::forward<AllConverters>(converters)...)
+    converted_function(FArg&& f_, init_fn_tag, AllConverters&&... converters_)
+        : converters(std::forward<AllConverters>(converters_)...)
         , f(std::forward<FArg>(f_))
     {}
 
