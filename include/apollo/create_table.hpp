@@ -127,6 +127,7 @@ struct converter<detail::table_setter>
         static_assert(!std::is_same<T, T>::value, // Make dependent.
             "Use subtable() instead of nested"
             " calls to newtable/rawset_table/etc.");
+        return {}; // Silence gcc's -Wreturn-type
     }
 
     template <typename T>
@@ -134,6 +135,7 @@ struct converter<detail::table_setter>
         static_assert(!std::is_same<T, T>::value, // Make dependent.
             "Use subtable() instead of nested"
             " calls to newtable/rawset_table/etc.");
+        return {nullptr, 0}; // Silence gcc's -Wreturn-type
     }
 };
 

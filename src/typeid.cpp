@@ -19,9 +19,11 @@ std::type_info const& apollo::lbuiltin_typeid(int id)
         case LUA_TTABLE: return typeid(table_tag);
         case LUA_TTHREAD: return typeid(lua_State*);
         case LUA_TUSERDATA: return typeid(void*);
+
+        default:
+            BOOST_ASSERT_MSG(false, "id is not a valid lua type id");
+            return typeid(void);
     }
-    BOOST_ASSERT_MSG(false, "id is not a valid lua type id");
-    return typeid(void);
 }
 
 std::type_info const& apollo::ltypeid(lua_State* L, int idx)

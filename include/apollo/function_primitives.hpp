@@ -127,6 +127,7 @@ call_with_stack_args_impl(
     to_type_of<ThisConverter> instance = from_stack_with(
         this_conv, L, 1, &i0);
     auto args = from_stack_as_tuple(L, i0, std::forward<Converters>(convs)...);
+    (void)args; // Silence gcc's -Wunused-but-set-variable
     return (unwrap_bound_ref(instance).*f)(
         unwrap_bound_ref(std::get<Is>(args))...);
 }

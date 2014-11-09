@@ -14,7 +14,7 @@ class registry_reference {
 public:
     registry_reference();
     explicit registry_reference(
-        lua_State* L, int idx = -1, ref_mode mode = ref_mode::move);
+        lua_State* L_, int idx = -1, ref_mode mode = ref_mode::move);
 
     ~registry_reference();
     registry_reference(registry_reference const& rhs);
@@ -27,7 +27,7 @@ public:
     bool empty() const;
     void reset(int idx, ref_mode mode = ref_mode::move);
     void reset(
-        lua_State* L = nullptr, int idx = 0,
+        lua_State* L_ = nullptr, int idx = 0,
         ref_mode mode = ref_mode::move);
     void push() const;
 

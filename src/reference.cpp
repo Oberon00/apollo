@@ -11,11 +11,11 @@ registry_reference::registry_reference()
 {
 }
 
-registry_reference::registry_reference(lua_State* L, int idx, ref_mode mode)
+registry_reference::registry_reference(lua_State* L_, int idx, ref_mode mode)
     : m_L(nullptr)
     , m_ref(LUA_NOREF)
 {
-    reset(L, idx, mode);
+    reset(L_, idx, mode);
 }
 
 
@@ -92,12 +92,12 @@ void registry_reference::reset(int idx, ref_mode mode)
     }
 }
 
-void registry_reference::reset(lua_State* L, int idx, ref_mode mode)
+void registry_reference::reset(lua_State* L_, int idx, ref_mode mode)
 {
     if (m_L)
         luaL_unref(m_L, LUA_REGISTRYINDEX, m_ref);
-    if (L) {
-        m_L = L;
+    if (L_) {
+        m_L = L_;
         reset(idx, mode);
     } else {
         BOOST_ASSERT(idx == 0);
