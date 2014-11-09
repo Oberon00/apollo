@@ -1,6 +1,7 @@
 #include <apollo/implicit_ctor.hpp>
 #include <apollo/lapi.hpp>
 #include <apollo/function.hpp>
+#include <apollo/raw_function.hpp>
 
 #include "test_prefix.hpp"
 

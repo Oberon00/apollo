@@ -28,6 +28,13 @@ struct failure_t;
 template <typename T>
 using has_failed = std::is_same<T, failure_t>;
 
+// Workaround MSVC not being able to call ctors in pack expansions:
+template <typename T>
+T default_constructed()
+{
+    return {};
+}
+
 }} // namespace apollo::detail
 
 #endif // APOLLO_DETAIL_META_UTIL_HPP_INCLUDED

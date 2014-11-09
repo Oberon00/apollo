@@ -1,6 +1,7 @@
 #include <boost/function.hpp>
 #include <boost/test/test_tools.hpp>
 #include <apollo/function.hpp>
+#include <apollo/raw_function.hpp>
 #include <string>
 
 static unsigned g_n_calls = 0;
