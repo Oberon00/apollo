@@ -10,6 +10,20 @@
 
 namespace apollo {
 
+struct raw_function {
+    /* implicit */ BOOST_CONSTEXPR
+        raw_function(lua_CFunction f_) BOOST_NOEXCEPT
+        : f(f_) {}
+    /* implicit */ BOOST_CONSTEXPR
+        operator lua_CFunction() const BOOST_NOEXCEPT
+    {
+        return f;
+    }
+
+    lua_CFunction f;
+};
+
+
 // Number converter //
 template<typename T>
 struct converter<T, typename std::enable_if<
