@@ -85,7 +85,7 @@ struct function_converter<F, typename std::enable_if<
 {
     using type = F;
 
-    using is_light = typename light_function_traits<F>::ok_t;
+    using is_light = is_light_function<F>;
 
     static F from_stack(lua_State* L, int idx)
     {
