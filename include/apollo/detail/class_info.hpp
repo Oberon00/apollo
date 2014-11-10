@@ -82,9 +82,6 @@ using class_info_map = std::unordered_map<std::type_index, class_info>;
 void* cast_class(void* obj, class_info const& cls, class_info const& to);
 unsigned n_class_conversion_steps(class_info const& from, class_info const& to);
 
-boost::any construct_implicit(class_info const& cls, lua_State* L, int idx);
-
-
 class_info_map& registered_classes(lua_State* L);
 class_info* registered_class_opt(lua_State* L, std::type_info const& type);
 
