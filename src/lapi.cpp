@@ -6,15 +6,6 @@
 #include <boost/exception/info.hpp>
 #include <boost/throw_exception.hpp>
 
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-// warning C4512: assignment operator could not be generated
-// Issued both in the Boost header and in the code using BOOST_SCOPE_EXIT.
-#   pragma warning(disable:4512)
-
-#endif
-#include <boost/scope_exit.hpp>
-
 
 namespace apollo {
 
@@ -54,17 +45,18 @@ void pcall(lua_State* L, int nargs, int nresults)
     int const msgh = push_error_msg_handler(L) ? lua_absindex(L, -nargs - 2) : 0;
     if (msgh)
         lua_insert(L, msgh); // move beneath arguments and function
-    BOOST_SCOPE_EXIT(&msgh, &L) {
+
+    auto cleanup = [L, msgh]() -> void {
         if (msgh)
             lua_remove(L, msgh);
+    };
+        
+    try { pcall(L, nargs, nresults, msgh); }
+    catch (...) {
+        cleanup();
+        throw;
     }
-    BOOST_SCOPE_EXIT_END
-
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
-
-    pcall(L, nargs, nresults, msgh);
+    cleanup();
 }
 
 } // namespace apollo
