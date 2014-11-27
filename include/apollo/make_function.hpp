@@ -83,13 +83,61 @@ int call_with_stack_args_and_push_lerror(
 struct init_fn_tag {}; // To avoid being as for move/copy ctor.
 
 template <typename F, typename ResultConverter, typename... ArgConverters>
-struct converted_function {
-public:
+struct function_dipatcher {
     using stores_converters_t = std::integral_constant<bool,
         !all_empty<ResultConverter, ArgConverters...>::value>;
     static bool const stores_converters = stores_converters_t::value;
 
     using tuple_t = std::tuple<ResultConverter, ArgConverters...>;
+
+    static int call(lua_State* L, F& f, int cvt_up_idx) BOOST_NOEXCEPT
+    {
+        return call_with_stored_converters(
+            L, f, tuple_seq<tuple_t>(), cvt_up_idx, stores_converters_t());
+    }
+
+    static tuple_t* push_converters(lua_State* L, tuple_t&& converters)
+    {
+#ifdef BOOST_MSVC
+#   pragma warning(push)
+#   pragma warning(disable:4127) // Conditional expression is constant.
+#endif
+        if (stores_converters) {
+#ifdef BOOST_MSVC
+#   pragma warning(pop)
+#endif
+            return push_gc_object(L, std::move(converters));
+        }
+        return nullptr;
+    }
+
+private:
+    template <int... Is> // No stored convertes:
+    static int call_with_stored_converters(
+        lua_State* L, F& f, iseq<Is...>, int, std::false_type)
+    {
+        return call_with_stack_args_and_push_lerror(
+            L, f, ResultConverter(), default_constructed<ArgConverters>()...);
+    }
+
+    template <int... Is> // Stored convertes:
+    static int call_with_stored_converters(
+        lua_State* L, F& f, iseq<Is...>, int up_idx, std::true_type)
+    {
+        auto& stored_converters = *static_cast<tuple_t*>(
+            lua_touserdata(L, lua_upvalueindex(up_idx)));
+        return call_with_stack_args_and_push_lerror(
+            L, f, std::get<Is>(stored_converters)...);
+    }
+};
+
+template <typename F, typename ResultConverter, typename... ArgConverters>
+struct converted_function {
+public:
+
+    using dispatch_t = function_dipatcher<
+        F, ResultConverter, ArgConverters...>;
+    using tuple_t = typename dispatch_t::tuple_t;
 
     tuple_t converters;
     F f;
@@ -111,31 +159,12 @@ public:
 
 private:
 
-    template <int... Is> // No stored convertes:
-    static int call_with_stored_converters(
-        lua_State* L, F& f, iseq<Is...>, std::false_type)
-    {
-        return call_with_stack_args_and_push_lerror(
-            L, f, ResultConverter(), default_constructed<ArgConverters>()...);
-    }
-
-    template <int... Is> // Stored convertes:
-    static int call_with_stored_converters(
-        lua_State* L, F& f, iseq<Is...>, std::true_type)
-    {
-        auto& stored_converters = *static_cast<tuple_t*>(
-            lua_touserdata(L, lua_upvalueindex(fn_upval_converters)));
-        return call_with_stack_args_and_push_lerror(
-            L, f, std::get<Is>(stored_converters)...);
-    }
-
     // Non-light function:
     static int entry_point_impl(lua_State* L, std::false_type) BOOST_NOEXCEPT
     {
         auto& f = *static_cast<F*>(
             lua_touserdata(L, lua_upvalueindex(fn_upval_fn)));
-        return call_with_stored_converters(
-            L, f, tuple_seq<tuple_t>(), stores_converters_t());
+        return call(L, f);
     }
 
     // Light function:
@@ -143,10 +172,15 @@ private:
     {
         auto voidholder = lua_touserdata(L, lua_upvalueindex(fn_upval_fn));
         auto f = reinterpret_cast<light_function_holder<F>&>(voidholder).f;
-        return call_with_stored_converters(
-            L, f, tuple_seq<tuple_t>(), stores_converters_t());
+        return call(L, f);
+    }
+
+    static int call(lua_State* L, F& f) BOOST_NOEXCEPT
+    {
+        return dispatch_t::call(L, f, fn_upval_fn);
     }
 };
+
 
 } // namespace detail
 
@@ -180,19 +214,12 @@ public:
         static_assert(detail::fn_upval_tag == 2, "");
         lua_pushlightuserdata(L, const_cast<std::type_info*>(&typeid(F)));
         static_assert(detail::fn_upval_type == 3, "");
+
         int nups = 3;
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-#   pragma warning(disable:4127) // Conditional expression is constant.
-#endif
-        if (type::stores_converters) {
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
-            push_gc_object(L, std::move(f.converters));
-            static_assert(detail::fn_upval_converters == 4, "");
+        static_assert(detail::fn_upval_converters == 4, "");
+        if (type::dispatch_t::push_converters(L, std::move(f.converters)))
             ++nups;
-        }
+
         lua_pushcclosure(L, &f.entry_point, nups);
     }
 
