@@ -28,9 +28,8 @@ struct failure_t;
 template <typename T>
 using has_failed = std::is_same<T, failure_t>;
 
-// Workaround MSVC not being able to call ctors in pack expansions:
 template <typename T>
-T default_constructed()
+typename std::remove_reference<T>::type default_constructed()
 {
     return {};
 }
