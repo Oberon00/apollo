@@ -177,7 +177,7 @@ private:
 
     static int call(lua_State* L, F& f) BOOST_NOEXCEPT
     {
-        return dispatch_t::call(L, f, fn_upval_fn);
+        return dispatch_t::call(L, f, fn_upval_converters);
     }
 };
 
