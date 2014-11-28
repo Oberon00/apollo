@@ -90,7 +90,12 @@ struct function_dipatcher {
 
     using tuple_t = std::tuple<ResultConverter, ArgConverters...>;
 
-    static int call(lua_State* L, F& f, int cvt_up_idx) BOOST_NOEXCEPT
+    static int call(
+        lua_State* L,
+        typename std::conditional<
+            is_plain_function<F>::value || is_mem_fn<F>::value,
+            F, F&>::type f,
+        int cvt_up_idx) BOOST_NOEXCEPT
     {
         return call_with_stored_converters(
             L, f, tuple_seq<tuple_t>(), cvt_up_idx, stores_converters_t());
