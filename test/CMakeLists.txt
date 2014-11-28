@@ -7,6 +7,7 @@ target_link_libraries(testutil
 set (TESTS
     create_class
     create_table
+    default_argument
     function_converters
     implicit_ctor
     lua_utils

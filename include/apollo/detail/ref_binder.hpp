@@ -10,6 +10,14 @@ class ref_binder {
 public:
     using bound_t = T&;
 
+    explicit ref_binder(T& v)
+        : m_ptr(&v), m_is_owner(false)
+    {}
+
+    ref_binder(T&& v)
+        : m_ptr(new T(std::move(v))), m_is_owner(true)
+    {}
+
     ref_binder(T* ptr, bool is_owner)
         : m_ptr(ptr), m_is_owner(is_owner)
     {}
