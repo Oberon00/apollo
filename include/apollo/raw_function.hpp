@@ -14,23 +14,6 @@ int static_entry_point(lua_State* L) BOOST_NOEXCEPT
         L, FVal, std::move(detail::default_constructed<Converters>())...);
 }
 
-template <typename F, F FVal, typename... Converters, int... Is>
-int light_entry_point_impl(lua_State* L, iseq<Is...>) BOOST_NOEXCEPT
-{
-    using tuple_t = std::tuple<Converters>;
-    auto& stored_converters = *static_cast<tuple_t*>(
-            lua_touserdata(L, lua_upvalueindex(1)));
-    return call_with_stack_args_and_push_lerror(
-        L, FVal, std::get<Is>(stored_converters)...);
-}
-
-template <typename F, F FVal, typename... Converters>
-int light_entry_point(lua_State* L) BOOST_NOEXCEPT
-{
-    return light_entry_point_impl<F, FVal, Converters...>(
-        L, iseq_n_t<sizeof...(Converters)>);
-}
-
 template <
     typename F, F FVal,
     typename ResultConverter, typename... ArgConverters>
@@ -42,9 +25,7 @@ public:
 
     tuple_t converters;
 
-    template <
-        typename FArg,
-        typename... AllConverters>
+    template <typename... AllConverters>
     light_converted_function(init_fn_tag, AllConverters&&... converters_)
         : converters(std::forward<AllConverters>(converters_)...)
     {}
