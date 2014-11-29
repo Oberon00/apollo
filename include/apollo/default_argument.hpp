@@ -30,11 +30,13 @@ public:
         return Base::n_conversion_steps(L, idx);
     }
 
-    typename Base::to_type from_stack(lua_State* L, int idx)
+    typename Base::to_type from_stack(lua_State* L, int idx, int* next_idx)
     {
-        if (lua_isnone(L, idx))
+        if (lua_isnone(L, idx)) {
+            // Do not increase next_idx.
             return static_cast<typename Base::to_type>(m_default);
-        return Base::from_stack(L, idx);
+        }
+        return unchecked_from_stack_with(*static_cast<Base*>(this), L, idx, next_idx);
     }
 };
 
