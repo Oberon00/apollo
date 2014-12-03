@@ -25,6 +25,7 @@ set(apollo_HDRS_DETAIL
     "instance_holder.hpp"
     "integer_seq.hpp"
     "light_key.hpp"
+    "lua_state.hpp"
     "meta_util.hpp"
     "ref_binder.hpp"
     "variadic_pass.hpp"
