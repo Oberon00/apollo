@@ -8,6 +8,8 @@
 
 #include "test_prefix.hpp"
 
+namespace {
+
 static unsigned g_n_calls = 0;
 static unsigned g_n_s_calls = 0;
 static unsigned g_n_i_calls = 0;
@@ -26,7 +28,7 @@ static void proc0()
     ++g_n_calls;
 }
 
-static void proc1(int i)
+/*static*/ void proc1(int i) // MSVC does not allow static fns as template arg.
 {
     BOOST_CHECK_EQUAL(i, 42);
     ++g_n_calls;
@@ -84,12 +86,14 @@ static void check_ambiguous(lua_State* L, int nargs = 0)
     check_call_fails(L, "Ambiguous call", nargs);
 }
 
+} // anonymous namespace
+
 BOOST_AUTO_TEST_CASE(single_overload)
 {
     reset_calls();
     apollo::push(L, apollo::make_overloadset(&proc0));
     apollo::pcall(L, 0, 0);
-    BOOST_CHECK_EQUAL(g_n_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_calls, 1u);
 
     apollo::push(L, apollo::make_overloadset(&proc1));
     lua_pushvalue(L, -1);
@@ -102,14 +106,14 @@ BOOST_AUTO_TEST_CASE(single_overload)
 
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_i_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_i_calls, 1u);
 
     apollo::push(L, apollo::make_overloadset_with(
         apollo::make_function_with(&proc1,
             apollo::push_converter_for<void>(),
             apollo::make_default_arg(42))));
     apollo::pcall(L, 0, 0);
-    BOOST_CHECK_EQUAL(g_n_i_calls, 2);
+    BOOST_CHECK_EQUAL(g_n_i_calls, 2u);
 
     apollo::push(L, apollo::make_overloadset_with(
         apollo::make_function_with(&proc1,
@@ -117,7 +121,7 @@ BOOST_AUTO_TEST_CASE(single_overload)
             apollo::make_default_arg(0xbad))));
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_i_calls, 3);
+    BOOST_CHECK_EQUAL(g_n_i_calls, 3u);
 
 }
 
@@ -129,7 +133,7 @@ BOOST_AUTO_TEST_CASE(light_overload)
             apollo::pull_converter_for<int>())));
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_i_calls, 4);
+    BOOST_CHECK_EQUAL(g_n_i_calls, 4u);
 }
 
 BOOST_AUTO_TEST_CASE(overload_resolution_singlearg)
@@ -143,11 +147,11 @@ BOOST_AUTO_TEST_CASE(overload_resolution_singlearg)
 
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_i_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_i_calls, 1u);
 
     lua_pushliteral(L, "foo");
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_s_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_s_calls, 1u);
 
     check_none_viable(L, 0);
 
@@ -164,16 +168,16 @@ BOOST_AUTO_TEST_CASE(overload_resolution_singlearg)
     lua_pushvalue(L, -1);
 
     apollo::pcall(L, 0, 0);
-    BOOST_CHECK_EQUAL(g_n_i_calls, 2);
+    BOOST_CHECK_EQUAL(g_n_i_calls, 2u);
 
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_i_calls, 3);
+    BOOST_CHECK_EQUAL(g_n_i_calls, 3u);
 
     lua_pushliteral(L, "foo");
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_s_calls, 2); // Should be called.
-    BOOST_CHECK_EQUAL(g_n_i_calls, 3); // Should not be called.
+    BOOST_CHECK_EQUAL(g_n_s_calls, 2u); // Should be called.
+    BOOST_CHECK_EQUAL(g_n_i_calls, 3u); // Should not be called.
 
     lua_pushnil(L);
     check_none_viable(L, 1);
@@ -192,12 +196,12 @@ BOOST_AUTO_TEST_CASE(overload_resolution_2_args)
     lua_pushinteger(L, 42);
     lua_pushliteral(L, "foo");
     apollo::pcall(L, 2, 0);
-    BOOST_CHECK_EQUAL(g_n_is_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_is_calls, 1u);
 
     lua_pushliteral(L, "foo");
     lua_pushinteger(L, 42);
     apollo::pcall(L, 2, 0);
-    BOOST_CHECK_EQUAL(g_n_si_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_si_calls, 1u);
 
     check_none_viable(L, 0);
 
@@ -218,17 +222,17 @@ BOOST_AUTO_TEST_CASE(overload_resolution_2_args)
     lua_pushvalue(L, -1);
 
     apollo::pcall(L, 0, 0);
-    BOOST_CHECK_EQUAL(g_n_is_calls, 2);
+    BOOST_CHECK_EQUAL(g_n_is_calls, 2u);
 
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_is_calls, 3);
+    BOOST_CHECK_EQUAL(g_n_is_calls, 3u);
 
     lua_pushliteral(L, "foo");
     lua_pushinteger(L, 42);
     apollo::pcall(L, 2, 0);
-    BOOST_CHECK_EQUAL(g_n_si_calls, 2); // Should be called.
-    BOOST_CHECK_EQUAL(g_n_is_calls, 3); // Should not be called.
+    BOOST_CHECK_EQUAL(g_n_si_calls, 2u); // Should be called.
+    BOOST_CHECK_EQUAL(g_n_is_calls, 3u); // Should not be called.
 
     lua_pushnil(L);
     lua_pushnil(L);
@@ -244,23 +248,23 @@ BOOST_AUTO_TEST_CASE(mixed_length)
     lua_pushvalue(L, -1);
     lua_pushliteral(L, "foo");
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_s_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_s_calls, 1u);
 
     lua_pushvalue(L, -1);
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 0);
-    BOOST_CHECK_EQUAL(g_n_i_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_i_calls, 1u);
 
     lua_pushvalue(L, -1);
     lua_pushliteral(L, "foo");
     lua_pushinteger(L, 42);
     apollo::pcall(L, 2, 0);
-    BOOST_CHECK_EQUAL(g_n_si_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_si_calls, 1u);
 
     lua_pushinteger(L, 42);
     lua_pushliteral(L, "foo");
     apollo::pcall(L, 2, 0);
-    BOOST_CHECK_EQUAL(g_n_is_calls, 1);
+    BOOST_CHECK_EQUAL(g_n_is_calls, 1u);
 }
 
 BOOST_AUTO_TEST_CASE(ambigous_overload)
