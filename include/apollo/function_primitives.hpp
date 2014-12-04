@@ -14,7 +14,8 @@ namespace apollo {
 namespace detail {
 
 template <typename Tuple>
-using tuple_seq = iseq_n_t<std::tuple_size<Tuple>::value>;
+using tuple_seq = iseq_n_t<
+    std::tuple_size<typename detail::remove_qualifiers<Tuple>::type>::value>;
 
 template<bool... Bs> // http://stackoverflow.com/a/24687161/2128694
 struct bool_and: std::is_same<iseq<Bs...>, iseq<(Bs || true)... >> {};
