@@ -22,21 +22,25 @@ public:
     explicit default_argument(T const& default_)
         : m_default(default_)
     {}
-    
-    static unsigned n_conversion_steps(lua_State* L, int idx)
+
+    unsigned n_conversion_steps(lua_State* L, int idx, int* next_idx) const
     {
-        if (lua_isnone(L, idx))
+        if (lua_isnone(L, idx)) {
+            // Do not increase next_idx.
             return no_conversion - 1;
-        return Base::n_conversion_steps(L, idx);
+        }
+        return n_conversion_steps_with(*static_cast<Base const*>(this),
+                L, idx, next_idx);
     }
 
-    typename Base::to_type from_stack(lua_State* L, int idx, int* next_idx)
+    typename Base::to_type from_stack(lua_State* L, int idx, int* next_idx) const
     {
         if (lua_isnone(L, idx)) {
             // Do not increase next_idx.
             return static_cast<typename Base::to_type>(m_default);
         }
-        return unchecked_from_stack_with(*static_cast<Base*>(this), L, idx, next_idx);
+        return unchecked_from_stack_with(*static_cast<Base const*>(this),
+            L, idx, next_idx);
     }
 };
 

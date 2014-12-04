@@ -116,7 +116,7 @@ namespace detail {
 
     template <typename Converter>
     auto converter_has_idx_param_impl(Converter conv)
-        -> decltype(conv.from_stack(
+        -> decltype(conv.n_conversion_steps(
             std::declval<lua_State*>(), 0, std::declval<int*>()));
 
     template <typename Converter>
@@ -156,10 +156,33 @@ to_type_of<pull_converter_for<T>> unchecked_from_stack(lua_State* L, int idx)
 }
 
 template <typename Converter>
+typename std::enable_if<
+    !detail::converter_has_idx_param<Converter>::value,
+    unsigned>::type
+n_conversion_steps_with(
+    Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
+{
+    (void)conv;
+    if (next_idx)
+        *next_idx = idx + conv.n_consumed;
+    return conv.n_conversion_steps(L, idx);
+}
+
+template <typename Converter>
+typename std::enable_if<
+    detail::converter_has_idx_param<Converter>::value,
+    unsigned>::type
+n_conversion_steps_with(
+    Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
+{
+    return conv.n_conversion_steps(L, idx, next_idx);
+}
+
+template <typename Converter>
 bool is_convertible_with(Converter const& conv, lua_State* L, int idx)
 {
     (void)conv; // Silence MSVC.
-    return conv.n_conversion_steps(L, idx) != no_conversion;
+    return n_conversion_steps_with(conv, L, idx) != no_conversion;
 }
 
 template <typename T>
