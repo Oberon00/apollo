@@ -2,6 +2,7 @@
 #define APOLLO_RAW_FUNCTION_HPP_INCLUDED APOLLO_RAW_FUNCTION_HPP_INCLUDED
 
 #include <apollo/make_function.hpp>
+#include <apollo/builtin_types.hpp> // raw_function
 
 namespace apollo {
 
@@ -34,6 +35,8 @@ public:
     {
         return dispatch_t::call(L, FVal, 1);
     }
+
+    F fn() const { return FVal; }
 };
 
 } // namespace detail

@@ -162,7 +162,6 @@ public:
     using tuple_t = typename dispatch_t::tuple_t;
 
     tuple_t converters;
-    F f;
 
     template <
         typename FArg,
@@ -171,7 +170,7 @@ public:
         typename... AllConverters>
     converted_function(FArg&& f_, init_fn_tag, AllConverters&&... converters_)
         : converters(std::forward<AllConverters>(converters_)...)
-        , f(std::forward<FArg>(f_))
+        , m_f(std::forward<FArg>(f_))
     {}
 
     static int entry_point(lua_State* L) BOOST_NOEXCEPT
@@ -179,7 +178,10 @@ public:
         return entry_point_impl(L, is_light_function<F>());
     }
 
+    F& fn() { return m_f; }
+
 private:
+    F m_f;
 
     // Non-light function:
     static int entry_point_impl(lua_State* L, std::false_type) BOOST_NOEXCEPT
@@ -256,7 +258,7 @@ public:
 
     static void push(lua_State* L, type&& f)
     {
-        push_impl(L, std::move(f.f), detail::is_light_function<F>());
+        push_impl(L, std::move(f.fn()), detail::is_light_function<F>());
         static_assert(detail::fn_upval_fn == 1, "");
         detail::push_function_tag(L);
         static_assert(detail::fn_upval_tag == 2, "");
