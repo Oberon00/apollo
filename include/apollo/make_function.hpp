@@ -221,6 +221,32 @@ make_function_with(
         std::forward<ArgConverters>(aconvs)...};
 }
 
+namespace detail {
+
+template <typename F, int... Is>
+auto make_function_impl(F&& f, iseq<Is...>)
+-> decltype(make_function_with(
+    std::forward<F>(f), std::move(std::get<Is>(default_converters(f)))...))
+{
+    auto def_converters = default_converters(f);
+    return make_function_with(
+        std::forward<F>(f), std::move(std::get<Is>(def_converters))...);
+}
+
+} // namespace detail
+
+template <typename F>
+auto make_function(F&& f)
+-> decltype(make_function_impl(
+    std::forward<F>(f),
+    detail::tuple_seq<decltype(detail::default_converters(f))>()))
+{
+    return make_function_impl(
+        std::forward<F>(f),
+        detail::tuple_seq<decltype(detail::default_converters(f))>());
+}
+
+
 template<typename F, typename ResultConverter, typename... Converters>
 struct converter<detail::converted_function<F, ResultConverter, Converters...>>
     : converter_base<

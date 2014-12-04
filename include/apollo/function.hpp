@@ -12,21 +12,6 @@ namespace detail {
 
 std::type_info const& function_type(lua_State* L, int idx);
 
-template <typename F, int... Is>
-void push_function_impl(lua_State* L, F&& f, iseq<Is...>)
-{
-    auto def_converters = default_converters(f);
-    push(L, make_funtion_with(
-        std::forward<F>(f), std::move(std::get<Is>(def_converters))...));
-}
-
-template <typename F>
-void push_function(lua_State* L, F&& f)
-{
-   push_function_impl(
-       L, std::forward<F>(f), tuple_seq<decltype(default_converters(f))>());
-}
-
 // function_converter //
 
 template <typename F, typename Enable=void>
@@ -130,7 +115,7 @@ private:
 public:
     static void push(lua_State* L, T const& f)
     {
-        detail::push_function(L, f);
+        apollo::push(L, make_function(f));
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
