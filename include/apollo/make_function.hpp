@@ -69,7 +69,7 @@ int call_with_stack_args_and_push(
 }
 
 template <typename F, typename ResultConverter, typename... Converters>
-int call_with_stack_args_and_push_lerror(
+int invoke_with(
     lua_State* L, F&& f,
     ResultConverter&& rconverter, Converters&&... converters)  BOOST_NOEXCEPT
 {
@@ -78,6 +78,26 @@ int call_with_stack_args_and_push_lerror(
         std::forward<F>(f),
         std::forward<ResultConverter>(rconverter),
         std::forward<Converters>(converters)...);
+}
+
+template <typename F, typename ConverterTuple, int... Is>
+int invoke_with_tuple_impl(
+    lua_State* L, F&& f,
+    ConverterTuple&& converters,
+    iseq<Is...>)  BOOST_NOEXCEPT
+{
+    return invoke_with(L, std::forward<F>(f), std::get<Is>(converters)...);
+}
+
+template <typename F, typename ConverterTuple>
+int invoke_with_tuple(
+    lua_State* L, F&& f,
+    ConverterTuple&& converters)  BOOST_NOEXCEPT
+{
+    return invoke_with_tuple_impl(
+        L, std::forward<F>(f),
+        std::forward<ConverterTuple>(converters),
+        tuple_seq<ConverterTuple>());
 }
 
 struct init_fn_tag {}; // To avoid being as for move/copy ctor.
@@ -98,7 +118,7 @@ struct function_dipatcher {
         int cvt_up_idx) BOOST_NOEXCEPT
     {
         return call_with_stored_converters(
-            L, f, tuple_seq<tuple_t>(), cvt_up_idx, stores_converters_t());
+            L, f, cvt_up_idx, stores_converters_t());
     }
 
     static tuple_t* push_converters(lua_State* L, tuple_t&& converters)
@@ -117,22 +137,19 @@ struct function_dipatcher {
     }
 
 private:
-    template <int... Is> // No stored convertes:
-    static int call_with_stored_converters(
-        lua_State* L, F& f, iseq<Is...>, int, std::false_type)
+    static int call_with_stored_converters( // No stored convertes:
+        lua_State* L, F& f, int, std::false_type)
     {
-        return call_with_stack_args_and_push_lerror(
+        return invoke_with(
             L, f, ResultConverter(), default_constructed<ArgConverters>()...);
     }
 
-    template <int... Is> // Stored convertes:
-    static int call_with_stored_converters(
-        lua_State* L, F& f, iseq<Is...>, int up_idx, std::true_type)
+    static int call_with_stored_converters( // Stored convertes:
+        lua_State* L, F& f, int up_idx, std::true_type)
     {
         auto& stored_converters = *static_cast<tuple_t*>(
             lua_touserdata(L, lua_upvalueindex(up_idx)));
-        return call_with_stack_args_and_push_lerror(
-            L, f, std::get<Is>(stored_converters)...);
+        return invoke_with_tuple(L, f, stored_converters);
     }
 };
 

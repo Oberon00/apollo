@@ -10,7 +10,7 @@ namespace detail {
 template <typename F, F FVal, typename... Converters>
 int static_entry_point(lua_State* L) BOOST_NOEXCEPT
 {
-    return call_with_stack_args_and_push_lerror(
+    return invoke_with(
         L, FVal, std::move(detail::default_constructed<Converters>())...);
 }
 
