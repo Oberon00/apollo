@@ -12,6 +12,7 @@ set (TESTS
     implicit_ctor
     lua_utils
     object_converters
+    overloadset
     reference
     simple_converters
     typeid
