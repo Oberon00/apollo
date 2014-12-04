@@ -83,7 +83,7 @@ struct function_converter<F, typename std::enable_if<
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        return function_type(L, idx) == typeid(type);
+        return function_type(L, idx) == typeid(type) ? 0 : no_conversion;
     }
 
 private:

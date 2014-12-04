@@ -118,6 +118,10 @@ BOOST_AUTO_TEST_CASE(plain_proc)
     auto proc4ptr = apollo::from_stack<decltype(&proc4)>(L, -1);
     lua_pop(L, 1);
     BOOST_CHECK_EQUAL(proc4ptr, &proc4);
+
+    lua_pushnil(L);
+    BOOST_CHECK(!apollo::is_convertible<decltype(&proc0)>(L, -1));
+    lua_pop(L, 1);
 }
 
 
@@ -227,6 +231,10 @@ BOOST_AUTO_TEST_CASE(proc_obj)
     std::function<void()> pobj(proc_obj{});
     apollo::push(L, pobj);
     check_proc(L);
+
+    lua_pushnil(L);
+    BOOST_CHECK(!apollo::is_convertible<std::function<void()>>(L, -1));
+    lua_pop(L, 1);
 }
 
 static void check_func(lua_State* L)
