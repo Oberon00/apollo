@@ -21,14 +21,14 @@ static void test_default(lua_State* L, T v)
         ++n_calls;
     };
 
-    apollo::push(L, apollo::make_funtion_with(testproc,
+    apollo::push(L, apollo::make_function_with(testproc,
         apollo::push_converter_for<void>(),
         apollo::make_default_arg(T(v)))); // rvalue
     apollo::pcall(L, 0, 0);
     BOOST_REQUIRE_EQUAL(n_calls, 1u);
 
     // Test that arguments are still picked up when supplied:
-    apollo::push(L, apollo::make_funtion_with(testproc,
+    apollo::push(L, apollo::make_function_with(testproc,
         apollo::push_converter_for<void>(),
         apollo::make_default_arg(T())));
     apollo::push(L, v);
@@ -36,7 +36,7 @@ static void test_default(lua_State* L, T v)
     BOOST_REQUIRE_EQUAL(n_calls, 2u);
 
     // lvalue:
-    apollo::push(L, apollo::make_funtion_with(testproc,
+    apollo::push(L, apollo::make_function_with(testproc,
         apollo::push_converter_for<void>(),
         apollo::make_default_arg(v)));
     v = T(); // Should not change default argument.

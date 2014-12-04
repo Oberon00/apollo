@@ -211,7 +211,7 @@ detail::converted_function<
     typename detail::remove_qualifiers<F>::type,
     typename detail::remove_qualifiers<ResultConverter>::type,
     typename detail::remove_qualifiers<ArgConverters>::type...>
-make_funtion_with(
+make_function_with(
     F&& f, ResultConverter&& rconv, ArgConverters&&... aconvs)
 {
     return {
