@@ -29,6 +29,7 @@ set(apollo_HDRS_DETAIL
     "lua_state.hpp"
     "meta_util.hpp"
     "ref_binder.hpp"
+    "signature.hpp"
     "variadic_pass.hpp"
 )
 

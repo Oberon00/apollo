@@ -4,6 +4,8 @@
 #include <apollo/converters.hpp>
 #include <apollo/detail/integer_seq.hpp>
 #include <apollo/detail/ref_binder.hpp>
+#include <apollo/detail/signature.hpp>
+
 #include <lua.hpp>
 
 #include <tuple>
@@ -80,24 +82,6 @@ default_converters(R(C::*)(Args...) const)
     return {};
 }
 
-// Plain function pointer:
-template <typename R, typename... Args>
-R return_type_of_impl(R(*)(Args...));
-
-// Function object (std::function, boost::function, etc.):
-template <template <class> class FObj, typename R, typename... Args>
-R return_type_of_impl(FObj<R(Args...)> const&);
-
-// Member function pointer:
-template <class C, typename R, typename... Args>
-R return_type_of_impl(R(C::*)(Args...));
-
-// Const member function pointer:
-template <class C, typename R,  typename... Args>
-R return_type_of_impl(R(C::*)(Args...) const);
-
-template <typename F>
-using return_type_of = decltype(return_type_of_impl(std::declval<F>()));
 
 // Plain function pointer or function object:
 template <typename F, int... Is, typename... Converters>
