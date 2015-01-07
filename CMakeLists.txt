@@ -60,3 +60,6 @@ add_subdirectory("src")
 if (BUILD_TESTING)
     add_subdirectory("test")
 endif()
+
+install(FILES "cmake/Modules/FindApollo.cmake" DESTINATION CMake/Modules)
+install(FILES "cmake/Modules/FindLua52.cmake" DESTINATION CMake/Modules)
