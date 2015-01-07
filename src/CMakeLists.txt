@@ -64,6 +64,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         COMPILE_FLAGS "-Wno-shadow") # BOOST_SCOPE_EXIT
 endif()
 
+set(CMAKE_DEBUG_POSTFIX "-d")
+
 add_library(apollo ${apollo_HDRS} ${apollo_SRCS})
 target_link_libraries(apollo ${LUA_LIBRARIES})
 
