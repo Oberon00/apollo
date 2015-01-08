@@ -110,10 +110,16 @@ struct converter<T, typename std::enable_if<
     : converter_base<T> {
 
 private:
-    using fconverter = detail::function_converter<T>;
+    // Work around a MSVC 12 (2013) bug, where
+    // decltype(&fn_templateX<>) == decltype(fn_template<T>)
+    // (another workaround would be to wrap the & in a function).
+    using fn_t = typename std::conditional<
+        std::is_function<T>::value, T*, T>::type;
+
+    using fconverter = detail::function_converter<fn_t>;
 
 public:
-    static void push(lua_State* L, T const& f)
+    static void push(lua_State* L, fn_t const& f)
     {
         apollo::push(L, make_function(f));
     }
