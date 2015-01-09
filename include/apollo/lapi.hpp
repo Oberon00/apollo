@@ -8,11 +8,11 @@
 
 namespace apollo {
 
-void set_error_msg_handler(lua_State* L);
-bool push_error_msg_handler(lua_State* L);
+APOLLO_API void set_error_msg_handler(lua_State* L);
+APOLLO_API bool push_error_msg_handler(lua_State* L);
 
-void pcall(lua_State* L, int nargs, int nresults, int msgh);
-void pcall(lua_State* L, int nargs, int nresults);
+APOLLO_API void pcall(lua_State* L, int nargs, int nresults, int msgh);
+APOLLO_API void pcall(lua_State* L, int nargs, int nresults);
 
 template <typename T>
 inline void rawget(lua_State* L, int t, T&& k)

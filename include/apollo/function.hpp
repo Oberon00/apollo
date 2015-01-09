@@ -1,6 +1,7 @@
 #ifndef APOLLO_FUNCTION_HPP_INCLUDED
 #define APOLLO_FUNCTION_HPP_INCLUDED APOLLO_FUNCTION_HPP_INCLUDED
 
+#include <apollo/config.hpp>
 #include <apollo/lapi.hpp>
 #include <apollo/make_function.hpp>
 #include <apollo/reference.hpp>
@@ -10,7 +11,7 @@ namespace apollo {
 
 namespace detail {
 
-std::type_info const& function_type(lua_State* L, int idx);
+APOLLO_API std::type_info const& function_type(lua_State* L, int idx);
 
 // function_converter //
 

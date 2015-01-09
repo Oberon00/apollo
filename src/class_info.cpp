@@ -15,7 +15,7 @@ static apollo::detail::light_key const class_info_map_key = {};
 static std::ptrdiff_t const error_ambiguous_base =
     std::numeric_limits<std::ptrdiff_t>::min();
 
-apollo::detail::class_info_map&
+APOLLO_API apollo::detail::class_info_map&
 apollo::detail::registered_classes(lua_State* L)
 {
     lua_rawgetp(L, LUA_REGISTRYINDEX, class_info_map_key);
@@ -29,7 +29,7 @@ apollo::detail::registered_classes(lua_State* L)
 }
 
 
-apollo::detail::class_info*
+APOLLO_API apollo::detail::class_info*
 apollo::detail::registered_class_opt(
     lua_State* L, std::type_info const& type)
 {
@@ -38,7 +38,7 @@ apollo::detail::registered_class_opt(
     return i_cls == classes.end() ? nullptr : &i_cls->second;
 }
 
-apollo::detail::class_info&
+APOLLO_API apollo::detail::class_info&
 apollo::detail::registered_class(
     lua_State* L, std::type_info const& type)
 {
@@ -47,7 +47,7 @@ apollo::detail::registered_class(
     return *cls;
 }
 
-void*
+APOLLO_API void*
 apollo::detail::cast_class(
     void* obj, class_info const& from, class_info const& to)
 {
@@ -69,7 +69,7 @@ apollo::detail::cast_class(
     return static_cast<char*>(obj) + i_base_relation->second.offset;
 }
 
-unsigned apollo::detail::n_class_conversion_steps(
+APOLLO_API unsigned apollo::detail::n_class_conversion_steps(
     class_info const& from, class_info const& to)
 {
     if (&from == &to)
@@ -80,7 +80,7 @@ unsigned apollo::detail::n_class_conversion_steps(
     return i_base_relation->second.n_intermediate_bases + 1;
 }
 
-apollo::detail::class_info
+APOLLO_API apollo::detail::class_info
 apollo::detail::make_class_info_impl(
     const std::type_info* rtti_type,
     std::vector<apollo::detail::base_info>& bases)

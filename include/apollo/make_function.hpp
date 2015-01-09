@@ -11,7 +11,7 @@ namespace apollo {
 
 namespace detail {
 
-void push_function_tag(lua_State* L);
+APOLLO_API void push_function_tag(lua_State* L);
 
 int const
     fn_upval_fn = 1,

@@ -11,12 +11,12 @@ namespace apollo {
 
 static apollo::detail::light_key const msghKey = {};
 
-void set_error_msg_handler(lua_State* L)
+APOLLO_API void set_error_msg_handler(lua_State* L)
 {
     lua_rawsetp(L, LUA_REGISTRYINDEX, &msghKey);
 }
 
-bool push_error_msg_handler(lua_State* L)
+APOLLO_API bool push_error_msg_handler(lua_State* L)
 {
     lua_rawgetp(L, LUA_REGISTRYINDEX, &msghKey);
     if lua_isnil(L, -1) {
@@ -26,7 +26,7 @@ bool push_error_msg_handler(lua_State* L)
     return true;
 }
 
-void pcall(lua_State* L, int nargs, int nresults, int msgh)
+APOLLO_API void pcall(lua_State* L, int nargs, int nresults, int msgh)
 {
     int const r = lua_pcall(L, nargs, nresults, msgh);
     if (r != LUA_OK) {
@@ -40,7 +40,7 @@ void pcall(lua_State* L, int nargs, int nresults, int msgh)
     }
 }
 
-void pcall(lua_State* L, int nargs, int nresults)
+APOLLO_API void pcall(lua_State* L, int nargs, int nresults)
 {
     int const msgh = push_error_msg_handler(L) ? lua_absindex(L, -nargs - 2) : 0;
     if (msgh)

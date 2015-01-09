@@ -1,6 +1,7 @@
 #ifndef APOLLO_REFERENCE_HPP_INCLUDED
 #define APOLLO_REFERENCE_HPP_INCLUDED APOLLO_REFERENCE_HPP_INCLUDED
 
+#include <apollo/config.hpp>
 #include <apollo/converters_fwd.hpp>
 
 #include <boost/assert.hpp>
@@ -10,7 +11,7 @@ namespace apollo {
 
 enum class ref_mode { move, copy };
 
-class registry_reference {
+class APOLLO_API registry_reference {
 public:
     registry_reference();
     explicit registry_reference(

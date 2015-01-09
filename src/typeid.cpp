@@ -1,12 +1,13 @@
-#include <apollo/typeid.hpp>
-#include <boost/assert.hpp>
 #include <apollo/class.hpp>
+#include <apollo/typeid.hpp>
+
+#include <boost/assert.hpp>
 
 namespace {
     struct table_tag {};
 }
 
-std::type_info const& apollo::lbuiltin_typeid(int id)
+APOLLO_API std::type_info const& apollo::lbuiltin_typeid(int id)
 {
     switch (id) {
         case LUA_TBOOLEAN: return typeid(bool);
@@ -26,7 +27,7 @@ std::type_info const& apollo::lbuiltin_typeid(int id)
     }
 }
 
-std::type_info const& apollo::ltypeid(lua_State* L, int idx)
+APOLLO_API std::type_info const& apollo::ltypeid(lua_State* L, int idx)
 {
     if (detail::is_apollo_instance(L, idx))
         return *detail::as_holder(L, idx)->type().rtti_type;

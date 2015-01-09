@@ -1,6 +1,7 @@
 #ifndef APOLLO_BUILTIN_TYPES_HPP_INCLUDED
 #define APOLLO_BUILTIN_TYPES_HPP_INCLUDED APOLLO_BUILTIN_TYPES_HPP_INCLUDED
 
+#include <apollo/config.hpp>
 #include <apollo/converters.hpp>
 
 #include <boost/assert.hpp>
@@ -176,7 +177,7 @@ struct string_conversion_steps {
 };
 
 template <>
-struct string_conversion_steps<char> {
+struct APOLLO_API string_conversion_steps<char> {
     static unsigned get(lua_State* L, int idx);
 };
 

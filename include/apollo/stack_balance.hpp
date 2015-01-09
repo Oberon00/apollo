@@ -1,11 +1,13 @@
 #ifndef APOLLO_STACK_BALANCE_HPP_INCLUDED
 #define APOLLO_STACK_BALANCE_HPP_INCLUDED APOLLO_STACK_POP_HPP_INCLUDED
 
+#include <apollo/config.hpp>
+
 #include <lua.hpp>
 
 namespace apollo {
 
-class stack_balance {
+class APOLLO_API stack_balance {
 public:
     enum action { pop = 1, push_nil = 2, adjust = pop | push_nil, debug = 4 };
     explicit stack_balance(

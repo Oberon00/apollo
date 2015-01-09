@@ -1,6 +1,7 @@
 #ifndef APOLLO_OVERLOAD_HPP_INCLUDED
 #define APOLLO_OVERLOAD_HPP_INCLUDED
 
+#include <apollo/config.hpp>
 #include <apollo/make_function.hpp>
 #include <apollo/detail/variadic_pass.hpp>
 
@@ -103,7 +104,7 @@ public:
         : m_overloads(std::move(ovls))
     {}
 
-    void push(lua_State* L); // Postcondition: *this has been moved to L
+    APOLLO_API void push(lua_State* L); // Postcondition: *this has been moved to L
 
     overloadset(overloadset&& other)
         : m_overloads(std::move(other.m_overloads))

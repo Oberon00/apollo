@@ -1,6 +1,7 @@
 #ifndef APOLLO_CLASS_HPP_INCLUDED
 #define APOLLO_CLASS_HPP_INCLUDED APOLLO_CLASS_HPP_INCLUDED
 
+#include <apollo/config.hpp>
 #include <apollo/converters.hpp>
 #include <apollo/gc.hpp> // For push_bare_udata().
 #include <apollo/smart_ptr.hpp>
@@ -17,7 +18,7 @@
 namespace apollo {
 
 namespace detail {
-void push_instance_metatable(
+APOLLO_API void push_instance_metatable(
     lua_State* L,
     class_info const& cls) BOOST_NOEXCEPT;
 
@@ -35,7 +36,7 @@ void push_instance(lua_State* L, Ptr&& ptr)
     lua_setmetatable(L, -2);
 }
 
-bool is_apollo_instance(lua_State* L, int idx);
+APOLLO_API bool is_apollo_instance(lua_State* L, int idx);
 
 inline instance_holder* as_holder(lua_State* L, int idx)
 {

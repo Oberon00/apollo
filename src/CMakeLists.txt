@@ -47,7 +47,8 @@ prepend_to_all(apollo_HDRS_PUBLIC "../include/apollo/")
 prepend_to_all(apollo_HDRS_DETAIL "../include/apollo/detail/")
 
 source_group("Internal Headers" FILES ${apollo_HDRS_DETAIL})
-set(apollo_HDRS ${apollo_HDRS_PUBLIC} ${apollo_HDRS_DETAIL})
+set(apollo_HDRS
+    ${apollo_HDRS_PUBLIC} ${apollo_HDRS_DETAIL} ${APOLLO_BUILDINFO_HPP})
 set(apollo_SRCS
     "builtin_types.cpp"
     "class.cpp"
@@ -68,6 +69,8 @@ endif()
 set(CMAKE_DEBUG_POSTFIX "-d")
 
 add_library(apollo ${apollo_HDRS} ${apollo_SRCS})
+set_target_properties(apollo PROPERTIES
+    COMPILE_DEFINITIONS APOLLO_BUILDING=1)
 target_link_libraries(apollo ${LUA_LIBRARIES})
 
 install(TARGETS apollo

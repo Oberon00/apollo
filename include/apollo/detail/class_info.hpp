@@ -1,6 +1,7 @@
 #ifndef APOLLO_CLASS_INFO_HPP_INCLUDED
 #define APOLLO_CLASS_INFO_HPP_INCLUDED APOLLO_CLASS_INFO_HPP_INCLUDED
 
+#include <apollo/config.hpp>
 #include <apollo/detail/variadic_pass.hpp>
 
 #include <boost/assert.hpp>
@@ -79,14 +80,18 @@ struct class_info {
 
 using class_info_map = std::unordered_map<std::type_index, class_info>;
 
-void* cast_class(void* obj, class_info const& cls, class_info const& to);
-unsigned n_class_conversion_steps(class_info const& from, class_info const& to);
+APOLLO_API void* cast_class(
+    void* obj, class_info const& cls, class_info const& to);
+APOLLO_API unsigned n_class_conversion_steps(
+    class_info const& from, class_info const& to);
 
-class_info_map& registered_classes(lua_State* L);
-class_info* registered_class_opt(lua_State* L, std::type_info const& type);
+APOLLO_API class_info_map& registered_classes(lua_State* L);
+APOLLO_API class_info* registered_class_opt(
+    lua_State* L, std::type_info const& type);
 
 // Only assert()s that the class is registered.
-class_info& registered_class(lua_State* L, std::type_info const& type);
+APOLLO_API class_info& registered_class(
+    lua_State* L, std::type_info const& type);
 
 struct base_info {
     class_info const* type;
@@ -113,7 +118,7 @@ int add_base_helper(
     return int();
 }
 
-class_info make_class_info_impl(
+APOLLO_API class_info make_class_info_impl(
     std::type_info const* rtti_type, std::vector<base_info>& bases);
 
 template <typename T, typename... Bases>

@@ -3,7 +3,7 @@
 
 static apollo::detail::light_key object_tag = {};
 
-void apollo::detail::push_instance_metatable(
+APOLLO_API void apollo::detail::push_instance_metatable(
     lua_State* L,
     class_info const& cls) BOOST_NOEXCEPT
 {
@@ -33,7 +33,7 @@ void apollo::detail::push_instance_metatable(
 #endif
 }
 
-bool apollo::detail::is_apollo_instance(lua_State* L, int idx)
+APOLLO_API bool apollo::detail::is_apollo_instance(lua_State* L, int idx)
 {
     if (!lua_getmetatable(L, idx))
         return false;

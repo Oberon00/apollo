@@ -7,10 +7,17 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
 
 
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    option(BUILD_SHARED_LIBS "Build apollo as a dynamic library (DLL/.so)." OFF)
+endif()
+
 if (MSVC)
     add_definitions("/W4" "/MP")
 else()
     list(APPEND CMAKE_CXX_FLAGS "-std=c++11")
+    if (BUILD_SHARED_LIBS)
+        list(APPEND CMAKE_CXX_FLAGS "-fvisibility=hidden")
+    endif()
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         set (_cfgfile
             "${CMAKE_CURRENT_SOURCE_DIR}/include/apollo/detail/clang_stdlib_config.hpp")
@@ -37,7 +44,20 @@ else()
         add_definitions("-Wnoexcept")
     endif()
 endif()
-include_directories(BEFORE "src" "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+set(APOLLO_DYNAMIC_LINK ${BUILD_SHARED_LIBS})
+
+# Configure the build info header
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/apollo")
+set(APOLLO_BUILDINFO_HPP
+    "${CMAKE_CURRENT_BINARY_DIR}/include/apollo/build_information.hpp")
+configure_file(build_information.hpp.cmake_in ${APOLLO_BUILDINFO_HPP})
+
+
+include_directories(BEFORE
+    "src"
+    "${CMAKE_CURRENT_BINARY_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(Boost_USE_STATIC_LIBS     ON)
 set(Boost_USE_MULTITHREADED   ON)
@@ -63,3 +83,4 @@ endif()
 
 install(FILES "cmake/Modules/FindApollo.cmake" DESTINATION CMake/Modules)
 install(FILES "cmake/Modules/FindLua52.cmake" DESTINATION CMake/Modules)
+install(FILES ${APOLLO_BUILDINFO_HPP} DESTINATION "include/apollo")

@@ -4,7 +4,7 @@
 
 static apollo::detail::light_key function_tag = {};
 
-std::type_info const& apollo::detail::function_type(
+APOLLO_API std::type_info const& apollo::detail::function_type(
     lua_State* L, int idx)
 {
     stack_balance b(L);
@@ -18,7 +18,7 @@ std::type_info const& apollo::detail::function_type(
     return *static_cast<std::type_info const*>(lua_touserdata(L, -1));
 }
 
-void apollo::detail::push_function_tag(lua_State* L)
+APOLLO_API void apollo::detail::push_function_tag(lua_State* L)
 {
     lua_pushlightuserdata(L, function_tag);
 }
