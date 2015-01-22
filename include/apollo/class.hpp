@@ -23,7 +23,7 @@ APOLLO_API void push_instance_metatable(
     class_info const& cls) BOOST_NOEXCEPT;
 
 template <typename Ptr>
-void push_instance(lua_State* L, Ptr&& ptr)
+void push_instance_ptr(lua_State* L, Ptr&& ptr)
 {
     using ptr_t = typename remove_qualifiers<Ptr>::type;
     using holder_t = ptr_instance_holder<ptr_t>;
@@ -31,7 +31,20 @@ void push_instance(lua_State* L, Ptr&& ptr)
         typename pointer_traits<ptr_t>::pointee_type>::type;
 
     class_info const& cls = registered_class(L, typeid(cls_t));
-    push_bare_udata(L, holder_t(std::forward<Ptr>(ptr), cls));
+    emplace_bare_udata<holder_t>(L, std::forward<Ptr>(ptr), cls);
+    push_instance_metatable(L, cls);
+    lua_setmetatable(L, -2);
+}
+
+template <typename T>
+void push_instance_val(lua_State* L, T&& val)
+{
+    using obj_t = typename std::remove_reference<T>::type;
+    using holder_t = value_instance_holder<obj_t>;
+
+    using cls_t = typename remove_qualifiers<obj_t>::type;
+    class_info const& cls = registered_class(L, typeid(cls_t));
+    emplace_bare_udata<holder_t>(L, std::forward<T>(val), cls);
     push_instance_metatable(L, cls);
     lua_setmetatable(L, -2);
 }
@@ -213,22 +226,21 @@ public:
     }
 };
 
+} // namespace detail
+
 template <typename T>
-typename std::enable_if<!pointer_traits<T>::is_valid>::type push_object(
-    lua_State* L, T&& v)
+typename std::enable_if<!detail::pointer_traits<T>::is_valid>::type
+push_object(lua_State* L, T&& v)
 {
-    using obj_t = typename detail::remove_qualifiers<T>::type;
-    push_instance(L, std::unique_ptr<obj_t>(new obj_t(std::forward<T>(v))));
+    detail::push_instance_val(L, std::forward<T>(v));
 }
 
 template <typename Ptr>
-typename std::enable_if<pointer_traits<Ptr>::is_valid>::type push_object(
-    lua_State* L, Ptr&& p)
+typename std::enable_if<detail::pointer_traits<Ptr>::is_valid>::type
+push_object(lua_State* L, Ptr&& p)
 {
-    push_instance(L, std::forward<Ptr>(p));
+    detail::push_instance_ptr(L, std::forward<Ptr>(p));
 }
-
-} // namespace detail
 
 template <typename T>
 void push_class_metatable(lua_State* L)
@@ -265,9 +277,26 @@ struct converter: detail::object_converter<T>
     {
         static_assert(std::is_same<
             typename detail::remove_qualifiers<U>::type , T>::value, "");
-        detail::push_object(L, std::forward<U>(v));
+        push_object(L, std::forward<U>(v));
     }
 };
+
+template <typename T>
+unsigned n_object_conversion_steps(lua_State* L, int idx)
+{
+    return detail::object_converter<
+        typename std::remove_cv<T>::type>::n_conversion_steps(L, idx);
+}
+
+template <typename T>
+auto object_from_stack(lua_State* L, int idx)
+-> decltype(detail::object_converter<
+    typename std::remove_cv<T>::type>::from_stack(L, idx))
+{
+    return detail::object_converter<
+        typename std::remove_cv<T>::type>::from_stack(L, idx);
+}
+
 
 } // namespace apollo
 

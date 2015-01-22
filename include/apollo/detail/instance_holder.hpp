@@ -17,6 +17,42 @@ public:
     virtual bool is_const() const = 0;
 };
 
+template <typename T>
+class value_instance_holder: public instance_holder {
+public:
+    value_instance_holder(T&& val, class_info const& cls) // Move val
+        : m_instance(std::move(val))
+        , m_type(&cls)
+    {}
+
+    value_instance_holder(T const& val, class_info const& cls) // Copy val
+        : m_instance(val)
+        , m_type(&cls)
+    {}
+
+    value_instance_holder(value_instance_holder&&) = delete;
+
+    void* get() override
+    {
+        return const_cast<void*>(
+            static_cast<void const*>(std::addressof(m_instance)));
+    }
+
+    bool is_const() const override
+    {
+        return std::is_const<T>::value;
+    }
+
+    class_info const& type() const override
+    {
+        return *m_type;
+    }
+
+private:
+    T m_instance;
+    class_info const* m_type;
+};
+
 template <typename Ptr>
 class ptr_instance_holder: public instance_holder {
     using ptr_traits = pointer_traits<Ptr>;
@@ -31,13 +67,7 @@ public:
         , m_type(&cls)
     {}
 
-    ptr_instance_holder(ptr_instance_holder&& other) // Move ctor
-        : m_instance(std::move(other.m_instance))
-        , m_type(other.m_type)
-    {
-        other.m_instance = static_cast<Ptr>(nullptr);
-        other.m_type = nullptr;
-    }
+    ptr_instance_holder(ptr_instance_holder&&) = delete;
 
     void* get() override
     {

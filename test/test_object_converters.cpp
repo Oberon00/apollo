@@ -88,14 +88,9 @@ BOOST_AUTO_TEST_CASE(object_converter)
         BOOST_CHECK_EQUAL(
             apollo::from_stack<foo_cls>(L, -1).get().i,
             42);
-        auto& outer_ptr = apollo::from_stack<std::unique_ptr<foo_cls>&>(L, -1);
-        BOOST_CHECK_EQUAL(outer_ptr->i, 42);
         apollo::from_stack<foo_cls&>(L, -1).i = 7;
         BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls*>(L, -1)->i, 7);
         BOOST_CHECK(!apollo::is_convertible<bar_cls&>(L, -1));
-        outer_ptr.reset();
-        BOOST_CHECK(!apollo::from_stack<foo_cls*>(L, -1));
-        BOOST_CHECK(!apollo::is_convertible<foo_cls&>(L, -1));
         lua_pop(L, 1);
 
         apollo::push(L, &foo);
@@ -120,6 +115,12 @@ BOOST_AUTO_TEST_CASE(object_converter)
             pfoo.get());
         BOOST_CHECK(!apollo::is_convertible<std::unique_ptr<foo_cls>>(L, -1));
         BOOST_CHECK_EQUAL(apollo::from_stack<foo_cls*>(L, -1), pfoo.get());
+        auto& outer_ptr = apollo::from_stack<std::shared_ptr<foo_cls>&>(L, -1);
+        BOOST_CHECK_EQUAL(outer_ptr->i, 7);
+        outer_ptr.reset();
+        BOOST_CHECK(!apollo::from_stack<foo_cls*>(L, -1));
+        BOOST_CHECK(!apollo::is_convertible<foo_cls&>(L, -1));
+
         lua_pop(L, 1);
     }
 
