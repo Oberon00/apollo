@@ -42,6 +42,21 @@ push_bare_udata(lua_State* L, T&& o)
     }
 }
 
+template <typename T, typename... Args>
+inline typename detail::remove_qualifiers<T>::type*
+emplace_bare_udata(lua_State* L, Args&&... ctor_args)
+{
+    using obj_t = typename detail::remove_qualifiers<T>::type;
+    void* uf = lua_newuserdata(L, sizeof(obj_t));
+    try {
+        return new(uf) obj_t(std::forward<Args>(ctor_args)...);
+    } catch (...) {
+        lua_pop(L, 1);
+        throw;
+    }
+}
+
+
 // Note: __gc will not unset metatable.
 // Use for objects that cannot be retrieved from untrusted Lua code only.
 template <typename T>
