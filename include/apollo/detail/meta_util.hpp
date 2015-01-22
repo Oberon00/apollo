@@ -34,6 +34,12 @@ typename std::remove_reference<T>::type default_constructed()
     return {};
 }
 
+template <typename T>
+T msvc_decltype_helper(T);
+
 }} // namespace apollo::detail
+
+#define APOLLO_FN_DECLTYPE(...) decltype( \
+    ::apollo::detail::msvc_decltype_helper(__VA_ARGS__))
 
 #endif // APOLLO_DETAIL_META_UTIL_HPP_INCLUDED

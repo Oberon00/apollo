@@ -88,7 +88,7 @@ make_light_funtion_with(
 }
 
 #define APOLLO_MAKE_LIGHT_FUNCTION(f, rconv, ...) \
-    apollo::make_light_funtion_with<decltype(f), f>(rconv, __VA_ARGS__)
+    apollo::make_light_funtion_with<APOLLO_FN_DECLTYPE(f), f>(rconv, __VA_ARGS__)
 
 namespace detail {
 
@@ -112,7 +112,7 @@ BOOST_CONSTEXPR raw_function to_raw_function() BOOST_NOEXCEPT
 }
 
 #define APOLLO_TO_RAW_FUNCTION(...) \
-    apollo::to_raw_function<decltype(__VA_ARGS__), __VA_ARGS__>()
+    apollo::to_raw_function<APOLLO_FN_DECLTYPE(__VA_ARGS__), __VA_ARGS__>()
 #define APOLLO_PUSH_FUNCTION_STATIC(L, ...) \
     lua_pushcfunction(L, APOLLO_TO_RAW_FUNCTION(__VA_ARGS__))
 #define APOLLO_PUSH_FUNCTION_STATIC_WITH(L, f, rconv, ...) \
