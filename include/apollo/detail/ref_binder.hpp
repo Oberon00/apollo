@@ -39,7 +39,6 @@ public:
     }
 
     T& get() const { return *m_ptr; }
-    explicit operator T& () const { return get(); }
     operator typename std::remove_cv<T>::type () const { return get(); }
 
     bool owns_object() const { return m_is_owner; }
