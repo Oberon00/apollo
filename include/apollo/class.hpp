@@ -235,6 +235,21 @@ push_object(lua_State* L, T&& v)
     detail::push_instance_val(L, std::forward<T>(v));
 }
 
+template <typename T, typename... Args>
+void emplace_object(lua_State* L, Args&&... args)
+{
+    using obj_t = typename std::remove_reference<T>::type;
+    using holder_t = detail::value_instance_holder<obj_t>;
+    using cls_t = typename detail::remove_qualifiers<obj_t>::type;
+
+    detail::class_info const& cls = detail::registered_class(L, typeid(cls_t));
+    emplace_bare_udata<holder_t>(L, cls, std::forward<Args>(args)...);
+    detail::push_instance_metatable(L, cls);
+    lua_setmetatable(L, -2);
+
+}
+
+
 template <typename Ptr>
 typename std::enable_if<detail::pointer_traits<Ptr>::is_valid>::type
 push_object(lua_State* L, Ptr&& p)

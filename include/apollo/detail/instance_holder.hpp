@@ -20,6 +20,13 @@ public:
 template <typename T>
 class value_instance_holder: public instance_holder {
 public:
+    template <typename... Args>
+    value_instance_holder(class_info const& cls, Args&&... args) // Emplace val
+        : m_instance(std::forward<Args>(args)...)
+        , m_type(&cls)
+    {}
+
+
     value_instance_holder(T&& val, class_info const& cls) // Move val
         : m_instance(std::move(val))
         , m_type(&cls)
@@ -30,7 +37,8 @@ public:
         , m_type(&cls)
     {}
 
-    value_instance_holder(value_instance_holder&&) = delete;
+    // Silence MSVC C4512: Assignment operator could not be generated.
+    value_instance_holder& operator= (value_instance_holder const&) = delete;
 
     void* get() override
     {
