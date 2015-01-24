@@ -72,12 +72,17 @@ template <> struct lua_type_id<raw_function>
 
 } // namespace detail
 
+template <typename T, typename Enable=void>
+struct convert_cref_by_val: std::integral_constant<bool,
+    detail::lua_type_id<T>::value != LUA_TUSERDATA>
+{};
+
 // Const references to primitive types are handled as non-references.
 template<typename T>
 struct converter<T, typename std::enable_if<
-    detail::is_const_reference<T>::value &&
-    detail::lua_type_id<typename detail::remove_qualifiers<T>::type>::value
-     != LUA_TUSERDATA>::type
+        detail::is_const_reference<T>::value &&
+        convert_cref_by_val<typename detail::remove_qualifiers<T>::type>::value
+    >::type
 >: converter<typename detail::remove_qualifiers<T>::type>
 {};
 
