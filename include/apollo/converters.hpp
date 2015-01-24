@@ -183,6 +183,13 @@ n_conversion_steps_with(
     return conv.n_conversion_steps(L, idx, next_idx);
 }
 
+
+template <typename T>
+unsigned n_conversion_steps(lua_State* L, int idx)
+{
+    return n_conversion_steps_with(pull_converter_for<T>(), L, idx);
+}
+
 template <typename Converter>
 bool is_convertible_with(Converter const& conv, lua_State* L, int idx)
 {
