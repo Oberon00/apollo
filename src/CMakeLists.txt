@@ -17,6 +17,7 @@ set(apollo_HDRS_PUBLIC
     "make_function.hpp"
     "operator.hpp"
     "overload.hpp"
+    "property.hpp"
     "raw_function.hpp"
     "reference.hpp"
     "smart_ptr.hpp"
