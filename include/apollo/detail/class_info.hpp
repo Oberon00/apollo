@@ -28,7 +28,8 @@ using cast_function = void*(*)(void*);
 
 class implicit_ctor {
 public:
-    virtual boost::any from_stack(lua_State* L, int idx) = 0;
+    // Returns a owning pointer to the object allocated with new.
+    virtual void* from_stack(lua_State* L, int idx) = 0;
     virtual ~implicit_ctor() {}
 };
 

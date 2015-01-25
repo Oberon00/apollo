@@ -91,13 +91,9 @@ public:
     {
         auto n_steps = object_converter<T const*>::n_conversion_steps(L, idx);
         if (n_steps == no_conversion) {
-            return {new T(std::move(
-#ifdef NDEBUG
-                boost::unsafe_any_cast
-#else
-                boost::any_cast
-#endif
-                <T const&>(get_ctor_opt(L, idx)->from_stack(L, idx)))), true};
+            return {
+                static_cast<T*>(get_ctor_opt(L, idx)->from_stack(L, idx)),
+                true};
         }
         return {object_converter<T const*>::from_stack(L, idx), false};
     }
