@@ -23,6 +23,7 @@ set(apollo_HDRS_PUBLIC
     "smart_ptr.hpp"
     "stack_balance.hpp"
     "typeid.hpp"
+    "ward_ptr.hpp"
 )
 set(apollo_HDRS_DETAIL
     "class_info.hpp"
