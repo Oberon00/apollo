@@ -11,13 +11,14 @@
 
 // See http://stackoverflow.com/a/5402543/2128694 for boost::exception support
 
+namespace {
+
 inline void translateBoostException(const boost::exception &e)
 {
     BOOST_FAIL(boost::diagnostic_information(e));
 }
 
-struct boost_exception_fixture
-{
+struct boost_exception_fixture {
     boost_exception_fixture()
     {
         boost::unit_test::unit_test_monitor.register_exception_translator<
@@ -26,6 +27,8 @@ struct boost_exception_fixture
 };
 
 BOOST_GLOBAL_FIXTURE(boost_exception_fixture)
+
+} // anonymous namespace
 
 lstate_fixture::lstate_fixture()
 {
