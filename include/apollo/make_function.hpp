@@ -294,6 +294,12 @@ T ctor_wrapper(Args... args)
     return T(std::forward<Args>(args)...);
 }
 
+template <typename T, typename... Args>
+T* new_wrapper(Args... args)
+{
+    return new T(std::forward<Args>(args)...);
+}
+
 } // namespace apollo
 
 #endif // APOLLO_MAKE_FUNCTION_HPP_INCLUDED
