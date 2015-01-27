@@ -30,7 +30,9 @@ template <typename T> // Any arithmetic type except bool is a number.
 struct lua_type_id<T,
         typename std::enable_if<
             std::is_same<T, typename detail::remove_qualifiers<T>::type>::value
-            && std::is_arithmetic<T>::value>::type>
+            && (
+                std::is_arithmetic<T>::value
+                || std::is_enum<T>::value)>::type>
         : std::integral_constant<int, LUA_TNUMBER> {};
 
 template <> // boolean
