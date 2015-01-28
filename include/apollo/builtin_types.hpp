@@ -37,7 +37,9 @@ struct raw_function {
 // Number converter //
 template<typename T>
 struct converter<T, typename std::enable_if<
-    detail::lua_type_id<T>::value == LUA_TNUMBER>::type>: converter_base<T> {
+        !std::is_enum<T>::value
+        && detail::lua_type_id<T>::value == LUA_TNUMBER>::type
+    >: converter_base<T> {
 
     static void push(lua_State* L, T n)
     {
@@ -60,6 +62,38 @@ struct converter<T, typename std::enable_if<
 #else
         int isnum;
         T n = static_cast<T>(lua_tonumberx(L, idx, &isnum));
+        BOOST_ASSERT(isnum);
+        return n;
+#endif
+    }
+};
+
+
+// Enum converter
+template<typename T>
+struct converter<T,
+        typename std::enable_if<std::is_enum<T>::value>::type
+    >: converter_base<T> {
+
+    static void push(lua_State* L, T n)
+    {
+        lua_pushinteger(L, static_cast<lua_Integer>(n));
+    }
+
+    static unsigned n_conversion_steps(lua_State* L, int idx)
+    {
+        if (lua_type(L, idx) == LUA_TNUMBER)
+            return 1;
+        return no_conversion;
+    }
+
+    static T from_stack(lua_State* L, int idx)
+    {
+#ifdef NDEBUG
+        return static_cast<T>(lua_tointeger(L, idx));
+#else
+        int isnum;
+        T n = static_cast<T>(lua_tointegerx(L, idx, &isnum));
         BOOST_ASSERT(isnum);
         return n;
 #endif
