@@ -15,6 +15,19 @@ static apollo::detail::light_key const class_info_map_key = {};
 static std::ptrdiff_t const error_ambiguous_base =
     std::numeric_limits<std::ptrdiff_t>::min();
 
+
+
+APOLLO_API std::size_t
+apollo::detail::allocate_class_id(std::type_info const& cls)
+{
+    static std::unordered_map<std::type_index, std::size_t> ids;
+    static std::size_t next_id = 0;
+    auto inserted = ids.insert({cls, next_id});
+    if (inserted.second)
+        ++next_id;
+    return inserted.first->second;
+}
+
 APOLLO_API apollo::detail::class_info_map&
 apollo::detail::registered_classes(lua_State* L)
 {
@@ -83,9 +96,10 @@ APOLLO_API unsigned apollo::detail::n_class_conversion_steps(
 APOLLO_API apollo::detail::class_info
 apollo::detail::make_class_info_impl(
     const std::type_info* rtti_type,
+    std::size_t static_id,
     std::vector<apollo::detail::base_info>& bases)
 {
-    class_info info(rtti_type);
+    class_info info(rtti_type, static_id);
 
     // Determine offsets to base subobjects and detect ambigous base classes.
     //

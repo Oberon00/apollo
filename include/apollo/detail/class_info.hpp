@@ -14,9 +14,19 @@
 #include <unordered_map>
 #include <vector>
 
-namespace boost { class any; }
-
 namespace apollo { namespace detail {
+
+// Static class ID optimization taken from luabinds registered_class<T> {{{
+APOLLO_API std::size_t allocate_class_id(std::type_info const& cls);
+
+template <typename T>
+struct static_class_id {
+    static std::size_t const id;
+};
+
+template <typename T>
+std::size_t const static_class_id<T>::id = allocate_class_id(typeid(T));
+// }}}
 
 template <typename From, typename To>
 void* cast_static(void* src)
@@ -34,8 +44,9 @@ public:
 };
 
 struct class_info {
-    class_info(std::type_info const* rtti_type_)
+    class_info(std::type_info const* rtti_type_, std::size_t static_id_)
         : rtti_type(rtti_type_)
+        , static_id(static_id_)
     { }
 
     // Explicit move and copy operations for MSVC
@@ -43,17 +54,20 @@ struct class_info {
     class_info(class_info&& rhs)
         : bases(std::move(rhs.bases))
         , rtti_type(std::move(rhs.rtti_type))
+        , static_id(std::move(rhs.static_id))
     {}
 
     class_info(class_info const& rhs)
         : bases(rhs.bases)
         , rtti_type(rhs.rtti_type)
+        , static_id(rhs.static_id)
     {}
 
     class_info& operator= (class_info&& rhs)
     {
         bases = std::move(rhs.bases);
         rtti_type = std::move(rhs.rtti_type);
+        static_id = std::move(rhs.static_id);
         return *this;
     }
 
@@ -61,6 +75,7 @@ struct class_info {
     {
         bases = rhs.bases;
         rtti_type = rhs.rtti_type;
+        static_id = rhs.static_id;
         return *this;
     }
 
@@ -77,6 +92,8 @@ struct class_info {
         std::type_index,
         std::unique_ptr<implicit_ctor>
     > implicit_ctors;
+
+    std::size_t static_id;
 };
 
 using class_info_map = std::unordered_map<std::type_index, class_info>;
@@ -120,7 +137,9 @@ int add_base_helper(
 }
 
 APOLLO_API class_info make_class_info_impl(
-    std::type_info const* rtti_type, std::vector<base_info>& bases);
+    std::type_info const* rtti_type,
+    std::size_t static_id,
+    std::vector<base_info>& bases);
 
 template <typename T, typename... Bases>
 class_info make_class_info(class_info_map const& base_infos)
@@ -128,7 +147,7 @@ class_info make_class_info(class_info_map const& base_infos)
     (void)base_infos; // Avoid MSVC warning when Bases is empty.
     std::vector<base_info> bases;
     variadic_pass(add_base_helper<T, Bases>(bases, base_infos)...);
-    return make_class_info_impl(&typeid(T), bases);
+    return make_class_info_impl(&typeid(T), static_class_id<T>::id, bases);
 }
 
 } } // namespace apollo::detail
