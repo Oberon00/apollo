@@ -69,13 +69,33 @@ public:
         return move_this();
     }
 
-    // t.__index = t
-    Derived&& thistable_index()
+    template <typename K>
+    Derived&& thistable_as(K&& key)
     {
-        lua_pushliteral(m_L, "__index");
+        apollo::push(m_L, key);
         lua_pushvalue(m_L, m_table_idx.top());
         lua_rawset(m_L, m_table_idx.top());
         return move_this();
+    }
+
+    Derived&& thistable_index()
+    {
+        return thistable_as("__index");
+    }
+
+    Derived&& metatable()
+    {
+        if (!lua_getmetatable(L, m_table_idx.top()))
+            lua_newtable(m_L);
+        lua_pushvalue(m_L, -1);
+        lua_setmetatable(m_L, m_table_idx.top());
+        m_table_idx.push(lua_gettop(m_L));
+        return move_this();
+    }
+
+    Derived&& end_metatable()
+    {
+        return end_subtable();
     }
 
 protected:
