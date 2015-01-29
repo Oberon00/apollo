@@ -39,3 +39,5 @@ foreach(test ${TESTS})
     add_test(NAME ${test} COMMAND test_${test})
 endforeach()
 
+add_executable(benchmark "benchmark.cpp")
+target_link_libraries(benchmark ${LUA_LIBRARIES} apollo)
