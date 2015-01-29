@@ -1,6 +1,7 @@
 #ifndef APOLLO_MAKE_FUNCTION_HPP_INCLUDED
 #define APOLLO_MAKE_FUNCTION_HPP_INCLUDED APOLLO_MAKE_FUNCTION_HPP_INCLUDED
 
+#include <apollo/config.hpp>
 #include <apollo/error.hpp>
 #include <apollo/function_primitives.hpp>
 #include <apollo/gc.hpp>
