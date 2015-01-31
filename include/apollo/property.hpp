@@ -1,6 +1,8 @@
 #ifndef APOLLO_PROPERTY_HPP_INCLUDED
 #define APOLLO_PROPERTY_HPP_INCLUDED
 
+#include <apollo/detail/meta_util.hpp>
+
 namespace apollo {
 
 namespace detail {
@@ -48,21 +50,29 @@ member_getter(
     return c.*Member;
 }
 
-template <typename MemberPtr, MemberPtr Member>
-typename detail::member_ptr_traits<MemberPtr>::ptr_t
-member_ref_getter(
+template <
+    typename MemberPtr, MemberPtr Member,
+    typename ReturnedPtr =
+        typename detail::member_ptr_traits<MemberPtr>::ptr_t>
+ReturnedPtr
+member_ptr_getter(
     typename detail::member_ptr_traits<MemberPtr>::cls_t const& c)
 {
-    return detail::member_ptr_traits<MemberPtr>::as_ptr(c, MemberPtr);
+    return static_cast<ReturnedPtr>(
+        detail::member_ptr_traits<MemberPtr>::as_ptr(c, MemberPtr));
 }
 
 template <typename MemberPtr, MemberPtr Member>
 typename detail::member_ptr_traits<MemberPtr>::const_ptr_t
-member_cref_getter(
+member_cptr_getter(
     typename detail::member_ptr_traits<MemberPtr>::cls_t const& c)
 {
-    return detail::member_ptr_traits<MemberPtr>::as_ptr(c, MemberPtr);
+    return member_ptr_getter<
+        MemberPtr, Member,
+        typename detail::member_ptr_traits<MemberPtr>::const_ptr_t>(c);
 }
+
+
 
 template <typename MemberPtr, MemberPtr Member>
 void
@@ -74,12 +84,13 @@ member_setter(
 }
 
 
-#define APOLLO_DETAIL_PROP(t, m) (::apollo::member_##t<decltype(&m), &m>)
+#define APOLLO_DETAIL_PROP(t, ...) \
+    (::apollo::member_##t<decltype(&__VA_ARGS__), &__VA_ARGS__>)
 #define APOLLO_MEMBER_GETTER(...) APOLLO_DETAIL_PROP(getter, __VA_ARGS__)
-#define APOLLO_MEMBER_REF_GETTER(...) \
-    APOLLO_DETAIL_PROP(ref_getter, __VA_ARGS__)
-#define APOLLO_MEMBER_CREF_GETTER(...) \
-    APOLLO_DETAIL_PROP(cref_getter, __VA_ARGS__)
+#define APOLLO_MEMBER_PTR_GETTER(...) \
+    APOLLO_DETAIL_PROP(ptr_getter, __VA_ARGS__)
+#define APOLLO_MEMBER_CPTR_GETTER(...) \
+    APOLLO_DETAIL_PROP(cptr_getter, __VA_ARGS__)
 #define APOLLO_MEMBER_SETTER(...) APOLLO_DETAIL_PROP(setter, __VA_ARGS__)
 
 } // namespace apollo
