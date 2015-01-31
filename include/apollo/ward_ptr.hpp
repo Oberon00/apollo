@@ -2,6 +2,7 @@
 #define APOLLO_WARD_PTR_HPP_INCLUDED WEAK_REF_HPP_INCLUDED
 
 #include <boost/noncopyable.hpp>
+#include <boost/assert.hpp>
 
 #include <cassert>
 #include <stdexcept>
