@@ -25,6 +25,7 @@ set (TESTS
     reference
     simple_converters
     typeid
+    ward_ptr
 )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
