@@ -21,6 +21,7 @@ set (TESTS
     lua_utils
     object_converters
     overloadset
+    property
     reference
     simple_converters
     typeid
