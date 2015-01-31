@@ -2,6 +2,7 @@
 #define APOLLO_PROPERTY_HPP_INCLUDED
 
 #include <apollo/detail/meta_util.hpp>
+#include <apollo/smart_ptr.hpp>
 
 namespace apollo {
 
@@ -14,30 +15,44 @@ template <typename C, typename T>
 struct member_ptr_traits<T C::*> {
 private:
     using ql_member_t = typename remove_qualifiers<T>::type;
-    using is_ptr_t = std::is_pointer<ql_member_t>;
+    using is_ptr_t = std::integral_constant<bool,
+        pointer_traits<ql_member_t>::is_valid>;
     static bool const is_ptr = is_ptr_t::value;
 public:
     using cls_t = C;
     using member_t = T;
     using ptr_t = typename std::conditional<is_ptr,
-        member_t, typename std::add_pointer<member_t>::type>::type;
-    using const_ptr_t = typename std::conditional<is_ptr,
-        const member_t, typename std::add_pointer<const member_t>::type>::type;
+        const member_t&, member_t*>::type;
+    using const_ptr_t = typename std::conditional<
+            std::is_pointer<ql_member_t>::value,
+            typename std::remove_pointer<ql_member_t>::type const*,
+            typename std::conditional<is_ptr, void, member_t const*>::type
+        >::type;
 
-    ptr_t as_ptr(C const& c, T C::* m)
+    static ptr_t as_ptr(C& c, T C::* m)
     {
-        return return as_ptr_impl(c, m, is_ptr_t());
+        return as_ptr_impl(c, m, is_ptr_t());
+    }
+
+    static const_ptr_t as_ptr(C const& c, T C::* m)
+    {
+        return as_ptr_impl(c, m, is_ptr_t());
     }
 
 private:
-    ptr_t as_ptr_impl(C const& c, T C::* m, std::true_type)
+    static ptr_t as_ptr_impl(C const& c, T C::* m, std::true_type)
     {
         return c.*m;
     }
 
-    ptr_t as_ptr_impl(C const& c, T C::* m, std::false_type)
+    static ptr_t as_ptr_impl(C& c, T C::* m, std::false_type)
     {
-        return &c.*m;
+        return &(c.*m);
+    }
+
+    static const_ptr_t as_ptr_impl(C const& c, T C::* m, std::false_type)
+    {
+        return &(c.*m);
     }
 };
 } // namespace detail
@@ -56,22 +71,23 @@ template <
         typename detail::member_ptr_traits<MemberPtr>::ptr_t>
 ReturnedPtr
 member_ptr_getter(
-    typename detail::member_ptr_traits<MemberPtr>::cls_t const& c)
+    typename detail::member_ptr_traits<MemberPtr>::cls_t& c)
 {
     return static_cast<ReturnedPtr>(
-        detail::member_ptr_traits<MemberPtr>::as_ptr(c, MemberPtr));
+        detail::member_ptr_traits<MemberPtr>::as_ptr(c, Member));
 }
 
-template <typename MemberPtr, MemberPtr Member>
-typename detail::member_ptr_traits<MemberPtr>::const_ptr_t
+template <
+    typename MemberPtr, MemberPtr Member,
+    typename ReturnedPtr =
+        typename detail::member_ptr_traits<MemberPtr>::const_ptr_t>
+ReturnedPtr
 member_cptr_getter(
     typename detail::member_ptr_traits<MemberPtr>::cls_t const& c)
 {
-    return member_ptr_getter<
-        MemberPtr, Member,
-        typename detail::member_ptr_traits<MemberPtr>::const_ptr_t>(c);
+    return static_cast<ReturnedPtr>(
+        detail::member_ptr_traits<MemberPtr>::as_ptr(c, Member));
 }
-
 
 
 template <typename MemberPtr, MemberPtr Member>
