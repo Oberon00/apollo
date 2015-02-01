@@ -18,9 +18,9 @@ static std::ptrdiff_t const error_ambiguous_base =
 
 
 APOLLO_API std::size_t
-apollo::detail::allocate_class_id(std::type_info const& cls)
+apollo::detail::allocate_class_id(boost::typeindex::type_info const& cls)
 {
-    static std::unordered_map<std::type_index, std::size_t> ids;
+    static std::unordered_map<boost::typeindex::type_index, std::size_t> ids;
     static std::size_t next_id = 0;
     auto inserted = ids.insert({cls, next_id});
     if (inserted.second)
@@ -44,16 +44,16 @@ apollo::detail::registered_classes(lua_State* L)
 
 APOLLO_API apollo::detail::class_info*
 apollo::detail::registered_class_opt(
-    lua_State* L, std::type_info const& type)
+    lua_State* L, boost::typeindex::type_info const& type)
 {
     auto& classes = registered_classes(L);
-    auto i_cls = classes.find(std::type_index(type));
+    auto i_cls = classes.find(boost::typeindex::type_index(type));
     return i_cls == classes.end() ? nullptr : &i_cls->second;
 }
 
 APOLLO_API apollo::detail::class_info&
 apollo::detail::registered_class(
-    lua_State* L, std::type_info const& type)
+    lua_State* L, boost::typeindex::type_info const& type)
 {
     auto cls = registered_class_opt(L, type);
     BOOST_ASSERT_MSG(cls, "Use of unregistered class.");
@@ -93,7 +93,7 @@ APOLLO_API unsigned apollo::detail::n_class_conversion_steps(
 
 APOLLO_API apollo::detail::class_info
 apollo::detail::make_class_info_impl(
-    const std::type_info* rtti_type,
+    const boost::typeindex::type_info* rtti_type,
     std::size_t static_id,
     std::vector<apollo::detail::base_info>& bases)
 {

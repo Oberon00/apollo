@@ -8,6 +8,7 @@
 #include <boost/exception/errinfo_type_info_name.hpp>
 #include <boost/exception/info.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/type_index.hpp>
 #include <lua.hpp>
 
 #include <type_traits>
@@ -212,7 +213,8 @@ to_type_of<Converter> from_stack_with(
     if (!is_convertible_with(conv, L, idx)) {
         BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
             << boost::errinfo_type_info_name(
-                typeid(to_type_of<Converter>).name())
+                boost::typeindex::type_id<to_type_of<Converter>>()
+                .pretty_name())
             << errinfo::msg("conversion from Lua to C++ failed")
             << errinfo::stack_index(idx)
             << errinfo::lua_state(L));

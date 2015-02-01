@@ -13,7 +13,7 @@ static void dummyproc() {}
 template <typename T>
 static void test_default(lua_State* L, T v)
 {
-    BOOST_TEST_MESSAGE("at " + std::string(typeid(T).name()));
+    BOOST_TEST_MESSAGE("at " + boost::typeindex::type_id<T>().pretty_name());
     unsigned n_calls = 0;
 
     std::function<void(T const&)> const testproc = [v, &n_calls](T const& x) -> void {
@@ -64,7 +64,8 @@ unsigned testproc_container<T>::n_calls;
 template <typename T>
 static void test_default_light(lua_State* L, T v)
 {
-    BOOST_TEST_MESSAGE("at (light) " + std::string(typeid(T).name()));
+    BOOST_TEST_MESSAGE("at (light) " +
+        boost::typeindex::type_id<T>().pretty_name());
     
     using tp_container = testproc_container<T>;
     tp_container::n_calls = 0;

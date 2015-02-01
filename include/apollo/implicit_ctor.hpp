@@ -44,11 +44,13 @@ private:
 template <typename From, typename To>
 void add_implicit_ctor(lua_State* L, To(*ctor)(From))
 {
-    auto const& to_tid = typeid(typename std::remove_pointer<
-        typename detail::remove_qualifiers<To>::type>::type);
+    auto const& to_tid = boost::typeindex::type_id<
+        typename std::remove_pointer<typename detail::remove_qualifiers<
+            To>::type>::type>().type_info();
     auto const ltype = detail::lua_type_id<From>::value;
     auto const& from_tid = ltype == LUA_TUSERDATA ?
-        typeid(typename detail::remove_qualifiers<From>::type) :
+        boost::typeindex::type_id<
+            typename detail::remove_qualifiers<From>::type>().type_info() :
         lbuiltin_typeid(ltype);
     using ctor_f_t = decltype(ctor);
     using ctor_impl_t = detail::implicit_ctor_impl<ctor_f_t>;
@@ -56,7 +58,8 @@ void add_implicit_ctor(lua_State* L, To(*ctor)(From))
     std::unique_ptr<ctor_impl_t> ctor_impl(new ctor_impl_t(ctor));
     BOOST_VERIFY_MSG(
         cls.implicit_ctors.emplace(
-            std::type_index(from_tid), std::move(ctor_impl)).second,
+            boost::typeindex::type_index(from_tid),
+            std::move(ctor_impl)).second,
         "A ctor with From -> To already exists.");
 }
 

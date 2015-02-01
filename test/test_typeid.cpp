@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(builtin_typeid)
 {
     // Use a macro to see line numbers
 #define CHECK_BUILTIN_T(L, R) \
-    CHECK_TID_EQ(apollo::lbuiltin_typeid(L), typeid(R))
+    CHECK_TID_EQ(apollo::lbuiltin_typeid(L), boost::typeindex::type_id<R>())
 
     CHECK_BUILTIN_T(LUA_TNUMBER, lua_Number);
     CHECK_BUILTIN_T(LUA_TBOOLEAN, bool);
@@ -32,22 +32,24 @@ static int testf(lua_State*)
 
 BOOST_AUTO_TEST_CASE(ltypeid)
 {
+    using boost::typeindex::type_id;
+
     apollo::register_class<test_cls>(L);
 
     lua_pushinteger(L, 42);
-    CHECK_TID_EQ(apollo::ltypeid(L, -1), typeid(lua_Number));
+    CHECK_TID_EQ(apollo::ltypeid(L, -1), type_id<lua_Number>());
     lua_pop(L, 1);
 
     lua_pushboolean(L, true);
-    CHECK_TID_EQ(apollo::ltypeid(L, -1), typeid(bool));
+    CHECK_TID_EQ(apollo::ltypeid(L, -1), type_id<bool>());
     lua_pop(L, 1);
 
     lua_pushcfunction(L, &testf);
-    CHECK_TID_EQ(apollo::ltypeid(L, -1), typeid(lua_CFunction));
+    CHECK_TID_EQ(apollo::ltypeid(L, -1), type_id<lua_CFunction>());
     lua_pop(L, 1);
 
     apollo::push(L, test_cls());
-    CHECK_TID_EQ(apollo::ltypeid(L, -1), typeid(test_cls));
+    CHECK_TID_EQ(apollo::ltypeid(L, -1), type_id<test_cls>());
     lua_pop(L, 1);
 
     lua_newuserdata(L, sizeof(char));

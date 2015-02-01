@@ -4,18 +4,19 @@
 
 static apollo::detail::light_key function_tag = {};
 
-APOLLO_API std::type_info const& apollo::detail::function_type(
+APOLLO_API boost::typeindex::type_info const& apollo::detail::function_type(
     lua_State* L, int idx)
 {
     stack_balance b(L);
 
     if (!lua_getupvalue(L, idx, fn_upval_tag))
-        return typeid(void);
+        return boost::typeindex::type_id<void>().type_info();
     if (lua_touserdata(L, -1) != function_tag)
-        return typeid(void);
+        return boost::typeindex::type_id<void>().type_info();
     lua_pop(L, 1); // Necessary to keep idx correct:
     BOOST_VERIFY(lua_getupvalue(L, idx, fn_upval_type));
-    return *static_cast<std::type_info const*>(lua_touserdata(L, -1));
+    return *static_cast<boost::typeindex::type_info const*>(
+        lua_touserdata(L, -1));
 }
 
 APOLLO_API void apollo::detail::push_function_tag(lua_State* L)

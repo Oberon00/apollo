@@ -5,13 +5,13 @@
 
 #include <lua.hpp>
 
-#include <typeinfo>
+#include <boost/type_index.hpp>
 
 namespace apollo {
 
-APOLLO_API std::type_info const& lbuiltin_typeid(int id);
+APOLLO_API boost::typeindex::type_info const& lbuiltin_typeid(int id);
 
-APOLLO_API std::type_info const& ltypeid(lua_State* L, int idx);
+APOLLO_API boost::typeindex::type_info const& ltypeid(lua_State* L, int idx);
 
 } // namespace apollo
 

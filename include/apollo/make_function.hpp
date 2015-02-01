@@ -263,7 +263,8 @@ public:
         static_assert(detail::fn_upval_fn == 1, "");
         detail::push_function_tag(L);
         static_assert(detail::fn_upval_tag == 2, "");
-        lua_pushlightuserdata(L, const_cast<std::type_info*>(&typeid(F)));
+        lua_pushlightuserdata(L, const_cast<boost::typeindex::type_info*>(
+            &boost::typeindex::type_id<F>().type_info()));
         static_assert(detail::fn_upval_type == 3, "");
 
         int nups = 3;

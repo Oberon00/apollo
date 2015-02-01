@@ -5,6 +5,8 @@
 #include <apollo/make_function.hpp>
 #include <apollo/detail/variadic_pass.hpp>
 
+#include <boost/type_index.hpp>
+
 //#include <iostream>
 #include <memory>
 #include <vector>
@@ -54,7 +56,9 @@ public:
 
     void push_signature(lua_State* L) override
     {
-        lua_pushstring(L, typeid(m_f.fn()).name());
+        auto const name = boost::typeindex::type_id<
+            decltype(m_f.fn())>().pretty_name();
+        lua_pushlstring(L, name.data(), name.size());
     }
 
 private:

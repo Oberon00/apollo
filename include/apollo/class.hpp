@@ -30,7 +30,8 @@ void push_instance_ptr(lua_State* L, Ptr&& ptr)
     using cls_t = typename remove_qualifiers<
         typename pointer_traits<ptr_t>::pointee_type>::type;
 
-    class_info const& cls = registered_class(L, typeid(cls_t));
+    class_info const& cls = registered_class(L,
+        boost::typeindex::type_id<cls_t>().type_info());
     emplace_bare_udata<holder_t>(L, std::forward<Ptr>(ptr), cls);
     push_instance_metatable(L, cls);
     lua_setmetatable(L, -2);
@@ -43,7 +44,8 @@ void push_instance_val(lua_State* L, T&& val)
     using holder_t = value_instance_holder<obj_t>;
 
     using cls_t = typename remove_qualifiers<obj_t>::type;
-    class_info const& cls = registered_class(L, typeid(cls_t));
+    class_info const& cls = registered_class(L,
+        boost::typeindex::type_id<cls_t>().type_info());
     emplace_bare_udata<holder_t>(L, std::forward<T>(val), cls);
     push_instance_metatable(L, cls);
     lua_setmetatable(L, -2);
@@ -68,7 +70,8 @@ struct object_converter<T const&, typename std::enable_if<
 private:
     static implicit_ctor* get_ctor_opt(lua_State* L, int idx)
     {
-        auto const& cls = registered_class(L, typeid(T));
+        auto const& cls = registered_class(L,
+            boost::typeindex::type_id<T>().type_info());
         auto const& ctors = cls.implicit_ctors;
         auto i_ctor = ctors.find(ltypeid(L, idx));
         return i_ctor == ctors.end() ? nullptr : i_ctor->second.get();
@@ -156,7 +159,8 @@ public:
 #endif
         if (!is_apollo_instance(L, idx))
             return no_conversion;
-        if (typeid(ptr_instance_holder<ptr_t>) == typeid(*as_holder(L, idx)))
+        if (boost::typeindex::type_id<ptr_instance_holder<ptr_t>>()
+            == boost::typeindex::type_id_runtime(*as_holder(L, idx)))
             return 0;
         return no_conversion;
     }
@@ -238,7 +242,8 @@ void emplace_object(lua_State* L, Args&&... args)
     using holder_t = detail::value_instance_holder<obj_t>;
     using cls_t = typename detail::remove_qualifiers<obj_t>::type;
 
-    detail::class_info const& cls = detail::registered_class(L, typeid(cls_t));
+    detail::class_info const& cls = detail::registered_class(L,
+        boost::typeindex::type_id<cls_t>().type_info());
     emplace_bare_udata<holder_t>(L, cls, std::forward<Args>(args)...);
     detail::push_instance_metatable(L, cls);
     lua_setmetatable(L, -2);
@@ -257,16 +262,15 @@ template <typename T>
 void push_class_metatable(lua_State* L)
 {
     using obj_t = typename detail::remove_qualifiers<T>::type;
-    detail::push_instance_metatable(
-        L,
-        detail::registered_class(L, typeid(obj_t)));
+    detail::push_instance_metatable(L, detail::registered_class(L,
+        boost::typeindex::type_id<obj_t>().type_info()));
 }
 
 template <typename T, typename... Bases>
 void register_class(lua_State* L)
 {
     auto& registry = detail::registered_classes(L);
-    auto index = std::type_index(typeid(T));
+    auto index = boost::typeindex::type_id<T>();
     if (registry.find(index) != registry.end()) {
         BOOST_ASSERT_MSG(false, "Class already registered!");
     }

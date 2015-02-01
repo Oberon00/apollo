@@ -7,11 +7,14 @@
 #include <apollo/reference.hpp>
 #include <apollo/stack_balance.hpp>
 
+#include <boost/type_index.hpp>
+
 namespace apollo {
 
 namespace detail {
 
-APOLLO_API std::type_info const& function_type(lua_State* L, int idx);
+APOLLO_API boost::typeindex::type_info const& function_type(
+    lua_State* L, int idx);
 
 // function_converter //
 
@@ -25,7 +28,7 @@ struct function_converter<FObj<R(Args...)>> {
     static type from_stack(lua_State* L, int idx)
     {
         auto const& fty = function_type(L, idx);
-        if (fty == typeid(type)) {
+        if (fty == boost::typeindex::type_id<type>()) {
             stack_balance balance(L);
             BOOST_VERIFY(lua_getupvalue(L, idx, detail::fn_upval_fn));
             BOOST_ASSERT(lua_type(L, -1) == LUA_TUSERDATA); // Not light!
@@ -34,7 +37,7 @@ struct function_converter<FObj<R(Args...)>> {
 
         // Plain function pointer in Lua? Then construct from it.
         using plainfconv = function_converter<R(*)(Args...)>;
-        if (fty == typeid(typename plainfconv::type))
+        if (fty == boost::typeindex::type_id<typename plainfconv::type>())
             return plainfconv::from_stack(L, idx);
 
         // TODO?: optimization: Before falling back to the pcall lambda,
@@ -84,7 +87,8 @@ struct function_converter<F, typename std::enable_if<
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        return function_type(L, idx) == typeid(type) ? 0 : no_conversion;
+        return function_type(L, idx) == boost::typeindex::type_id<type>() ?
+            0 : no_conversion;
     }
 
 private:
