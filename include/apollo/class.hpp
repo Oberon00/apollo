@@ -206,13 +206,8 @@ public:
 #   pragma warning(pop)
 #endif
 
-        auto const& cls_info = holder->type();
-        if (static_class_id<obj_t>::id == cls_info.static_id)
-            return 0;
-
         return n_class_conversion_steps(
-            cls_info,
-            registered_class(L, typeid(obj_t)));
+            holder->type(), static_class_id<obj_t>::id);
     }
 
     static Ptr from_stack(lua_State* L, int idx)
@@ -220,12 +215,10 @@ public:
         if (lua_isnil(L, idx))
             return nullptr;
         auto holder = as_holder(L, idx);
-        auto const& cls_info = holder->type();
-        if (static_class_id<obj_t>::id == cls_info.static_id)
-            return static_cast<Ptr>(holder->get());
-        return static_cast<Ptr>(cast_class(holder->get(),
+        return static_cast<Ptr>(cast_class(
+            holder->get(),
             holder->type(),
-            registered_class(L, typeid(obj_t))));
+            static_class_id<obj_t>::id));
     }
 };
 

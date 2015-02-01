@@ -84,7 +84,8 @@ struct class_info {
         std::ptrdiff_t offset;
         unsigned n_intermediate_bases;
     };
-    std::unordered_map<class_info const*, base_relation> bases;
+
+    std::unordered_map<std::size_t, base_relation> bases;
 
     std::type_info const* rtti_type;
 
@@ -99,9 +100,9 @@ struct class_info {
 using class_info_map = std::unordered_map<std::type_index, class_info>;
 
 APOLLO_API void* cast_class(
-    void* obj, class_info const& cls, class_info const& to);
+    void* obj, class_info const& cls, std::size_t to);
 APOLLO_API unsigned n_class_conversion_steps(
-    class_info const& from, class_info const& to);
+    class_info const& from, std::size_t to);
 
 APOLLO_API class_info_map& registered_classes(lua_State* L);
 APOLLO_API class_info* registered_class_opt(
