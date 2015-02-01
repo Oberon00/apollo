@@ -7,8 +7,7 @@ target_link_libraries(testutil
 
 if (BUILD_SHARED_LIBS AND MSVC)
     add_custom_command(TARGET testutil POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-            $<TARGET_FILE:apollo> $<TARGET_FILE_DIR:testutil>
+        COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:apollo>" "$<TARGET_FILE_DIR:testutil>"
         COMMENT "Copying apollo DLL to test directory...")
 endif()
 
