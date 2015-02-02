@@ -37,15 +37,6 @@ set(apollo_HDRS_DETAIL
     "variadic_pass.hpp"
 )
 
-# http://stackoverflow.com/a/13104057/2128694
-macro(prepend_to_all _srcs _path)
-    unset(_tmp)
-    foreach(src ${${_srcs}})
-        list(APPEND _tmp ${_path}${src})
-    endforeach()
-    set(${_srcs} ${_tmp})
-endmacro()
-
 prepend_to_all(apollo_HDRS_PUBLIC "../include/apollo/")
 prepend_to_all(apollo_HDRS_DETAIL "../include/apollo/detail/")
 

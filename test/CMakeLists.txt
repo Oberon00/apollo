@@ -5,11 +5,7 @@ add_library(testutil STATIC
 target_link_libraries(testutil
     apollo ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
-if (BUILD_SHARED_LIBS AND MSVC)
-    add_custom_command(TARGET testutil POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:apollo>" "$<TARGET_FILE_DIR:testutil>"
-        COMMENT "Copying apollo DLL to test directory...")
-endif()
+needs_apollo_dll(testutil)
 
 set (TESTS
     create_class

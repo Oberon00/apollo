@@ -1,6 +1,25 @@
 cmake_minimum_required(VERSION 2.8)
 project(apollo)
 
+# http://stackoverflow.com/a/13104057/2128694
+macro(prepend_to_all _srcs _path)
+    unset(_tmp)
+    foreach(src ${${_srcs}})
+        list(APPEND _tmp ${_path}${src})
+    endforeach()
+    set(${_srcs} ${_tmp})
+endmacro()
+
+macro(needs_apollo_dll _target)
+    if (BUILD_SHARED_LIBS AND MSVC)
+        add_custom_command(TARGET ${_target} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:apollo>" "$<TARGET_FILE_DIR:${_target}>"
+            COMMENT "Copying apollo DLL to ${_target} directory...")
+    endif()
+endmacro()
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 include(CTest)
 
 set(CMAKE_MODULE_PATH
