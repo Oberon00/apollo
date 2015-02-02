@@ -96,6 +96,7 @@ include_directories(
     ${Boost_INCLUDE_DIRS} ${LUA_INCLUDE_DIR})
 
 add_subdirectory("src")
+add_subdirectory("doc")
 if (BUILD_TESTING)
     add_subdirectory("test")
 endif()
