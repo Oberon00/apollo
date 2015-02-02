@@ -65,8 +65,8 @@ set(apollo_SRCS
 )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set_source_files_properties("lapi.cpp" PROPERTIES
-        COMPILE_FLAGS "-Wno-shadow") # BOOST_SCOPE_EXIT
+    set_source_files_properties("class_info.cpp" PROPERTIES
+        COMPILE_FLAGS "-Wno-exit-time-destructors")
 endif()
 
 set(CMAKE_DEBUG_POSTFIX "-d")

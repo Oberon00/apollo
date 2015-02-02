@@ -85,10 +85,11 @@ public:
 
     Derived&& metatable()
     {
-        if (!lua_getmetatable(L, m_table_idx.top()))
+        if (!lua_getmetatable(m_L, m_table_idx.top())) {
             lua_newtable(m_L);
-        lua_pushvalue(m_L, -1);
-        lua_setmetatable(m_L, m_table_idx.top());
+            lua_pushvalue(m_L, -1);
+            lua_setmetatable(m_L, m_table_idx.top());
+        }
         m_table_idx.push(lua_gettop(m_L));
         return move_this();
     }

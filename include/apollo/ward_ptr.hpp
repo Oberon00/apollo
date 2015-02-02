@@ -184,10 +184,11 @@ ward_ptr<T>::ward_ptr(enable_ward_ptr_from_this<U>* u)
     m_connection = detail::get_connection(u);
     BOOST_ASSERT(m_connection->referenced == static_cast<U*>(u));
     T* t = static_cast<T*>(static_cast<U*>(u));
-    m_offset = (intptr_t)t - (intptr_t)m_connection->referenced;
+    m_offset =
+        reinterpret_cast<intptr_t>(t) -
+        reinterpret_cast<intptr_t>(m_connection->referenced);
     BOOST_ASSERT(m_offset == 0);
-    if (u)
-        BOOST_ASSERT(dynamic_cast<T*>(static_cast<U*>(u)));
+    BOOST_ASSERT(!u || dynamic_cast<T*>(static_cast<U*>(u)));
     ++m_connection->n_refs;
 }
 

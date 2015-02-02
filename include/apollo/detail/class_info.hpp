@@ -5,6 +5,7 @@
 #include <apollo/detail/variadic_pass.hpp>
 
 #include <boost/assert.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/type_index.hpp>
 #include <lua.hpp>
 
@@ -13,17 +14,6 @@
 #include <unordered_map>
 #include <vector>
 
-namespace std { // TODO: #ifdef this when it's added to boost
-
-template <>
-struct hash<boost::typeindex::type_index> {
-    size_t operator()(boost::typeindex::type_index const& t) const
-    {
-        return t.hash_code();
-    }
-};
-
-} // namespace std
 
 namespace apollo { namespace detail {
 
@@ -105,14 +95,17 @@ struct class_info {
 
     std::unordered_map<
         boost::typeindex::type_index,
-        std::unique_ptr<implicit_ctor>
+        std::unique_ptr<implicit_ctor>,
+        boost::hash<boost::typeindex::type_index>
     > implicit_ctors;
 
     std::size_t static_id;
 };
 
 using class_info_map = std::unordered_map<
-    boost::typeindex::type_index, class_info>;
+    boost::typeindex::type_index,
+    class_info,
+    boost::hash<boost::typeindex::type_index>>;
 
 APOLLO_API void* cast_class(
     void* obj, class_info const& cls, std::size_t to);

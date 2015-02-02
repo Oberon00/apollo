@@ -20,7 +20,11 @@ static std::ptrdiff_t const error_ambiguous_base =
 APOLLO_API std::size_t
 apollo::detail::allocate_class_id(boost::typeindex::type_info const& cls)
 {
-    static std::unordered_map<boost::typeindex::type_index, std::size_t> ids;
+    static std::unordered_map<
+            boost::typeindex::type_index,
+            std::size_t,
+            boost::hash<boost::typeindex::type_index>
+        > ids;
     static std::size_t next_id = 0;
     auto inserted = ids.insert({cls, next_id});
     if (inserted.second)
