@@ -19,7 +19,7 @@ APOLLO_API void set_error_msg_handler(lua_State* L)
 APOLLO_API bool push_error_msg_handler(lua_State* L)
 {
     lua_rawgetp(L, LUA_REGISTRYINDEX, &msghKey);
-    if lua_isnil(L, -1) {
+    if (lua_isnil(L, -1)) {
         lua_pop(L, 1);
         return false;
     }
@@ -50,7 +50,7 @@ APOLLO_API void pcall(lua_State* L, int nargs, int nresults)
         if (msgh)
             lua_remove(L, msgh);
     };
-        
+
     try { pcall(L, nargs, nresults, msgh); }
     catch (...) {
         cleanup();
