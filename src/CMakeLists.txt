@@ -78,6 +78,7 @@ target_link_libraries(apollo ${LUA_LIBRARIES})
 
 install(TARGETS apollo
     RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib)
 install(FILES ${apollo_HDRS_PUBLIC}
     DESTINATION include/apollo)
