@@ -17,8 +17,10 @@ Contents:
    :maxdepth: 2
 
    basic-usage
-
-
+   building
+   functions
+   classes
+   converters
 
 Indices and tables
 ==================
