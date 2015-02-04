@@ -1,7 +1,7 @@
 #ifndef APOLLO_CLOSING_STATE_HPP_INCLUDED
 #define APOLLO_CLOSING_STATE_HPP_INCLUDED
 
-#include <lua.hpp>
+#include <apollo/lua_include.hpp>
 
 namespace apollo {
 

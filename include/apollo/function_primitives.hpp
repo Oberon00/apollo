@@ -6,7 +6,7 @@
 #include <apollo/detail/ref_binder.hpp>
 #include <apollo/detail/signature.hpp>
 
-#include <lua.hpp>
+#include <apollo/lua_include.hpp>
 
 #include <tuple>
 #include <type_traits>

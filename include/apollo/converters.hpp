@@ -9,7 +9,7 @@
 #include <boost/exception/info.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/type_index.hpp>
-#include <lua.hpp>
+#include <apollo/lua_include.hpp>
 
 #include <type_traits>
 

@@ -5,7 +5,7 @@
 #include <apollo/converters_fwd.hpp>
 
 #include <boost/assert.hpp>
-#include <lua.hpp>
+#include <apollo/lua_include.hpp>
 
 namespace apollo {
 

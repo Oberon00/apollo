@@ -57,7 +57,7 @@ struct converter<T, typename std::enable_if<
 
     static T from_stack(lua_State* L, int idx)
     {
-#ifdef NDEBUG
+#if defined(NDEBUG) || LUA_VERSION_NUM < 502
         return static_cast<T>(lua_tonumber(L, idx));
 #else
         int isnum;
@@ -141,34 +141,34 @@ struct converter<void>: converter_base<void> {
 
 namespace detail {
 
-inline char const* push_string(lua_State* L, char c)
+inline void push_string(lua_State* L, char c)
 {
-    return lua_pushlstring(L, &c, 1);
+    lua_pushlstring(L, &c, 1);
 }
 
 template <std::size_t N>
-inline char const* push_string(lua_State* L, char const (&s)[N])
+void push_string(lua_State* L, char const (&s)[N])
 {
     // Don't count null termination.
-    return lua_pushlstring(L, s, N - (s[N - 1] == 0));
+    lua_pushlstring(L, s, N - (s[N - 1] == 0));
 }
 
 // Need to make this a template too, so that the array overload is called in
 // the appropriate cases. Also can't make it const T* because otherwise the
 // call would be ambigous.
 template <typename T>
-inline char const* push_string(lua_State* L, T s)
+inline void push_string(lua_State* L, T s)
 {
     using T2 = typename remove_qualifiers<T>::type;
     static_assert(
         std::is_same<T2, char*>::value || std::is_same<T2, char const*>::value,
         "push_string called with non-string");
-    return lua_pushstring(L, s);
+    lua_pushstring(L, s);
 }
 
-inline char const* push_string(lua_State* L, std::string const& s)
+inline void push_string(lua_State* L, std::string const& s)
 {
-    return lua_pushlstring(L, s.c_str(), s.size());
+    lua_pushlstring(L, s.c_str(), s.size());
 }
 
 template <typename T>
@@ -231,9 +231,9 @@ struct converter<T, typename std::enable_if<
         detail::lua_type_id<T>::value == LUA_TSTRING>::type>: converter_base<T> {
     using to_type = typename detail::to_string<T>::type;
 
-    static char const* push(lua_State* L, T const& s)
+    static void push(lua_State* L, T const& s)
     {
-        return detail::push_string(L, s);
+        detail::push_string(L, s);
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)

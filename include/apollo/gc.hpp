@@ -5,7 +5,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <lua.hpp>
+#include <apollo/lua_include.hpp>
 
 #include <type_traits>
 

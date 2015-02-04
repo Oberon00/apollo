@@ -50,6 +50,7 @@ set(apollo_SRCS
     "class_info.cpp"
     "function.cpp"
     "lapi.cpp"
+    "lua51compat.cpp"
     "overload.cpp"
     "reference.cpp"
     "stack_balance.cpp"

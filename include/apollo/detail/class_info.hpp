@@ -7,7 +7,7 @@
 #include <boost/assert.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/type_index.hpp>
-#include <lua.hpp>
+#include <apollo/lua_include.hpp>
 
 #include <memory>
 #include <type_traits>

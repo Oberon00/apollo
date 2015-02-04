@@ -3,7 +3,7 @@
 
 #include <apollo/converters.hpp>
 
-#include <lua.hpp>
+#include <apollo/lua_include.hpp>
 #include <boost/assert.hpp>
 
 #include <stack>

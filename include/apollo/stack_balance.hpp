@@ -3,7 +3,7 @@
 
 #include <apollo/config.hpp>
 
-#include <lua.hpp>
+#include <apollo/lua_include.hpp>
 
 namespace apollo {
 

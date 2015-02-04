@@ -6,7 +6,7 @@
 #include <boost/exception/get_error_info.hpp>
 #include <boost/exception/exception.hpp>
 #include <boost/exception/errinfo_type_info_name.hpp>
-#include <lua.hpp>
+#include <apollo/lua_include.hpp>
 
 #include <exception>
 #include <string>
