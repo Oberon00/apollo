@@ -1,6 +1,9 @@
 Basic usage
 ===========
 
+Core primitives: ``push``, ``from_stack`` & friends
+---------------------------------------------------
+
 apollo's core functions are ``push`` and ``from_stack``, defined in the
 ``<converters.hpp>`` header::
 
@@ -56,3 +59,65 @@ Let's try this out:
 
 Of course, higher-order functions (functions taking or returning functions) are
 also supported, as are ``boost::function`` and ``std::function``.
+
+
+Syntactic sugar: ``new_table`` and ``rawset_table``
+---------------------------------------------------
+
+Because exporting functions and other things by first pushing them and then
+using ``lua_setfield``/``lua_setglobal`` is quite tendious and verbose, apollo
+offers convenient syntactic sugar in the ``create_table.hpp`` header::
+
+   implementation-defined rawset_table(lua_State* L, int table_idx);
+   implementation-defined new_table(lua_State* L);
+
+These functions return implementation defined proxy objects that support setting
+table by chaining ``operator()`` calls. Nested tables are also supported using
+``subtable(key)`` and ``end_subtable()``, as are metatables with ``metatable``
+and ``end_metatable``.
+
+.. literalinclude:: examples/basic-create_table.cpp
+
+
+The basics of using classes
+---------------------------
+
+apollo's class system only has the following two primitive functions::
+
+   template <typename T, typename... Bases>
+   void register_class(lua_State* L);
+
+   template <typename T>
+   void push_class_metatable(lua_State* L);
+
+You first register a class ``T`` for usage in a certain ``lua_State* L`` by
+calling ``register_class<T>(L)``. apollo will then wrap objects of this class in
+an implementation defined *holder* and push it as a userdata object. To make
+this usable from Lua, apollo always sets a per-type metatable that you can
+access and change using ``push_class_metatable<T>(L)``. The only field in this
+metatable that is preset is the ``__gc`` field that unsets the userdata's
+metatable (to prevent access to the destroyed object) and calls ``T``'s
+destructor. Otherwise you can use classes together with ``push``,
+``from_stack``, ``rawset_table``, etc. like any other type. There's one gotcha
+though: For efficiency reasons (and to implement implicit constructors)
+``from_stack<T const&>`` and ``from_stack<T>`` do not return the specified type
+for classes but instead a implementation defined reference wrapper object. Use
+it's ``get()`` member function or ``apollo::unwrap_bound_ref()`` to obtain the
+underlying reference. Note that when using implicit constructors, the lifetime
+of the underlying class can be bound to the reference wrapper, so better keep it
+alive as long as you use the object.
+
+Since there is no direct way to access public data members of classes from Lua,
+apollo provides wrapper getter and setter functions that can be used to expose
+them in the ``property.hpp`` header. Namely, these are the
+``APOLLO_MEMBER_SETTER(my_class::my_member)`` and the corresponding
+``APOLLO_MEMBER_GETTER`` macros. They evaluate to a function (yes, a function not
+a function pointer!) that takes the member type by ``const&`` and sets it or
+gets it by value respectively.
+
+A similar wrapper is provided for  constructors: ``ctor_wrapper<T, Args...>`` is
+a function taht returns a ``T`` constructed from ``Args...``.
+
+Let's see some class foo in action:
+
+.. literalinclude:: examples/basic-class.cpp
