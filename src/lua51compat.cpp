@@ -1,5 +1,7 @@
 #include <apollo/lua_include.hpp>
 
+#if LUA_VERSION_NUM < 502
+
 // Taken from Lua 5.2's lauxlib.c
 
 
@@ -41,3 +43,5 @@ APOLLO_API void luaL_requiref(
         lua_setglobal(L, modname);  /* _G[modname] = module */
     }
 }
+
+#endif // LUA_VERSION_NUM < 502
