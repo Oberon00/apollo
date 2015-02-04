@@ -6,10 +6,14 @@
 #include <functional>
 #include <cassert>
 
+namespace {
+
 bool is_odd(int n)
 {
     return n % 2 != 0;
 }
+
+} // anonymous namespace
 
 int main()
 {
