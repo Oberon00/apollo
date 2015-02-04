@@ -23,13 +23,13 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include(CTest)
 
 set(CMAKE_MODULE_PATH
-    ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/" ${CMAKE_MODULE_PATH})
 
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     option(BUILD_SHARED_LIBS "Build apollo as a dynamic library (DLL/.so)." OFF)
     set(APOLLO_LUA_VERSION "" CACHE STRING
-        "51 or 52; empty to use 51 if 52 cannot be found and 52 otherwise.")
+        "Set to a dotted Lua version number: 5.1, 5.2 or 5.3. Empty: Newest available.")
 endif()
 
 if (MSVC)
@@ -93,17 +93,7 @@ find_package(Boost 1.53 REQUIRED ${Boost_FIND_COMPONENTS})
 
 add_definitions("-DBOOST_ALL_NO_LIB")
 
-if(APOLLO_LUA_VERSION)
-    find_package("Lua${APOLLO_LUA_VERSION}" REQUIRED)
-else()
-    find_package(Lua52)
-    if(NOT LUA52_FOUND)
-        find_package(Lua51)
-        if(NOT LUA51_FOUND)
-            message(FATAL_ERROR "Neither Lua 5.1 nor 5.2 could be found.")
-        endif()
-    endif()
-endif()
+find_package(Lua ${APOLLO_LUA_VERSION} REQUIRED)
 set(LUA_INCLUDE_DIRS "${LUA_INCLUDE_DIR}")
 
 include_directories(
