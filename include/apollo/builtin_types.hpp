@@ -6,7 +6,7 @@
 
 #include <boost/assert.hpp>
 
-#include <climits>
+#include <limits>
 #include <string>
 
 namespace apollo {
@@ -40,31 +40,64 @@ struct converter<T, typename std::enable_if<
         !std::is_enum<T>::value
         && detail::lua_type_id<T>::value == LUA_TNUMBER>::type
     >: converter_base<T> {
+private:
+    using llimits = std::numeric_limits<lua_Integer>;
+    static bool const is_integral = std::is_integral<T>::value;
+    static bool const is_safe_integral = is_integral &&
+        sizeof(T) >= sizeof(lua_Integer) &&
+        std::is_signed<T>::value == std::is_signed<lua_Integer>::value;
 
+public:
     static void push(lua_State* L, T n)
     {
-        lua_pushnumber(L, static_cast<lua_Number>(n));
+#ifdef BOOST_MSVC
+#   pragma warning(push)
+#   pragma warning(disable:4127) // Conditional expression is constant.
+#endif
+        if (is_integral && (is_safe_integral
+#if LUA_VERSION_NUM >= 503 // Not worth the effort on < 5.3.
+            || (n >= llimits::min() && n <= llimits::max())
+#endif // LUA_VERSION_NUM >= 503
+        )) {
+#ifdef BOOST_MSVC
+#   pragma warning(pop)
+#endif
+            lua_pushinteger(L, static_cast<lua_Integer>(n));
+        } else {
+            lua_pushnumber(L, static_cast<lua_Number>(n));
+        }
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-        if (lua_type(L, idx) == LUA_TNUMBER) // Actual number.
-            return 0;
-        if (lua_isnumber(L, idx)) // String convertible to number.
+        if (lua_type(L, idx) == LUA_TNUMBER) { // Actual number.
+#if LUA_VERSION_NUM >= 503
+            if ((lua_isinteger(L, idx) ? true : false) == is_integral)
+                return 0;
             return 1;
+#else // LUA_VERSION_NUM >= 503
+            return 0;
+#endif // LUA_VERSION_NUM >= 503 / else
+        }
+        if (lua_isnumber(L, idx)) // String convertible to number.
+            return 2;
         return no_conversion;
     }
 
     static T from_stack(lua_State* L, int idx)
     {
-#if defined(NDEBUG) || LUA_VERSION_NUM < 502
-        return static_cast<T>(lua_tonumber(L, idx));
-#else
-        int isnum;
-        T n = static_cast<T>(lua_tonumberx(L, idx, &isnum));
-        BOOST_ASSERT(isnum);
-        return n;
+#if LUA_VERSION_NUM >= 503
+#   ifdef BOOST_MSVC
+#       pragma warning(push)
+#       pragma warning(disable:4127) // Conditional expression is constant.
+#   endif
+        if (is_integral && lua_isinteger(L, idx))
+            return static_cast<T>(lua_tointeger(L, idx));
+#   ifdef BOOST_MSVC
+#       pragma warning(pop)
+#   endif
 #endif
+        return static_cast<T>(lua_tonumber(L, idx));
     }
 };
 
@@ -89,14 +122,7 @@ struct converter<T,
 
     static T from_stack(lua_State* L, int idx)
     {
-#ifdef NDEBUG
         return static_cast<T>(lua_tointeger(L, idx));
-#else
-        int isnum;
-        T n = static_cast<T>(lua_tointegerx(L, idx, &isnum));
-        BOOST_ASSERT(isnum);
-        return n;
-#endif
     }
 };
 
