@@ -41,6 +41,9 @@ struct lua_type_id<bool>: std::integral_constant<int, LUA_TBOOLEAN> {};
 
 template <> struct lua_type_id<void>: std::integral_constant<int, LUA_TNIL> {};
 
+template <>
+struct lua_type_id<void*>: std::integral_constant<int, LUA_TLIGHTUSERDATA> {};
+
 // string
 template <>
 struct lua_type_id<char*>: std::integral_constant<int, LUA_TSTRING> {};

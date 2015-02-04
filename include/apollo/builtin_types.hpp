@@ -69,7 +69,7 @@ struct converter<T, typename std::enable_if<
 };
 
 
-// Enum converter
+// Enum converter //
 template<typename T>
 struct converter<T,
         typename std::enable_if<std::is_enum<T>::value>::type
@@ -262,6 +262,24 @@ struct converter<raw_function>: converter_base<raw_function> {
     static raw_function from_stack(lua_State* L, int idx)
     {
         return lua_tocfunction(L, idx);
+    }
+};
+
+template <>
+struct converter<void*>: converter_base<void*> {
+    static void push(lua_State* L, void* p)
+    {
+        lua_pushlightuserdata(L, p);
+    }
+
+    static unsigned n_conversion_steps(lua_State* L, int idx)
+    {
+        return lua_islightuserdata(L, idx) ? 0 : no_conversion;
+    }
+
+    static void* from_stack(lua_State* L, int idx)
+    {
+        return lua_touserdata(L, idx);
     }
 };
 

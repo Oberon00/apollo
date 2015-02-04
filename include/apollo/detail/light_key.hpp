@@ -1,7 +1,11 @@
 #ifndef APOLLO_LIGHT_KEY_HPP_INCLUDED
 #define APOLLO_LIGHT_KEY_HPP_INCLUDED APOLLO_LIGHT_KEY_HPP_INCLUDED
 
-namespace apollo { namespace detail {
+#include <apollo/converters_fwd.hpp>
+
+namespace apollo {
+
+namespace detail {
 
 struct light_key {
     operator void* () {
@@ -12,6 +16,18 @@ struct light_key {
     }
 };
 
-} } // namespace apollo::detail
+} // namespace detail
+
+template<>
+struct converter<detail::light_key>: converter_base<detail::light_key> {
+
+    static void push(lua_State* L, detail::light_key const& lk)
+    {
+        lua_pushlightuserdata(L, const_cast<void*>(
+            static_cast<void const*>(lk)));
+    }
+};
+
+} // namespace apollo
 
 #endif
