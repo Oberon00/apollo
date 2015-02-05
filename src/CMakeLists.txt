@@ -1,7 +1,7 @@
 set(apollo_HDRS_PUBLIC
     "builtin_types.hpp"
     "class.hpp"
-    "closing_state.hpp"
+    "closing_lstate.hpp"
     "config.hpp"
     "converters.hpp"
     "converters_fwd.hpp"

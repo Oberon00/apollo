@@ -1,5 +1,5 @@
-#ifndef APOLLO_CLOSING_STATE_HPP_INCLUDED
-#define APOLLO_CLOSING_STATE_HPP_INCLUDED
+#ifndef APOLLO_CLOSING_LSTATE_HPP_INCLUDED
+#define APOLLO_CLOSING_LSTATE_HPP_INCLUDED
 
 #include <apollo/lua_include.hpp>
 
@@ -46,4 +46,4 @@ private:
 
 } // namespace apollo
 
-#endif // APOLLO_CLOSING_STATE_HPP_INCLUDED
+#endif // APOLLO_CLOSING_LSTATE_HPP_INCLUDED

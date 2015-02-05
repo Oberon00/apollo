@@ -1,4 +1,4 @@
-#include <apollo/closing_state.hpp>
+#include <apollo/closing_lstate.hpp>
 #include <apollo/builtin_types.hpp>
 #include <apollo/function.hpp>
 #include <apollo/create_table.hpp>
