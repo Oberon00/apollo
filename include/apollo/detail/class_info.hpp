@@ -26,9 +26,16 @@ struct static_class_id {
     static std::size_t const id;
 };
 
+#ifdef BOOST_CLANG
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wglobal-constructors"
+#endif
 template <typename T>
 std::size_t const static_class_id<T>::id = allocate_class_id(
     boost::typeindex::type_id<T>().type_info());
+#ifdef BOOST_CLANG
+#    pragma clang diagnostic pop
+#endif
 // }}}
 
 template <typename From, typename To>

@@ -57,11 +57,6 @@ set(apollo_SRCS
     "typeid.cpp"
 )
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set_source_files_properties("class_info.cpp" PROPERTIES
-        COMPILE_FLAGS "-Wno-exit-time-destructors")
-endif()
-
 set(CMAKE_DEBUG_POSTFIX "-d")
 
 add_library(apollo ${apollo_HDRS} ${apollo_SRCS})
