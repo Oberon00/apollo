@@ -29,7 +29,7 @@ set(CMAKE_MODULE_PATH
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     option(BUILD_SHARED_LIBS "Build apollo as a dynamic library (DLL/.so)." OFF)
     set(APOLLO_LUA_VERSION "" CACHE STRING
-        "Set to a dotted Lua version number: 5.1, 5.2 or 5.3. Empty: Newest available.")
+        "Set to a dotted Lua version number, e.g.: 5.1.5, 5.3.0. Empty: Newest available.")
 endif()
 
 if (MSVC)
@@ -93,7 +93,12 @@ find_package(Boost 1.53 REQUIRED ${Boost_FIND_COMPONENTS})
 
 add_definitions("-DBOOST_ALL_NO_LIB")
 
-find_package(Lua ${APOLLO_LUA_VERSION} REQUIRED)
+if (APOLLO_LUA_VERSION)
+    find_package(Lua ${APOLLO_LUA_VERSION} EXACT REQUIRED)
+else()
+    find_package(Lua REQUIRED)
+endif()
+
 set(LUA_INCLUDE_DIRS "${LUA_INCLUDE_DIR}")
 
 include_directories(
