@@ -21,6 +21,7 @@ public:
     {
         m_L = other.m_L;
         other.m_L = nullptr;
+        return *this;
     }
 
     ~closing_lstate()
