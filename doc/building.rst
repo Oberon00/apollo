@@ -4,7 +4,7 @@ Building apollo
 apollo requires that you have installed the following libraries:
 
 - Boost_ in version 1.56 (later versions may/should also work).
-- Lua_ in version 5.2 (5.3 may also work, support for 5.1 is planned).
+- Lua_ in version 5.1 to 5.3.
 
 
 CMake_ in a reasonably recent version is used as the build system.
