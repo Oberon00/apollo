@@ -1,41 +1,23 @@
 #ifndef APOLLO_OPERATOR_HPP_INCLUDED
 #define APOLLO_OPERATOR_HPP_INCLUDED APOLLO_OPERATOR_HPP_INCLUDED
 
-#include <utility> // std::forward
-#include <boost/lexical_cast.hpp>
-#include <apollo/to_raw_function.hpp>
-
 namespace apollo { namespace op {
 
 
-// The get_raw_* functions are workarounds for MSVC; see get_raw_ctor_wrapper.
-#define APOLLO_DETAIL_BINOP(op, name) \
-    template <typename Lhs, typename Rhs>                                  \
-    auto name(Lhs lhs, Rhs rhs)                                            \
-    -> decltype(lhs op rhs)                                                \
-    {                                                                      \
-        return lhs op rhs;                                                 \
-    }                                                                      \
-                                                                           \
-    template <typename Lhs, typename Rhs>                                  \
-    raw_function get_raw_##name()                                          \
-    {                                                                      \
-        using rv_t = decltype(std::declval<Lhs>() op std::declval<Rhs>()); \
-        return to_raw_function<rv_t(*)(Lhs, Rhs), &name<Lhs, Rhs>>();      \
+#define APOLLO_DETAIL_BINOP(op, name)     \
+    template <typename Lhs, typename Rhs> \
+    auto name(Lhs lhs, Rhs rhs)           \
+    -> decltype(lhs op rhs)               \
+    {                                     \
+        return lhs op rhs;                \
     }
 
 #define APOLLO_DETAIL_PREFIXOP(op, name) \
-    template <typename Operand>                                     \
-    auto name(Operand operand)                                      \
-     -> decltype(op operand)                                        \
-    {                                                               \
-        return op operand;                                          \
-    }                                                               \
-    template <typename Operand>                                     \
-    raw_function get_raw_##name()                                   \
-    {                                                               \
-        using rv_t = decltype(op std::declval<Operand>());          \
-        return to_raw_function<rv_t(*)(Operand), &name<Operand>>(); \
+    template <typename Operand>          \
+    auto name(Operand operand)           \
+     -> decltype(op operand)             \
+    {                                    \
+        return op operand;               \
     }
 
 // Operator names follow the names of the
@@ -72,12 +54,6 @@ APOLLO_DETAIL_BINOP(>>, shr);
 
 #undef APOLLO_DETAIL_BINOP
 #undef APOLLO_DETAIL_PREFIXOP
-
-template <typename T>
-std::string to_string(T const& v)
-{
-    return boost::lexical_cast<std::string>(v);
-}
 
 } } // namespace apollo::op
 
