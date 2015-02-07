@@ -1,8 +1,9 @@
 #ifndef APOLLO_CTOR_WRAPPER_HPP_INCLUDED
 #define APOLLO_CTOR_WRAPPER_HPP_INCLUDED
 
+#include <apollo/detail/smart_ptr.hpp>
+
 #include <utility>
-#include <apollo/smart_ptr.hpp>
 
 namespace apollo {
 

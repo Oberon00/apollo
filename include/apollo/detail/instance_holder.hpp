@@ -1,7 +1,7 @@
 #ifndef APOLLO_INSTANCE_HOLDER_HPP_INCLUDED
 #define APOLLO_INSTANCE_HOLDER_HPP_INCLUDED APOLLO_INSTANCE_HOLDER_HPP_INCLUDED
 
-#include <apollo/smart_ptr.hpp>
+#include <apollo/detail/smart_ptr.hpp>
 
 #include <boost/get_pointer.hpp>
 

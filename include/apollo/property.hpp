@@ -2,7 +2,7 @@
 #define APOLLO_PROPERTY_HPP_INCLUDED
 
 #include <apollo/detail/meta_util.hpp>
-#include <apollo/smart_ptr.hpp>
+#include <apollo/detail/smart_ptr.hpp>
 
 namespace apollo {
 

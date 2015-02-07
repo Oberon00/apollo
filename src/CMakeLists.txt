@@ -22,7 +22,6 @@ set(apollo_HDRS_PUBLIC
     "property.hpp"
     "raw_function.hpp"
     "reference.hpp"
-    "smart_ptr.hpp"
     "stack_balance.hpp"
     "to_raw_function.hpp"
     "typeid.hpp"
@@ -37,6 +36,7 @@ set(apollo_HDRS_DETAIL
     "meta_util.hpp"
     "ref_binder.hpp"
     "signature.hpp"
+    "smart_ptr.hpp"
     "variadic_pass.hpp"
 )
 

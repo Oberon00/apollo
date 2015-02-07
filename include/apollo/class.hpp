@@ -4,7 +4,7 @@
 #include <apollo/config.hpp>
 #include <apollo/converters.hpp>
 #include <apollo/gc.hpp> // For push_bare_udata().
-#include <apollo/smart_ptr.hpp>
+#include <apollo/detail/smart_ptr.hpp>
 #include <apollo/typeid.hpp>
 #include <apollo/detail/class_info.hpp>
 #include <apollo/detail/instance_holder.hpp>
