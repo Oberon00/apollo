@@ -2,7 +2,7 @@
 #include <apollo/default_argument.hpp>
 #include <apollo/lapi.hpp>
 #include <apollo/overload.hpp>
-#include <apollo/raw_function.hpp>
+#include <apollo/to_raw_function.hpp>
 
 #include <iostream>
 

@@ -1,5 +1,5 @@
-#ifndef APOLLO_RAW_FUNCTION_HPP_INCLUDED
-#define APOLLO_RAW_FUNCTION_HPP_INCLUDED APOLLO_RAW_FUNCTION_HPP_INCLUDED
+#ifndef APOLLO_TO_RAW_FUNCTION_HPP_INCLUDED
+#define APOLLO_TO_RAW_FUNCTION_HPP_INCLUDED APOLLO_RAW_FUNCTION_HPP_INCLUDED
 
 #include <apollo/make_function.hpp>
 #include <apollo/builtin_types.hpp> // raw_function
@@ -132,4 +132,4 @@ BOOST_CONSTEXPR raw_function get_raw_ctor_wrapper() BOOST_NOEXCEPT
 
 } // namespace apollo
 
-#endif // APOLLO_RAW_FUNCTION_HPP_INCLUDED
+#endif // APOLLO_TO_RAW_FUNCTION_HPP_INCLUDED

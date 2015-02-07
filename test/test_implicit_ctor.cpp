@@ -2,7 +2,7 @@
 #include <apollo/function.hpp>
 #include <apollo/implicit_ctor.hpp>
 #include <apollo/lapi.hpp>
-#include <apollo/raw_function.hpp>
+#include <apollo/to_raw_function.hpp>
 
 #include <boost/noncopyable.hpp>
 

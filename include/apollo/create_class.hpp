@@ -6,7 +6,7 @@
 #include <apollo/create_table.hpp>
 #include <apollo/function.hpp>
 #include <apollo/implicit_ctor.hpp>
-#include <apollo/raw_function.hpp>
+#include <apollo/to_raw_function.hpp>
 
 namespace apollo {
 

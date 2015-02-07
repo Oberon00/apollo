@@ -3,7 +3,7 @@
 
 #include <utility> // std::forward
 #include <boost/lexical_cast.hpp>
-#include <apollo/raw_function.hpp>
+#include <apollo/to_raw_function.hpp>
 
 namespace apollo { namespace op {
 

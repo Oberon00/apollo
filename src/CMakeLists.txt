@@ -19,10 +19,10 @@ set(apollo_HDRS_PUBLIC
     "operator.hpp"
     "overload.hpp"
     "property.hpp"
-    "raw_function.hpp"
     "reference.hpp"
     "smart_ptr.hpp"
     "stack_balance.hpp"
+    "to_raw_function.hpp"
     "typeid.hpp"
     "ward_ptr.hpp"
 )
