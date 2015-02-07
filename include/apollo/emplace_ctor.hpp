@@ -3,6 +3,7 @@
 
 #include <apollo/class.hpp>
 #include <apollo/function_primitives.hpp>
+#include <apollo/raw_function.hpp>
 
 namespace apollo {
 

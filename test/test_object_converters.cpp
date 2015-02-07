@@ -1,5 +1,6 @@
 #include <apollo/builtin_types.hpp>
 #include <apollo/class.hpp>
+#include <apollo/ctor_wrapper.hpp>
 #include <apollo/lapi.hpp>
 #include <apollo/function.hpp>
 

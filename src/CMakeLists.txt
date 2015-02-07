@@ -7,6 +7,7 @@ set(apollo_HDRS_PUBLIC
     "converters_fwd.hpp"
     "create_class.hpp"
     "create_table.hpp"
+    "ctor_wrapper.hpp"
     "default_argument.hpp"
     "emplace_ctor.hpp"
     "error.hpp"

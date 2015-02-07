@@ -4,6 +4,8 @@
 #include <apollo/builtin_types.hpp>
 #include <apollo/class.hpp>
 #include <apollo/create_table.hpp>
+#include <apollo/ctor_wrapper.hpp>
+#include <apollo/emplace_ctor.hpp>
 #include <apollo/function.hpp>
 #include <apollo/implicit_ctor.hpp>
 #include <apollo/to_raw_function.hpp>
@@ -52,7 +54,7 @@ public:
     template<typename... Args>
     class_creator&& ctor(char const* name = "new")
     {
-        return (*this)(name, get_raw_ctor_wrapper<T, Args...>());
+        return (*this)(name, get_raw_emplace_ctor_wrapper<T, Args...>());
     }
 
     // Implicit constructors //
@@ -74,7 +76,7 @@ public:
     template<typename... Args>
     class_creator&& implicit_only_ctor()
     {
-        add_implicit_ctor(this->m_L, &ctor_wrapper<T, Args...>);
+        add_implicit_ctor(this->m_L, &new_wrapper<T, Args...>);
         return std::move(*this);
     }
 
