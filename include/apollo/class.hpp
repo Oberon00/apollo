@@ -11,8 +11,6 @@
 #include <apollo/detail/light_key.hpp>
 #include <apollo/detail/ref_binder.hpp>
 
-#include <memory>
-
 namespace apollo {
 
 namespace detail {
