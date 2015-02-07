@@ -10,7 +10,6 @@
 
 #include <exception>
 #include <string>
-#include <typeinfo>
 
 namespace apollo {
 

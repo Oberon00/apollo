@@ -6,8 +6,6 @@
 #include <apollo/function_primitives.hpp>
 #include <apollo/gc.hpp>
 
-#include <typeinfo>
-
 namespace apollo {
 
 namespace detail {
