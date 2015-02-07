@@ -20,15 +20,6 @@ int gc_object(lua_State* L) BOOST_NOEXCEPT
 }
 
 template <typename T>
-int gc_object_with_mt(lua_State* L) BOOST_NOEXCEPT
-{
-    gc_object<T>(L);
-    lua_pushnil(L);
-    lua_setmetatable(L, 1);
-    return 0;
-}
-
-template <typename T>
 inline typename detail::remove_qualifiers<T>::type*
 push_bare_udata(lua_State* L, T&& o)
 {

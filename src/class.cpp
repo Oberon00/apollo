@@ -3,6 +3,16 @@
 
 static apollo::detail::light_key object_tag = {};
 
+static int gc_instance(lua_State* L) BOOST_NOEXCEPT
+{
+    if (!apollo::detail::is_apollo_instance(L, 1))
+        luaL_argerror(L, 1, "Expected apollo object.");
+    apollo::gc_object<apollo::detail::instance_holder>(L);
+    lua_pushnil(L);
+    lua_setmetatable(L, 1);
+    return 0;
+}
+
 APOLLO_API void apollo::detail::push_instance_metatable(
     lua_State* L,
     class_info const& cls) BOOST_NOEXCEPT
@@ -19,7 +29,7 @@ APOLLO_API void apollo::detail::push_instance_metatable(
 
         lua_pushliteral(L, "__gc");
         // Destroy through pointer to interface class.
-        lua_pushcfunction(L, &gc_object_with_mt<instance_holder>);
+        lua_pushcfunction(L, &gc_instance);
         lua_rawset(L, -3);
 
         // Copy metatable because we also want to return it.
@@ -35,7 +45,7 @@ APOLLO_API void apollo::detail::push_instance_metatable(
 
 APOLLO_API bool apollo::detail::is_apollo_instance(lua_State* L, int idx)
 {
-    if (!lua_getmetatable(L, idx))
+    if (lua_type(L, idx) != LUA_TUSERDATA || !lua_getmetatable(L, idx))
         return false;
 
     lua_rawgeti(L, -1, 1);

@@ -129,17 +129,10 @@ BOOST_AUTO_TEST_CASE(gc)
     apollo::rawget(L, -1, "__gc");
     BOOST_CHECK_EQUAL(lua_tocfunction(L, -1), &apollo::gc_object<test_cls>);
     lua_pop(L, 2); // Pop metatable and __gc function.
-    BOOST_REQUIRE_EQUAL(apollo::gc_object_with_mt<test_cls>(L), 0);
+    lua_pop(L, 1);
+    lua_gc(L, LUA_GCCOLLECT, 0);
+    lua_gc(L, LUA_GCCOLLECT, 0);
     BOOST_CHECK_EQUAL(test_cls::n_destructions, 4u);
-    BOOST_CHECK(!lua_getmetatable(L, -1));
-    lua_pop(L, 1);
-
-    apollo::push_gc_object(L, test_cls(0));
-    BOOST_CHECK_EQUAL(test_cls::n_destructions, 5u);
-    lua_pop(L, 1);
-    lua_gc(L, LUA_GCCOLLECT, 0);
-    lua_gc(L, LUA_GCCOLLECT, 0);
-    BOOST_CHECK_EQUAL(test_cls::n_destructions, 6u);
 }
 
 static int testthrower(lua_State* L)
