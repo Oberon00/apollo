@@ -2,6 +2,7 @@ set (EXAMPLES
     basic-push-from_stack
     basic-create_table
     basic-class
+    raw_function
 )
 
 foreach(example ${EXAMPLES})

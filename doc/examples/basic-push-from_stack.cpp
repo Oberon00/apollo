@@ -1,7 +1,6 @@
-#include <apollo/closing_lstate.hpp>
 #include <apollo/builtin_types.hpp>
+#include <apollo/closing_lstate.hpp>
 #include <apollo/function.hpp>
-#include <lua.hpp>
 
 #include <functional>
 #include <cassert>

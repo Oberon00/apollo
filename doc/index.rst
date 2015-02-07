@@ -18,9 +18,12 @@ Contents:
 
    basic-usage
    building
+   converter-basics
    functions
    classes
-   converters
+   sugar
+   utilities
+   converter-advanced
 
 Indices and tables
 ==================
