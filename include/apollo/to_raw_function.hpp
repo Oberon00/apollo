@@ -2,7 +2,7 @@
 #define APOLLO_TO_RAW_FUNCTION_HPP_INCLUDED APOLLO_RAW_FUNCTION_HPP_INCLUDED
 
 #include <apollo/make_function.hpp>
-#include <apollo/builtin_types.hpp> // raw_function
+#include <apollo/raw_function.hpp>
 
 namespace apollo {
 

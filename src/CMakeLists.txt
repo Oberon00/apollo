@@ -19,6 +19,7 @@ set(apollo_HDRS_PUBLIC
     "operator.hpp"
     "overload.hpp"
     "property.hpp"
+    "raw_function.hpp"
     "reference.hpp"
     "smart_ptr.hpp"
     "stack_balance.hpp"

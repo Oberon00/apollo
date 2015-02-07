@@ -1,5 +1,7 @@
 #include <apollo/builtin_types.hpp>
+#include <apollo/raw_function.hpp>
 #include <apollo/stack_balance.hpp>
+
 #include <cstring>
 
 #include "test_prefix.hpp"
