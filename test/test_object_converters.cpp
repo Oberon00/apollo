@@ -230,10 +230,10 @@ BOOST_AUTO_TEST_CASE(fromnil)
     BOOST_CHECK(apollo::is_convertible<foo_cls*>(L, -1));
     BOOST_CHECK(!apollo::from_stack<foo_cls*>(L, -1));
     BOOST_CHECK(!apollo::is_convertible<foo_cls&>(L, -1));
-    BOOST_CHECK(!apollo::is_convertible<std::unique_ptr<foo_cls>&>(L, -1));
 
-    // Note: Trying to actually do this results in a compile time error:
-    BOOST_CHECK(apollo::is_convertible<std::unique_ptr<foo_cls>>(L, -1));
+    BOOST_CHECK(apollo::is_convertible<std::shared_ptr<foo_cls>>(L, -1));
+    BOOST_CHECK(!apollo::is_convertible<std::shared_ptr<foo_cls>&>(L, -1));
+    BOOST_CHECK(!apollo::from_stack<std::shared_ptr<foo_cls>>(L, -1));
 
     lua_pop(L, 1);
 }

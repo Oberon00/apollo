@@ -167,7 +167,7 @@ public:
 #   pragma warning(push)
 #   pragma warning(disable:4127) // conditional expression is constant
 #endif
-        if (is_ref::value && lua_isnil(L, idx))
+        if (lua_isnil(L, idx))
             return make_nil_smart_ptr(is_ref());
 #ifdef BOOST_MSVC
 #   pragma warning(pop)
