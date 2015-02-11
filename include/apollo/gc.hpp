@@ -19,20 +19,6 @@ int gc_object(lua_State* L) BOOST_NOEXCEPT
     return 0;
 }
 
-template <typename T>
-inline typename detail::remove_qualifiers<T>::type*
-push_bare_udata(lua_State* L, T&& o)
-{
-    using obj_t = typename detail::remove_qualifiers<T>::type;
-    void* uf = lua_newuserdata(L, sizeof(obj_t));
-    try {
-        return new(uf) obj_t(std::forward<T>(o));
-    } catch (...) {
-        lua_pop(L, 1);
-        throw;
-    }
-}
-
 template <typename T, typename... Args>
 inline typename detail::remove_qualifiers<T>::type*
 emplace_bare_udata(lua_State* L, Args&&... ctor_args)
@@ -46,6 +32,14 @@ emplace_bare_udata(lua_State* L, Args&&... ctor_args)
         throw;
     }
 }
+
+template <typename T>
+inline typename detail::remove_qualifiers<T>::type*
+push_bare_udata(lua_State* L, T&& o)
+{
+    return emplace_bare_udata<T>(L, std::forward<T>(o));
+}
+
 
 
 // Note: __gc will not unset metatable.
