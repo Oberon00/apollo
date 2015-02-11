@@ -51,6 +51,8 @@ accessed as an additional overhead. However, all of this can be avoided by using
 ``APOLLO_TO_RAW_FUNCTION``, as described in the next two sections.
 
 
+.. _sec-fn-raw:
+
 Raw functions
 -------------
 
@@ -143,12 +145,18 @@ Converts ``f`` to a raw function using :ref:`f-APOLLO_TO_RAW_FUNCTION` and
 pushes it onto ``L``.
 
 
+.. _sec-ctor:
+
+
 Wrappers for constructors
 -------------------------
 
 Header::
 
    #include <apollo/ctor_wrapper.hpp>
+
+.. seealso:: For exposing constructors to Lua prefer
+   :ref:`f-get_raw_emplace_ctor_wrapper`.
 
 .. _f-ctor_wrapper:
 
@@ -157,21 +165,29 @@ Header::
 
 ::
 
-   template <typename T, typename... Args>
+   template <typename /* explicit */ T, typename... /* explicit */ Args>
    T ctor_wrapper(Args... args);
 
 Returns ``T`` constructed from ``args``. This is useful when you need to expose
 constructors to Lua.
 
 
+.. _f-new_wrapper:
+
+``new_wrapper()``
+^^^^^^^^^^^^^^^^^^
+
 ::
 
-   template <typename T, typename... Args>
+   template <typename /* explicit */ T, typename... Args>
    see-below new_wrapper(Args... args);
 
 If ``T`` is a (smart) pointer type, returns ``T`` constructed from ``new obj_t``
 with the given ``args``, where ``obj_t`` is the pointee type of ``T``. Otherwise
 returns ``new T`` constructed with ``args`` as ``T*``.
+
+
+.. _sec-op:
 
 
 Wrappers for C++ operators
@@ -188,14 +204,14 @@ pointer operators (unary ``*`` and ``->``). They take the following form::
     namespace apollo { namespace op {
 
     // For binary operators:
-    template <typename Lhs, typename Rhs>
+    template <typename /* explicit */ Lhs, typename /* explicit */ Rhs>
     auto name(Lhs lhs, Rhs rhs) -> decltype(lhs OP rhs)
     {
         return lhs OP rhs; // Exposition only!
     }
 
     // For unary operators:
-    template <typename Operand>
+    template <typename /* explicit */ Operand>
     auto name(Operand operand) -> decltype(OP operand)
     {
         return OP operand; // Exposition only!
@@ -236,6 +252,7 @@ since Lua 5.3 and a “u” indicates an unary (prefix) operator:
 ======  ====  =====
 
 
+.. _sec-property:
 
 Wrappers to get and set public data members
 -------------------------------------------

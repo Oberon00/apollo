@@ -1,6 +1,8 @@
 Basic usage
 ===========
 
+.. _sec-basic-converters:
+
 Core primitives: ``push``, ``from_stack`` & friends
 ---------------------------------------------------
 
@@ -61,6 +63,8 @@ Of course, higher-order functions (functions taking or returning functions) are
 also supported, as are ``boost::function`` and ``std::function``.
 
 
+.. _sec-basic-sugar:
+
 Syntactic sugar: ``new_table`` and ``rawset_table``
 ---------------------------------------------------
 
@@ -78,6 +82,8 @@ and ``end_metatable``.
 
 .. literalinclude:: examples/basic-create_table.cpp
 
+
+.. _sec-basic-cls:
 
 The basics of using classes
 ---------------------------

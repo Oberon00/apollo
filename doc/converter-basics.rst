@@ -1,3 +1,5 @@
+.. _sec-converters-basic:
+
 Converters: Basics
 ==================
 
@@ -11,8 +13,17 @@ The converters are used not only by the functions below, but also to retrieve
 the arguments of C++ functions that were pushed to Lua and to push their return
 values.
 
-A *push-converter* is a converter used for pushing, a *pull-converter* is used
+A *PushConverter* is a converter used for pushing, a *PullConverter* is used
 for retrieving values from the Lua stack.
+
+.. seealso::
+
+   :ref:`sec-basic-converters`
+      A short tutorial that demonstrates the most important features.
+
+   :ref:`sec-converters-advanced`
+      More on converters.
+
 
 Converter functions
 -------------------
@@ -32,7 +43,7 @@ Header::
    void push(lua_State* L, T&& v, MoreTs&&... more);
 
 Pushes ``v`` (and optionally ``more``) on the stack of ``L`` using ``T``'s
-default push-converter.
+default PushConverter.
 
 If multiple arguments are pushed, they are pushed in direct order (as required
 for using this function with ``lua_call``), i.e. the first argument is pushed
@@ -55,7 +66,7 @@ becomes the new stack top.
        lua_State* L, int idx, T&& fallback)
 
 Return the value at index ``idx`` on the stack of ``L`` converted to ``T``
-using ``T``'s default pull-converter.
+using ``T``'s default PullConverter.
 
 The actual return type is usually exactly ``T`` but converters can substitute
 their own. This is currently used only by the converter for classes and is
@@ -77,7 +88,7 @@ and ``fallback`` is returned for overload 2.
    bool is_convertible(lua_State* L, int idx);
 
 Returns whether the value at index ``idx`` on the stack of ``L`` can be
-converted to ``T`` using ``T``'s default pull-converter.
+converted to ``T`` using ``T``'s default PullConverter.
 
 
 
@@ -94,7 +105,7 @@ converted to ``T`` using ``T``'s default pull-converter.
 
 Just like the first overload of :ref:`f-from_stack`: Return the value at index
 ``idx`` on the stack of ``L`` converted to ``T`` using ``T``'s default
-pull-converter.
+PullConverter.
 
 The only difference is the error handling: While :ref:`f-from_stack` throws an
 exception, this function has undefined behavior (e.g. exceptions or segfaults)
@@ -142,7 +153,7 @@ There are a few things to note:
 string
    Pushing character arrays or ``std::string`` will preserve embedded
    null-bytes, while ``char*`` cannot. For ``std::string`` the ``size()`` is
-   used for the lenght, for ``char[N]``, the lenght is ``N - 1`` if the last
+   used for the length, for ``char[N]``, the length is ``N - 1`` if the last
    character is a null-byte and ``N`` otherwise.
 
    .. warning:: Be careful with that if you push a local
