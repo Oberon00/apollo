@@ -37,7 +37,6 @@ metaprogramming for faster builds and better auto-completion support.
 * A up-to-date, reasonably C++11-compliant compiler and standard library. Tested
   with gcc 4.8, Clang 3.4 with libstdc++-4.8 (see Travis CI) and MSVC 12 (2013).
 * [Lua](http://lua.org) in version 5.1, 5.2 or 5.3.
-  be supported in the future to allow the use of [LuaJIT](http://luajit.org/).
 * [Boost 1.56](http://boost.org) Presently used modules are Assert, Config,
   Core, Exception and TypeIndex. For the tests, Preprocessor and Test are used
   additionally.
