@@ -107,7 +107,7 @@ inline void push_impl(lua_State*)
 template <typename Head, typename... Tail>
 void push_impl(lua_State* L, Head&& head, Tail&&... tail)
 {
-    push_converter_for<Head>::push(
+    push_converter_for<Head>().push(
         L, std::forward<Head>(head));
     push_impl(L, std::forward<Tail>(tail)...);
 }
