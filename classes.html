@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Classes (user-defined types) &mdash; apollo 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="apollo 0.1 documentation" href="index.html" />
+    <link rel="next" title="Helpers for table creation/modification" href="sugar.html" />
+    <link rel="prev" title="Functions" href="functions.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="sugar.html" title="Helpers for table creation/modification"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="functions.html" title="Functions"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="classes-user-defined-types">
+<span id="sec-classes"></span><h1>Classes (user-defined types)<a class="headerlink" href="#classes-user-defined-types" title="Permalink to this headline">¶</a></h1>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/class.hpp&gt;</span>
+</pre></div>
+</div>
+<p>apollo allows you to use class types with <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a>,
+provided you tell the library about the type first using
+<a class="reference internal" href="#f-register-class"><em>register_class()</em></a>. However, to make the type usable in Lua, you also need
+to set the appropriate metatable fields (usually at least <tt class="docutils literal"><span class="pre">__index</span></tt>).</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="basic-usage.html#sec-basic-cls"><em>The basics of using classes</em></a></dt>
+<dd>A short tutorial that demonstrates the most important features.</dd>
+<dt><a class="reference internal" href="functions.html#sec-ctor"><em>Wrappers for constructors</em></a>, <a class="reference internal" href="functions.html#sec-op"><em>Wrappers for C++ operators</em></a>, <a class="reference internal" href="functions.html#sec-property"><em>Wrappers to get and set public data members</em></a></dt>
+<dd>Useful wrapper functions.</dd>
+</dl>
+</div>
+<div class="section" id="pointer-and-reference-semantics-smart-pointer-support">
+<h2>Pointer and reference semantics, smart pointer support<a class="headerlink" href="#pointer-and-reference-semantics-smart-pointer-support" title="Permalink to this headline">¶</a></h2>
+<p>If you push a object by value (or by reference; that is indistinguishable) it
+will be copied (or moved for rvalue references) to Lua and the copy/moved-to
+object will live in memory allocated by <tt class="docutils literal"><span class="pre">lua_newuserdata</span></tt>. Such objects are
+never <tt class="docutils literal"><span class="pre">const</span></tt>.</p>
+<p>If you push by pointer, only the pointer is copied (or moved for rvalue
+references) to Lua. apollo does not make any assumptions about ownership: The
+only thing that happens when the containing Lua userdata is collected is that
+the pointer&#8217;s destructor is called. That means, if you want to pass ownership to
+Lua, use an <tt class="docutils literal"><span class="pre">std::unique_ptr</span></tt>, if you want to share ownership with Lua use an
+<tt class="docutils literal"><span class="pre">std::shared_ptr</span></tt>, if you just want to pass a reference to Lua use a raw
+pointer and make sure that the referenced object stays alive as long as any
+references to it exist in Lua (which usually means, if you want to be sure about
+it, as long as the <tt class="docutils literal"><span class="pre">lua_State</span></tt> is not closed).</p>
+<p>Pointers to <tt class="docutils literal"><span class="pre">const</span></tt> will make the Lua representation of the object act as
+<tt class="docutils literal"><span class="pre">const</span></tt> (i.e. it is only convertible to <tt class="docutils literal"><span class="pre">const&amp;</span></tt>, <tt class="docutils literal"><span class="pre">const*</span></tt> or the value
+type, which also means that only const member functions can be called on it,
+since apollo will use <tt class="docutils literal"><span class="pre">from_stack&lt;C&amp;&gt;</span></tt> for non-const member functions).</p>
+</div>
+<div class="section" id="using-from-stack-with-class-types">
+<span id="sec-cls-from-stack"></span><h2>Using <tt class="docutils literal"><span class="pre">from_stack</span></tt> with class types<a class="headerlink" href="#using-from-stack-with-class-types" title="Permalink to this headline">¶</a></h2>
+<p>For a class type <tt class="docutils literal"><span class="pre">C</span></tt>, <tt class="docutils literal"><span class="pre">from_stack</span></tt> can be used with a template argument of
+<tt class="docutils literal"><span class="pre">C*</span></tt>, <tt class="docutils literal"><span class="pre">C&amp;</span></tt> to obtain a mutable pointer/reference to the object on the Lua
+stack, as expected. <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const*</span></tt>, also as expected, obtains a pointer to const.</p>
+<p>However, just <tt class="docutils literal"><span class="pre">from_stack&lt;C&gt;</span></tt> or <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const&amp;</span></tt> (both equivalent) return not
+exactly what you asked for but instead they return an implementation defined
+reference wrapper object. This is necessary for <tt class="docutils literal"><span class="pre">const&amp;</span></tt> because the object
+retrieved might not actually live in Lua but be an <a class="reference internal" href="#sec-cls-implicit"><em>implicitly constructed
+object</em></a>. In that case, the lifetime of the object is bound to
+the reference wrapper&#8217;s. So how do you use an object wrapped in such a reference
+wrapper? First, make sure the wrapper stays alive for the time you use the
+object if you use it as <tt class="docutils literal"><span class="pre">const&amp;</span></tt> (C++ ensures that objects stay alive inside
+the <em>full expression</em> in which they were constructed, which is already
+enough for cases where you just pass the result of <tt class="docutils literal"><span class="pre">from_stack</span></tt> to another
+function that does not store a reference to its argument). Then you can use the
+wrapped object by:</p>
+<ul class="simple">
+<li>Employing the implicit conversion of the reference wrapper to <tt class="docutils literal"><span class="pre">C</span></tt> (copies
+the value).</li>
+<li>Using the <tt class="docutils literal"><span class="pre">get()</span></tt> member function that returns a <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const&amp;</span></tt>.</li>
+<li>Passing the wrapper to the <tt class="docutils literal"><span class="pre">unwrap_bound_ref</span></tt> function, which returns the
+same as <tt class="docutils literal"><span class="pre">get()</span></tt> but is useful in generic code, because if the argument is not
+a reference wrapper, it is returned unchanged.</li>
+</ul>
+<p>Note that an object that is <tt class="docutils literal"><span class="pre">const</span></tt> in Lua is only convertible to  <tt class="docutils literal"><span class="pre">C</span></tt>, <tt class="docutils literal"><span class="pre">C</span>
+<span class="pre">const&amp;</span></tt> and <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const*</span></tt>.</p>
+<p>A nil value is converted to a <tt class="docutils literal"><span class="pre">nullptr</span></tt> / default-constructed smart pointer.</p>
+<div class="section" id="smart-pointer-retrieval-limitations">
+<h3>Smart pointer retrieval limitations<a class="headerlink" href="#smart-pointer-retrieval-limitations" title="Permalink to this headline">¶</a></h3>
+<p>While normal pointers, references or value types can even be converted from
+derived types to registered bases thereof, retrieving an object as a smart
+pointer from Lua only works if it was pushed as the exact same smart pointer
+type. E.g. a <tt class="docutils literal"><span class="pre">std::shared_ptr&lt;Derived&gt;</span></tt> in Lua can be converted to only:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">Derived</span></tt>, <tt class="docutils literal"><span class="pre">Derived*</span></tt>, <tt class="docutils literal"><span class="pre">Derived&amp;</span></tt> and const variants.</li>
+<li><tt class="docutils literal"><span class="pre">Base</span></tt> (yes, that&#8217;s slicing!), <tt class="docutils literal"><span class="pre">Base*</span></tt>, <tt class="docutils literal"><span class="pre">Base&amp;</span></tt> and const variants.</li>
+<li><tt class="docutils literal"><span class="pre">std::shared_ptr&lt;Derived&gt;</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">std::shared_ptr&lt;Derived&gt;&amp;</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">std::shared_ptr&lt;Derived&gt;</span> <span class="pre">const&amp;</span></tt></li>
+</ul>
+<p>(Would it not be a <tt class="docutils literal"><span class="pre">std::shared_ptr</span></tt> but another type, e.g. a value or a
+plain pointer or a <tt class="docutils literal"><span class="pre">unique_ptr</span></tt>, the last two were also not possible.)  It
+can <em>not</em> be converted to e.g.:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">std::shared_ptr&lt;Derived</span> <span class="pre">const&gt;</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">std::shared_ptr&lt;Base&gt;</span></tt></li>
+</ul>
+<p>Note that for a move-only smart pointer such as <tt class="docutils literal"><span class="pre">std::unique_ptr</span></tt> only
+conversion to a (const) reference is possible.</p>
+</div>
+</div>
+<div class="section" id="function-reference">
+<h2>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="register-class">
+<span id="f-register-class"></span><h3><tt class="docutils literal"><span class="pre">register_class()</span></tt><a class="headerlink" href="#register-class" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="cm">/* explicit */</span> <span class="n">Bases</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">register_class</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Registers the class <tt class="docutils literal"><span class="pre">T</span></tt> for usage with apollo, allowing conversions to
+<tt class="docutils literal"><span class="pre">Bases</span></tt>, bases thereof (if any) and so on.</p>
+<p>This function needs to be called before any object of the class <tt class="docutils literal"><span class="pre">T</span></tt> can be
+pushed or a retrieval attempted. apollo will save the type information and
+allocate a metatable for objects of this type (see
+<a class="reference internal" href="#f-push-class-metatable"><em>push_class_metatable()</em></a>).</p>
+<p>Base classes must be registered before derived ones. If you don&#8217;t need
+conversions to a base, you can leave it out. You may, however, not specify types
+as bases that are none. Virtual bases are not supported.</p>
+</div>
+<div class="section" id="push-class-metatable">
+<span id="f-push-class-metatable"></span><h3><tt class="docutils literal"><span class="pre">push_class_metatable()</span></tt><a class="headerlink" href="#push-class-metatable" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">push_class_metatable</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Pushes the metatable onto the stack of <tt class="docutils literal"><span class="pre">L</span></tt> that newly pushed objects of type
+<tt class="docutils literal"><span class="pre">T</span></tt> will use when pushed.</p>
+<p><tt class="docutils literal"><span class="pre">T</span></tt> needs to be registered in <tt class="docutils literal"><span class="pre">L</span></tt> (see <a class="reference internal" href="#f-register-class"><em>register_class()</em></a>).</p>
+<p>The metatable initially only contains a <tt class="docutils literal"><span class="pre">__gc</span></tt> metamethod that calls the
+objects destructor and frees internal apollo type information. You may set
+your own <tt class="docutils literal"><span class="pre">__gc</span></tt> metamethod but this method must call the original one.</p>
+<p>You will usually want to set at least the <tt class="docutils literal"><span class="pre">__index</span></tt> metafield.</p>
+</div>
+<div class="section" id="emplace-object">
+<span id="f-emplace-object"></span><h3><tt class="docutils literal"><span class="pre">emplace_object()</span></tt><a class="headerlink" href="#emplace-object" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">emplace_object</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Like <tt class="docutils literal"><span class="pre">push(L,</span> <span class="pre">T(std::forward&lt;Args&gt;(args)...))</span></tt> but constructs the object
+directly in Lua, withouth copying or even moving it. Very handy for types that
+are not moveable.</p>
+<p>Note that this always uses apollo&#8217;s default object converter, even if you wrote
+your own specializations for <tt class="docutils literal"><span class="pre">converter&lt;T&gt;</span></tt>.</p>
+</div>
+<div class="section" id="get-raw-emplace-ctor-wrapper">
+<span id="f-get-raw-emplace-ctor-wrapper"></span><h3><tt class="docutils literal"><span class="pre">get_raw_emplace_ctor_wrapper()</span></tt><a class="headerlink" href="#get-raw-emplace-ctor-wrapper" title="Permalink to this headline">¶</a></h3>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/emplace_ctor.hpp&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="cm">/* explicit */</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="n">raw_function</span> <span class="n">get_raw_emplace_ctor_wrapper</span><span class="p">()</span> <span class="k">noexcept</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Returns a raw function that constructs <tt class="docutils literal"><span class="pre">T</span></tt> in Lua using
+<a class="reference internal" href="#f-emplace-object"><em>emplace_object()</em></a> from argument types <tt class="docutils literal"><span class="pre">Args</span></tt>. When exposing constructors
+to Lua, this should be preferred for efficiency reasons. It is necessary when
+<tt class="docutils literal"><span class="pre">T</span></tt> is not moveable.</p>
+</div>
+</div>
+<div class="section" id="implicit-constructors-conversion-support">
+<span id="sec-cls-implicit"></span><h2>Implicit constructors/conversion support<a class="headerlink" href="#implicit-constructors-conversion-support" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/implicit_ctor.hpp&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="add-implicit-ctor">
+<span id="f-add-implicit-ctor"></span><h3><tt class="docutils literal"><span class="pre">add_implicit_ctor()</span></tt><a class="headerlink" href="#add-implicit-ctor" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">From</span><span class="p">,</span> <span class="k">typename</span> <span class="n">To</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">add_implicit_ctor</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">To</span><span class="p">(</span><span class="o">*</span><span class="n">ctor</span><span class="p">)(</span><span class="n">From</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>By adding an implicit constructor / conversion function from <tt class="docutils literal"><span class="pre">From</span></tt> to <tt class="docutils literal"><span class="pre">To</span></tt>,
+<a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a> will be able to convert types that have the type <tt class="docutils literal"><span class="pre">From</span></tt> in
+Lua to a value type of just <tt class="docutils literal"><span class="pre">To</span></tt> or to a const reference <tt class="docutils literal"><span class="pre">To</span> <span class="pre">const&amp;</span></tt> (that&#8217;s
+why a <a class="reference internal" href="#sec-cls-from-stack"><em>reference wrapper</em></a> is returned for these two
+kinds of types).</p>
+<p><tt class="docutils literal"><span class="pre">To</span></tt> can also be a raw pointer to a class type. This is actually recommended,
+since it is more efficient with the current implementation. If a value type is
+returned, it needs to be moveable.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="functions.html#sec-ctor"><em>Wrappers for constructors</em></a></p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Classes (user-defined types)</a><ul>
+<li><a class="reference internal" href="#pointer-and-reference-semantics-smart-pointer-support">Pointer and reference semantics, smart pointer support</a></li>
+<li><a class="reference internal" href="#using-from-stack-with-class-types">Using <tt class="docutils literal"><span class="pre">from_stack</span></tt> with class types</a><ul>
+<li><a class="reference internal" href="#smart-pointer-retrieval-limitations">Smart pointer retrieval limitations</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#function-reference">Function reference</a><ul>
+<li><a class="reference internal" href="#register-class"><tt class="docutils literal"><span class="pre">register_class()</span></tt></a></li>
+<li><a class="reference internal" href="#push-class-metatable"><tt class="docutils literal"><span class="pre">push_class_metatable()</span></tt></a></li>
+<li><a class="reference internal" href="#emplace-object"><tt class="docutils literal"><span class="pre">emplace_object()</span></tt></a></li>
+<li><a class="reference internal" href="#get-raw-emplace-ctor-wrapper"><tt class="docutils literal"><span class="pre">get_raw_emplace_ctor_wrapper()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#implicit-constructors-conversion-support">Implicit constructors/conversion support</a><ul>
+<li><a class="reference internal" href="#add-implicit-ctor"><tt class="docutils literal"><span class="pre">add_implicit_ctor()</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="functions.html"
+                        title="previous chapter">Functions</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="sugar.html"
+                        title="next chapter">Helpers for table creation/modification</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="sugar.html" title="Helpers for table creation/modification"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="functions.html" title="Functions"
+             >previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Christian Neumüller.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

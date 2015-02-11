@@ -1,0 +1,452 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Lower level utilities &mdash; apollo 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="apollo 0.1 documentation" href="index.html" />
+    <link rel="next" title="Converters: Advanced topics" href="converter-advanced.html" />
+    <link rel="prev" title="Helpers for table creation/modification" href="sugar.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="converter-advanced.html" title="Converters: Advanced topics"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sugar.html" title="Helpers for table creation/modification"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="lower-level-utilities">
+<h1>Lower level utilities<a class="headerlink" href="#lower-level-utilities" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="safely-calling-lua-functions-from-c">
+<h2>Safely calling Lua functions from C++<a class="headerlink" href="#safely-calling-lua-functions-from-c" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/lapi.hpp&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="pcall">
+<span id="f-pcall"></span><h3><tt class="docutils literal"><span class="pre">pcall()</span></tt><a class="headerlink" href="#pcall" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">void</span> <span class="nf">pcall</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nargs</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nresults</span><span class="p">,</span> <span class="kt">int</span> <span class="n">msgh</span><span class="p">);</span> <span class="c1">// 1</span>
+<span class="kt">void</span> <span class="nf">pcall</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nargs</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nresults</span><span class="p">);</span> <span class="c1">// 2</span>
+</pre></div>
+</div>
+<p>The first overload is like <tt class="docutils literal"><span class="pre">lua_pcall</span></tt> but instead of returning an error code
+on failure, it throws an <tt class="docutils literal"><span class="pre">lua_api_error</span></tt>. This class inherits from
+<tt class="docutils literal"><span class="pre">boost::exception</span></tt> and, when thrown by <tt class="docutils literal"><span class="pre">pcall</span></tt> always contains the
+following error information objects (defined in header <tt class="docutils literal"><span class="pre">&lt;apollo/error.hpp&gt;</span></tt>:</p>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">lua_State*</span></tt> (<tt class="docutils literal"><span class="pre">L</span></tt>) at <tt class="docutils literal"><span class="pre">errinfo::lua_state</span></tt>.</li>
+<li>The string on top of the Lua stack (the error message) as a <tt class="docutils literal"><span class="pre">std::string</span></tt> at
+<tt class="docutils literal"><span class="pre">errinfo::lua_msg</span></tt>. If there was no string on top of the stack, it will
+contain the string <tt class="docutils literal"><span class="pre">&quot;(no</span> <span class="pre">error</span> <span class="pre">message)&quot;</span></tt>.</li>
+<li>The error code (e.g. <tt class="docutils literal"><span class="pre">LUA_ERRUN</span></tt> or <tt class="docutils literal"><span class="pre">LUA_ERRGCMM</span></tt>) that <tt class="docutils literal"><span class="pre">lua_pcall</span></tt>
+returned at <tt class="docutils literal"><span class="pre">errinfo::lua_error_code</span></tt>.</li>
+<li>The message <tt class="docutils literal"><span class="pre">&quot;lua_pcall()</span> <span class="pre">failed&quot;</span></tt> as a <tt class="docutils literal"><span class="pre">std::string</span></tt> at <tt class="docutils literal"><span class="pre">errinfo::msg</span></tt>.</li>
+</ul>
+<p>The second overload is like calling the first without an message handler (<tt class="docutils literal"><span class="pre">msgh</span>
+<span class="pre">=</span> <span class="pre">0</span></tt>) if no message handler was set (see below). Otherwise it is like calling
+the first overload with the set message handler.</p>
+</div>
+<div class="section" id="set-error-msg-handler">
+<span id="f-set-error-msg-handler"></span><h3><tt class="docutils literal"><span class="pre">set_error_msg_handler()</span></tt><a class="headerlink" href="#set-error-msg-handler" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">void</span> <span class="nf">set_error_msg_handler</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Pops the value at the top of the stack and saves it as error message handler for
+<tt class="docutils literal"><span class="pre">pcall</span></tt>.</p>
+</div>
+<div class="section" id="push-error-msg-handler">
+<span id="f-push-error-msg-handler"></span><h3><tt class="docutils literal"><span class="pre">push_error_msg_handler()</span></tt><a class="headerlink" href="#push-error-msg-handler" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">bool</span> <span class="nf">push_error_msg_handler</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If you previously set an error message handler using
+<a class="reference internal" href="#f-set-error-msg-handler"><em>set_error_msg_handler()</em></a>, pushes that on top of the stack and returns
+<tt class="docutils literal"><span class="pre">true</span></tt>. Otherwise pushes nothing and returns <tt class="docutils literal"><span class="pre">false</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="safely-calling-c-functions-from-lua">
+<h2>Safely calling C++ functions from Lua<a class="headerlink" href="#safely-calling-c-functions-from-lua" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="exceptions-to-lua-errors">
+<span id="f-exceptions-to-lua-errors"></span><h3><tt class="docutils literal"><span class="pre">exceptions_to_lua_errors()</span></tt><a class="headerlink" href="#exceptions-to-lua-errors" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="k">auto</span> <span class="n">exceptions_to_lua_errors</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">F</span><span class="o">&amp;&amp;</span> <span class="n">f</span><span class="p">,</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="k">noexcept</span>
+    <span class="o">-&gt;</span> <span class="k">decltype</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">args</span><span class="p">)...));</span>
+</pre></div>
+</div>
+<p>Calls <tt class="docutils literal"><span class="pre">f</span></tt> with <tt class="docutils literal"><span class="pre">args</span></tt> and returns its return value. If an exception is
+thrown by <tt class="docutils literal"><span class="pre">f</span></tt>, calls <tt class="docutils literal"><span class="pre">lua_error()</span></tt> with a string describing the exception
+(usually of the form <tt class="docutils literal"><span class="pre">exception:</span> <span class="pre">&lt;what()&gt;</span></tt>, but more descriptive for e.g.
+<tt class="docutils literal"><span class="pre">to_cpp_conversion_error</span></tt>s).</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">The <tt class="docutils literal"><span class="pre">caught&lt;F&gt;()</span></tt> method of <a class="reference internal" href="functions.html#sec-fn-raw"><em>raw_function</em></a> is
+more convenient to use if you want to wrap a function otherwise (i.e. except
+for error handling) conforming to Lua calling conventions for usage from Lua.</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Make sure that the move/copy constructors of the arguments and the
+return value do not throw! Since these operations happen before/after
+<tt class="docutils literal"><span class="pre">exceptions_to_lua_errors</span></tt> is executed, such exceptions cannot be
+translated to Lua errors (they will not even trigger the <tt class="docutils literal"><span class="pre">noexcept</span></tt> so
+<tt class="docutils literal"><span class="pre">std::terminate()</span></tt> wont be called either).</p>
+</div>
+</div>
+<div class="section" id="exceptions-to-lua-errors-l">
+<span id="f-exceptions-to-lua-errors-l"></span><h3><tt class="docutils literal"><span class="pre">exceptions_to_lua_errors_L()</span></tt><a class="headerlink" href="#exceptions-to-lua-errors-l" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">F</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="k">auto</span> <span class="n">exceptions_to_lua_errors_L</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">F</span><span class="o">&amp;&amp;</span> <span class="n">f</span><span class="p">,</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span><span class="p">)</span> <span class="k">noexcept</span>
+    <span class="o">-&gt;</span> <span class="k">decltype</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">args</span><span class="p">)...));</span>
+</pre></div>
+</div>
+<p>Just like <a class="reference internal" href="#f-exceptions-to-lua-errors"><em>exceptions_to_lua_errors()</em></a> but calls <tt class="docutils literal"><span class="pre">f</span></tt> with <tt class="docutils literal"><span class="pre">L</span></tt> as an
+additional first argument.</p>
+</div>
+</div>
+<div class="section" id="garbage-collection-and-low-level-userdata-utilities">
+<h2>Garbage collection and low level userdata utilities<a class="headerlink" href="#garbage-collection-and-low-level-userdata-utilities" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/gc.hpp&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="push-bare-udata">
+<span id="f-push-bare-udata"></span><h3><tt class="docutils literal"><span class="pre">push_bare_udata()</span></tt><a class="headerlink" href="#push-bare-udata" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">T</span><span class="o">-</span><span class="n">without</span><span class="o">-</span><span class="n">cvr</span><span class="o">*</span> <span class="n">push_bare_udata</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">o</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Pushes a new userdata with <tt class="docutils literal"><span class="pre">sizeof(T)</span></tt> onto <tt class="docutils literal"><span class="pre">L</span></tt> and constructs a <tt class="docutils literal"><span class="pre">T</span></tt> into
+it&#8217;s copy/move constructor with <tt class="docutils literal"><span class="pre">o</span></tt>. Returns a pointer to that userdata.</p>
+<p>Equivalent to <tt class="docutils literal"><span class="pre">emplace_bare_udata&lt;T&gt;(L,</span> <span class="pre">o)</span></tt>.</p>
+</div>
+<div class="section" id="emplace-bare-udata">
+<span id="f-emplace-bare-udata"></span><h3><tt class="docutils literal"><span class="pre">emplace_bare_udata()</span></tt><a class="headerlink" href="#emplace-bare-udata" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="n">T</span><span class="o">-</span><span class="n">without</span><span class="o">-</span><span class="n">cvr</span><span class="o">*</span> <span class="n">emplace_bare_udata</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">ctor_args</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Pushes a new userdata with <tt class="docutils literal"><span class="pre">sizeof(T)</span></tt> onto <tt class="docutils literal"><span class="pre">L</span></tt> and constructs a <tt class="docutils literal"><span class="pre">T</span></tt> into
+it, calling its constructor with <tt class="docutils literal"><span class="pre">args</span></tt>. If the constructor throws an
+exception, the userdata will be popped from the stack before rethrowing.</p>
+</div>
+<div class="section" id="gc-object">
+<span id="f-gc-object"></span><h3><tt class="docutils literal"><span class="pre">gc_object()</span></tt><a class="headerlink" href="#gc-object" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">int</span> <span class="n">gc_object</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">)</span> <span class="k">noexcept</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Intended for use as <tt class="docutils literal"><span class="pre">lua_CFunction</span></tt>. Calls <tt class="docutils literal"><span class="pre">~T</span></tt> on the first Lua argument
+(i.e. the value at index 1 on <tt class="docutils literal"><span class="pre">L</span></tt>&#8216;s stack) without any checking. Always
+returns <tt class="docutils literal"><span class="pre">0</span></tt> (= no Lua return values).</p>
+</div>
+<div class="section" id="push-gc-object">
+<span id="f-push-gc-object"></span><h3><tt class="docutils literal"><span class="pre">push_gc_object()</span></tt><a class="headerlink" href="#push-gc-object" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">T</span><span class="o">-</span><span class="n">without</span><span class="o">-</span><span class="n">cvr</span><span class="o">*</span> <span class="n">push_gc_object</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">o</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Just like <a class="reference internal" href="#f-push-bare-udata"><em>push_bare_udata()</em></a>, but if the cvr-unqualified <tt class="docutils literal"><span class="pre">T</span></tt> is not
+trivially destructible, creates a new table, sets its <tt class="docutils literal"><span class="pre">__gc</span></tt> field to
+<a class="reference internal" href="#f-gc-object"><em>gc_object()</em></a> (with appropriate <tt class="docutils literal"><span class="pre">T</span></tt>) and sets the new table as metatable
+of the newly created userdata.</p>
+</div>
+</div>
+<div class="section" id="closing-lstate">
+<h2><tt class="docutils literal"><span class="pre">closing_lstate</span></tt><a class="headerlink" href="#closing-lstate" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/closing_lstate.hpp&gt;</span>
+</pre></div>
+</div>
+<p>Synopsis:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">class</span> <span class="nc">closing_lstate</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="k">explicit</span> <span class="n">closing_lstate</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">);</span> <span class="c1">// 1</span>
+    <span class="n">closing_lstate</span><span class="p">();</span> <span class="c1">// 2</span>
+    <span class="n">closing_lstate</span><span class="p">(</span><span class="n">closing_lstate</span><span class="o">&amp;&amp;</span> <span class="n">other</span><span class="p">);</span>
+    <span class="n">closing_lstate</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span> <span class="p">(</span><span class="n">closing_lstate</span><span class="o">&amp;&amp;</span> <span class="n">other</span><span class="p">);</span>
+    <span class="o">~</span><span class="n">closing_lstate</span><span class="p">();</span>
+
+    <span class="k">operator</span> <span class="n">lua_State</span><span class="o">*</span> <span class="p">();</span>
+    <span class="n">lua_State</span><span class="o">*</span> <span class="nf">get</span><span class="p">();</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Stores a <tt class="docutils literal"><span class="pre">lua_State*</span></tt> (passed either via constructor 1 or created via
+<tt class="docutils literal"><span class="pre">luaL_newstate()</span></tt> by constructor 2) and closes it in its destructor.
+<tt class="docutils literal"><span class="pre">closing_lstate</span></tt> objects are moveable but not copyable. <tt class="docutils literal"><span class="pre">get()</span></tt> and the
+implcit conversion operator both return the stored <tt class="docutils literal"><span class="pre">lua_State*</span></tt>.</p>
+</div>
+<div class="section" id="references-to-the-lua-registry">
+<h2>References to the Lua registry<a class="headerlink" href="#references-to-the-lua-registry" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/reference.hpp&gt;</span>
+</pre></div>
+</div>
+<p>Synopsis:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">enum</span> <span class="k">class</span> <span class="nc">ref_mode</span> <span class="p">{</span> <span class="n">move</span><span class="p">,</span> <span class="n">copy</span> <span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">registry_reference</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">registry_reference</span><span class="p">();</span> <span class="c1">// 1</span>
+    <span class="k">explicit</span> <span class="nf">registry_reference</span><span class="p">(</span> <span class="c1">// 2</span>
+        <span class="n">lua_State</span><span class="o">*</span> <span class="n">L_</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ref_mode</span> <span class="n">mode</span> <span class="o">=</span> <span class="n">ref_mode</span><span class="o">::</span><span class="n">move</span><span class="p">);</span>
+    <span class="o">~</span><span class="n">registry_reference</span><span class="p">();</span>
+
+    <span class="n">registry_reference</span><span class="p">(</span><span class="n">registry_reference</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">rhs</span><span class="p">);</span>
+    <span class="n">registry_reference</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span><span class="n">registry_reference</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">rhs</span><span class="p">);</span>
+
+    <span class="n">registry_reference</span><span class="p">(</span><span class="n">registry_reference</span><span class="o">&amp;&amp;</span> <span class="n">rhs</span><span class="p">);</span>
+    <span class="n">registry_reference</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span> <span class="p">(</span><span class="n">registry_reference</span><span class="o">&amp;&amp;</span> <span class="n">rhs</span><span class="p">);</span>
+
+    <span class="kt">void</span> <span class="nf">reset</span><span class="p">(</span><span class="kt">int</span> <span class="n">idx</span><span class="p">,</span> <span class="n">ref_mode</span> <span class="n">mode</span> <span class="o">=</span> <span class="n">ref_mode</span><span class="o">::</span><span class="n">move</span><span class="p">);</span> <span class="c1">// 1</span>
+    <span class="kt">void</span> <span class="nf">reset</span><span class="p">(</span> <span class="c1">// 2</span>
+        <span class="n">lua_State</span><span class="o">*</span> <span class="n">L_</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">ref_mode</span> <span class="n">mode</span> <span class="o">=</span> <span class="n">ref_mode</span><span class="o">::</span><span class="n">move</span><span class="p">);</span>
+
+    <span class="kt">void</span> <span class="n">push</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+
+    <span class="kt">bool</span> <span class="n">empty</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+    <span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">get</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Manages a reference to the Lua registry using <tt class="docutils literal"><span class="pre">luaL_ref()</span></tt> / <tt class="docutils literal"><span class="pre">luaL_unref</span></tt>.</p>
+<p>The first constructor is equivalent to the second with <tt class="docutils literal"><span class="pre">L_</span> <span class="pre">=</span> <span class="pre">nullptr</span></tt> and
+<tt class="docutils literal"><span class="pre">idx</span> <span class="pre">=</span> <span class="pre">0</span></tt>.</p>
+<p>The second constructor overload and the second <tt class="docutils literal"><span class="pre">reset()</span></tt> overload make the
+reference point to the value at <tt class="docutils literal"><span class="pre">idx</span></tt> on <tt class="docutils literal"><span class="pre">L</span></tt>. If <tt class="docutils literal"><span class="pre">ref_mode::move</span></tt> was
+specified, the value will be removed from the stack, if <tt class="docutils literal"><span class="pre">ref_mode::copy</span></tt> was
+specified, it will be left there. The first <tt class="docutils literal"><span class="pre">reset()</span></tt> overload behaves like
+the second called with the <tt class="docutils literal"><span class="pre">lua_State*</span></tt> that the reference currently refers to
+(it thus may only be called if the reference refers to a <tt class="docutils literal"><span class="pre">lua_State*</span></tt>). Both
+<tt class="docutils literal"><span class="pre">reset()</span></tt> overloads will <tt class="docutils literal"><span class="pre">luaL_unref</span></tt> the current reference, if any.</p>
+<p>If <tt class="docutils literal"><span class="pre">0</span></tt> is passed as <tt class="docutils literal"><span class="pre">idx</span></tt> to <tt class="docutils literal"><span class="pre">reset()</span></tt> or the second constructor overload,
+the reference is initialized with <tt class="docutils literal"><span class="pre">LUA_NOREF</span></tt>. <tt class="docutils literal"><span class="pre">0</span></tt> is the only acceptable
+<tt class="docutils literal"><span class="pre">idx</span></tt> if <tt class="docutils literal"><span class="pre">L</span></tt> is <tt class="docutils literal"><span class="pre">nullptr</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">push()</span></tt> pushes the currently referenced value on top of the currently
+referenced states stack. Precondition: <tt class="docutils literal"><span class="pre">!empty()</span></tt>.</p>
+<p>A <tt class="docutils literal"><span class="pre">registry_reference</span></tt> is considered <tt class="docutils literal"><span class="pre">empty()</span></tt> if it references
+<tt class="docutils literal"><span class="pre">LUA_NOREF</span></tt>. <tt class="docutils literal"><span class="pre">L</span></tt> returns the currently referenced <tt class="docutils literal"><span class="pre">lua_State*</span></tt> (or
+<tt class="docutils literal"><span class="pre">nullptr</span></tt> if there is none) and <tt class="docutils literal"><span class="pre">get()</span></tt> returns the registry index of the
+value referenced there (or <tt class="docutils literal"><span class="pre">LUA_NOREF</span></tt> if there is none).</p>
+<p>This class is usable with <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a>: Pushing just
+calls the <tt class="docutils literal"><span class="pre">push</span></tt> method or pushes nil if the reference is empty. If an attempt
+is made to push a reference that references another state as that on which it
+should be pushed, the behaviour is undefined.  <tt class="docutils literal"><span class="pre">from_stack(L,</span> <span class="pre">idx)</span></tt> will
+return a <tt class="docutils literal"><span class="pre">registry_reference</span></tt> constructed with these arguments and
+<tt class="docutils literal"><span class="pre">ref_mode::copy</span></tt>. Thus, <a class="reference internal" href="converter-basics.html#f-is-convertible"><em>is_convertible()</em></a> is always true for
+<tt class="docutils literal"><span class="pre">stack_reference</span></tt>.</p>
+</div>
+<div class="section" id="references-to-the-lua-stack">
+<h2>References to the Lua stack<a class="headerlink" href="#references-to-the-lua-stack" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/reference.hpp&gt;</span>
+</pre></div>
+</div>
+<p>Synopsis:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">class</span> <span class="nc">stack_reference</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="k">explicit</span> <span class="n">stack_reference</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="nf">reset</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span> <span class="o">=</span> <span class="k">nullptr</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="kt">bool</span> <span class="n">empty</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+    <span class="kt">bool</span> <span class="n">valid</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">get</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>References the stack value at <tt class="docutils literal"><span class="pre">idx</span></tt> (as passed to <tt class="docutils literal"><span class="pre">reset</span></tt> or the
+constructor). If <tt class="docutils literal"><span class="pre">idx</span></tt> is relative, it is converted to an absolute index using
+<tt class="docutils literal"><span class="pre">lua_absindex</span></tt>.</p>
+<p>A <tt class="docutils literal"><span class="pre">stack_reference</span></tt> is considered <tt class="docutils literal"><span class="pre">empty()</span></tt> if it has an <tt class="docutils literal"><span class="pre">idx</span></tt> of <tt class="docutils literal"><span class="pre">0</span></tt>.</p>
+<p>A <tt class="docutils literal"><span class="pre">stack_reference</span></tt> is considered <tt class="docutils literal"><span class="pre">valid(L)</span></tt> if it not empty and if <tt class="docutils literal"><span class="pre">idx</span> <span class="pre">&lt;=</span>
+<span class="pre">lua_gettop(L)</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">get()</span></tt> returns the stored index.</p>
+<p>The usefulness of <tt class="docutils literal"><span class="pre">stack_reference</span></tt> comes from the fact that it can be used
+with <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a>. Thus it can be used e.g. with
+<a class="reference internal" href="sugar.html#f-rawset-table"><em>rawset_table()</em></a> or <a class="reference internal" href="sugar.html#f-new-table"><em>new_table()</em></a>.</p>
+<p><tt class="docutils literal"><span class="pre">push()</span></tt> will (re)push the referenced value on top of the stack (using
+<tt class="docutils literal"><span class="pre">lua_pushvalue()</span></tt>) or push nil if the reference is empty. <tt class="docutils literal"><span class="pre">from_stack(L,</span>
+<span class="pre">idx)</span></tt> will just construct a <tt class="docutils literal"><span class="pre">stack_reference</span></tt> with these arguments. Thus,
+<a class="reference internal" href="converter-basics.html#f-is-convertible"><em>is_convertible()</em></a> is always true for <tt class="docutils literal"><span class="pre">stack_reference</span></tt>.</p>
+</div>
+<div class="section" id="stack-balance">
+<h2><tt class="docutils literal"><span class="pre">stack_balance</span></tt><a class="headerlink" href="#stack-balance" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/stack_balance.hpp&gt;</span>
+</pre></div>
+</div>
+<p>Synopsis:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">class</span> <span class="nc">stack_balance</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="k">enum</span> <span class="n">action</span> <span class="p">{</span> <span class="n">pop</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">push_nil</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">adjust</span> <span class="o">=</span> <span class="n">pop</span> <span class="o">|</span> <span class="n">push_nil</span><span class="p">,</span> <span class="n">debug</span> <span class="o">=</span> <span class="mi">4</span> <span class="p">};</span>
+    <span class="k">explicit</span> <span class="nf">stack_balance</span><span class="p">(</span>
+        <span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span>
+        <span class="kt">int</span> <span class="n">diff</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="kt">int</span> <span class="n">act</span> <span class="o">=</span> <span class="n">pop</span><span class="o">|</span><span class="n">debug</span><span class="p">);</span>
+    <span class="o">~</span><span class="n">stack_balance</span><span class="p">();</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>Saves the current value of <tt class="docutils literal"><span class="pre">lua_gettop()</span></tt> in its constructor and in its
+destructor, if the new stack top is not equal to the old stack top + <tt class="docutils literal"><span class="pre">diff</span></tt>
+acts according to the <tt class="docutils literal"><span class="pre">act</span></tt> parameter givent to the constructor:</p>
+<ul class="simple">
+<li>If the stack contains too many values and <tt class="docutils literal"><span class="pre">act</span></tt> has the <tt class="docutils literal"><span class="pre">pop</span></tt>-bit set,
+pops surplus values.</li>
+<li>If the stack contains too few values and <tt class="docutils literal"><span class="pre">push_nil</span></tt> was specified, pushes
+<tt class="docutils literal"><span class="pre">nil</span></tt>, until the desired stack size is reached.</li>
+<li>If, after the above, the stack size does not match the desired and <tt class="docutils literal"><span class="pre">debug</span></tt>
+was specified, a <tt class="docutils literal"><span class="pre">BOOST_ASSERT</span></tt> will fail with an error message.</li>
+</ul>
+</div>
+<div class="section" id="type-information">
+<h2>Type information<a class="headerlink" href="#type-information" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/typeid.hpp&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="lbuiltin-typeid">
+<span id="f-lbuiltin-typeid"></span><h3><tt class="docutils literal"><span class="pre">lbuiltin_typeid()</span></tt><a class="headerlink" href="#lbuiltin-typeid" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">boost</span><span class="o">::</span><span class="n">typeindex</span><span class="o">::</span><span class="n">type_info</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">lbuiltin_typeid</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Returns what <a class="reference internal" href="#f-ltypeid"><em>ltypeid()</em></a> returns for the builtin Lua type <tt class="docutils literal"><span class="pre">id</span></tt> (e.g.
+<tt class="docutils literal"><span class="pre">LUA_TSTRING</span></tt>) when no more specific type information is available.</p>
+</div>
+<div class="section" id="ltypeid">
+<span id="f-ltypeid"></span><h3><tt class="docutils literal"><span class="pre">ltypeid()</span></tt><a class="headerlink" href="#ltypeid" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">boost</span><span class="o">::</span><span class="n">typeindex</span><span class="o">::</span><span class="n">type_info</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">ltypeid</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>For userdata values pushed with apollo&#8217;s object converter, returns the type of
+the object. Otherwise, returns <tt class="docutils literal"><span class="pre">lbuiltin_typeid(lua_type(L,</span> <span class="pre">idx))</span></tt>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Lower level utilities</a><ul>
+<li><a class="reference internal" href="#safely-calling-lua-functions-from-c">Safely calling Lua functions from C++</a><ul>
+<li><a class="reference internal" href="#pcall"><tt class="docutils literal"><span class="pre">pcall()</span></tt></a></li>
+<li><a class="reference internal" href="#set-error-msg-handler"><tt class="docutils literal"><span class="pre">set_error_msg_handler()</span></tt></a></li>
+<li><a class="reference internal" href="#push-error-msg-handler"><tt class="docutils literal"><span class="pre">push_error_msg_handler()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#safely-calling-c-functions-from-lua">Safely calling C++ functions from Lua</a><ul>
+<li><a class="reference internal" href="#exceptions-to-lua-errors"><tt class="docutils literal"><span class="pre">exceptions_to_lua_errors()</span></tt></a></li>
+<li><a class="reference internal" href="#exceptions-to-lua-errors-l"><tt class="docutils literal"><span class="pre">exceptions_to_lua_errors_L()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#garbage-collection-and-low-level-userdata-utilities">Garbage collection and low level userdata utilities</a><ul>
+<li><a class="reference internal" href="#push-bare-udata"><tt class="docutils literal"><span class="pre">push_bare_udata()</span></tt></a></li>
+<li><a class="reference internal" href="#emplace-bare-udata"><tt class="docutils literal"><span class="pre">emplace_bare_udata()</span></tt></a></li>
+<li><a class="reference internal" href="#gc-object"><tt class="docutils literal"><span class="pre">gc_object()</span></tt></a></li>
+<li><a class="reference internal" href="#push-gc-object"><tt class="docutils literal"><span class="pre">push_gc_object()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#closing-lstate"><tt class="docutils literal"><span class="pre">closing_lstate</span></tt></a></li>
+<li><a class="reference internal" href="#references-to-the-lua-registry">References to the Lua registry</a></li>
+<li><a class="reference internal" href="#references-to-the-lua-stack">References to the Lua stack</a></li>
+<li><a class="reference internal" href="#stack-balance"><tt class="docutils literal"><span class="pre">stack_balance</span></tt></a></li>
+<li><a class="reference internal" href="#type-information">Type information</a><ul>
+<li><a class="reference internal" href="#lbuiltin-typeid"><tt class="docutils literal"><span class="pre">lbuiltin_typeid()</span></tt></a></li>
+<li><a class="reference internal" href="#ltypeid"><tt class="docutils literal"><span class="pre">ltypeid()</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sugar.html"
+                        title="previous chapter">Helpers for table creation/modification</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="converter-advanced.html"
+                        title="next chapter">Converters: Advanced topics</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="converter-advanced.html" title="Converters: Advanced topics"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="sugar.html" title="Helpers for table creation/modification"
+             >previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Christian Neumüller.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,485 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Functions &mdash; apollo 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="apollo 0.1 documentation" href="index.html" />
+    <link rel="next" title="Classes (user-defined types)" href="classes.html" />
+    <link rel="prev" title="Converters: Basics" href="converter-basics.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="classes.html" title="Classes (user-defined types)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="converter-basics.html" title="Converters: Basics"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="functions">
+<h1>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h1>
+<p>apollo supports pointers to functions (both free ones and member functions) as
+well as <tt class="docutils literal"><span class="pre">boost::function</span></tt> and <tt class="docutils literal"><span class="pre">std::function</span></tt>. In addition, apollo offers
+facilities for raw functions: Pushing <tt class="docutils literal"><span class="pre">lua_CFunction</span></tt>s as such and
+converting other functions to them for zero-overhead compared to a handwritten
+wrapper. Lastly, some wrapper functions are provided: For constructors,
+operators and public data member getters and setters.</p>
+<div class="section" id="function-converter">
+<h2>Function converter<a class="headerlink" href="#function-converter" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/function.hpp&gt;</span>
+</pre></div>
+</div>
+<p>apollo&#8217;s function converter supports pushing</p>
+<blockquote>
+<div><ul class="simple">
+<li>pointers to free functions</li>
+<li>pointers to member functions</li>
+<li><tt class="docutils literal"><span class="pre">boost::function</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">std::function</span></tt></li>
+</ul>
+</div></blockquote>
+<p>Arguments will be retrieved using <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a> and the return value
+is pushed using <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a>. Exceptions are converted to Lua errors using
+<a class="reference internal" href="utilities.html#f-exceptions-to-lua-errors"><em>exceptions_to_lua_errors()</em></a>. The <tt class="docutils literal"><span class="pre">this</span></tt> argument for member functions
+of a class <tt class="docutils literal"><span class="pre">C</span></tt> is retrieved as <tt class="docutils literal"><span class="pre">C&amp;</span></tt> for non-const member functions and as
+<tt class="docutils literal"><span class="pre">C</span> <span class="pre">const&amp;</span></tt> for const member functions (see <a class="reference internal" href="classes.html#sec-classes"><em>Classes (user-defined types)</em></a>).</p>
+<p>Additionally, function pointers pushed with apollo can be retrieved back using
+<a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a> as the exact same type they were pushed. A <tt class="docutils literal"><span class="pre">boost::</span></tt> or
+<tt class="docutils literal"><span class="pre">std::function</span></tt> can be obtained from any Lua function or other value that has
+a <tt class="docutils literal"><span class="pre">__call</span></tt> metamethod.  If the value was pushed as the exact same function
+object type or as a pointer to a compatible free function, invoking the function
+object will call the the C++ function directly. Otherwise, the function object
+will contain a reference to the Lua function object and it will be called
+through <a class="reference internal" href="utilities.html#f-pcall"><em>pcall()</em></a>, pushing any arguments onto the Lua stack using
+<a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a>.</p>
+<div class="section" id="implementation-notes">
+<h3>Implementation notes<a class="headerlink" href="#implementation-notes" title="Permalink to this headline">¶</a></h3>
+<p>There is a bit of overhead associated with apollo&#8217;s functions: First, in order
+to be able to get the functions back from Lua, type information has to be saved,
+needing two light userdata upvalues. Then, of course, the function pointer
+itself has to be saved which is a light userdata for free functions and a full
+userdata for most member function pointers and all function objects. When
+calling a function pushed this way, (only) the function upvalue needs to be
+accessed as an additional overhead. However, all of this can be avoided by using
+<tt class="docutils literal"><span class="pre">APOLLO_TO_RAW_FUNCTION</span></tt>, as described in the next two sections.</p>
+</div>
+</div>
+<div class="section" id="raw-functions">
+<span id="sec-fn-raw"></span><h2>Raw functions<a class="headerlink" href="#raw-functions" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/raw_function.hpp&gt;</span>
+</pre></div>
+</div>
+<p>Sometimes, you want to just directly push a raw <tt class="docutils literal"><span class="pre">lua_CFunction</span></tt> to Lua using
+<a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a>. However, if you just do that, apollo will try to use
+<tt class="docutils literal"><span class="pre">from_stack</span></tt> for the <tt class="docutils literal"><span class="pre">lua_State*</span></tt> and <tt class="docutils literal"><span class="pre">push</span></tt> a single <tt class="docutils literal"><span class="pre">int</span></tt> back. To
+inform apollo that it should just use <tt class="docutils literal"><span class="pre">lua_pushcfunction()</span></tt>, you need to wrap
+your function into an <tt class="docutils literal"><span class="pre">apollo::raw_function</span></tt> (defined in the
+<tt class="docutils literal"><span class="pre">&lt;apollo/builtin_types.hpp&gt;</span></tt> header):</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">struct</span> <span class="n">raw_function</span> <span class="p">{</span>
+    <span class="cm">/* implicit */</span> <span class="k">constexpr</span> <span class="n">raw_function</span><span class="p">(</span><span class="n">lua_CFunction</span> <span class="n">f_</span><span class="p">)</span> <span class="k">noexcept</span><span class="p">;</span>
+    <span class="cm">/* implicit */</span> <span class="k">constexpr</span> <span class="k">operator</span> <span class="n">lua_CFunction</span><span class="p">()</span> <span class="k">const</span> <span class="k">noexcept</span><span class="p">;</span>
+
+    <span class="k">template</span> <span class="o">&lt;</span><span class="n">lua_CFunction</span> <span class="cm">/* explicit */</span> <span class="n">FVal</span><span class="o">&gt;</span>
+    <span class="k">static</span> <span class="k">constexpr</span> <span class="n">raw_function</span> <span class="n">caught</span><span class="p">()</span> <span class="k">noexcept</span><span class="p">;</span>
+
+    <span class="n">lua_CFunction</span> <span class="n">f</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>The constructor will just initialize the public <tt class="docutils literal"><span class="pre">f</span></tt> member with its argument,
+the implicit conversion operator returns it. The static member function
+<tt class="docutils literal"><span class="pre">caught</span></tt> takes a <tt class="docutils literal"><span class="pre">lua_CFunction</span></tt> as template argument and returns a
+<tt class="docutils literal"><span class="pre">raw_function</span></tt> that contains the passed function wrapped in
+<a class="reference internal" href="utilities.html#f-exceptions-to-lua-errors"><em>exceptions_to_lua_errors()</em></a>.</p>
+</div>
+<div class="section" id="converting-arbitrary-c-functions-to-raw-functions">
+<h2>Converting arbitrary C++ functions to raw functions<a class="headerlink" href="#converting-arbitrary-c-functions-to-raw-functions" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/to_raw_function.hpp&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="to-raw-function">
+<span id="f-to-raw-function"></span><h3><tt class="docutils literal"><span class="pre">to_raw_function()</span></tt><a class="headerlink" href="#to-raw-function" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">F</span><span class="p">,</span> <span class="n">F</span> <span class="cm">/* explicit */</span> <span class="n">FVal</span><span class="o">&gt;</span>
+<span class="k">constexpr</span> <span class="n">raw_function</span> <span class="n">to_raw_function</span><span class="p">()</span> <span class="k">noexcept</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Takes a function pointer type and value as explicit template arguments and
+returns a raw function that wraps it, converting arguments using
+<a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a> and the return value using <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a>.</p>
+<p>Note that a function pushed this way cannot be really retrieved back as it does
+not contain any type information (which is the advantage at the same time: zero
+upvalues). It can however be retrieved as <tt class="docutils literal"><span class="pre">boost::</span></tt> or <tt class="docutils literal"><span class="pre">std::function</span></tt>, but
+it will only be called via <tt class="docutils literal"><span class="pre">pcall</span></tt> then.</p>
+<p>Usage example:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/builtin_types.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/closing_lstate.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/to_raw_function.hpp&gt;</span>
+
+<span class="k">namespace</span> <span class="p">{</span>
+
+<span class="kt">bool</span> <span class="n">is_odd</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">}</span> <span class="c1">// anonymous namespace</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">apollo</span><span class="o">::</span><span class="n">closing_lstate</span> <span class="n">L</span><span class="p">;</span>
+    <span class="n">luaL_openlibs</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+
+    <span class="k">auto</span> <span class="n">is_odd_rf</span> <span class="o">=</span> <span class="n">apollo</span><span class="o">::</span><span class="n">to_raw_function</span><span class="o">&lt;</span><span class="k">decltype</span><span class="p">(</span><span class="o">&amp;</span><span class="n">is_odd</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">is_odd</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="n">apollo</span><span class="o">::</span><span class="n">push</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">is_odd_rf</span><span class="p">);</span>
+    <span class="c1">// Or, equivalently, even: lua_pushcfunction(L, is_odd_rf.f);</span>
+    <span class="n">lua_setglobal</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;is_odd&quot;</span><span class="p">);</span>
+    <span class="n">luaL_dostring</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;print(is_odd(4), is_odd(5))&quot;</span><span class="p">);</span> <span class="c1">// --&gt; false	true</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="apollo-to-raw-function">
+<span id="f-apollo-to-raw-function"></span><h3><tt class="docutils literal"><span class="pre">APOLLO_TO_RAW_FUNCTION()</span></tt><a class="headerlink" href="#apollo-to-raw-function" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#define APOLLO_TO_RAW_FUNCTION(f) to_raw_function&lt;decltype(f), f&gt;()</span>
+<span class="c1">// Exposition only!</span>
+</pre></div>
+</div>
+<p>Since it is cumbersome to always write the <tt class="docutils literal"><span class="pre">decltype</span></tt> or manually spell the
+function pointer, this macro does just that for you. It also works for template
+function names containing unparenthesized commas and works around a bug in MSVC
+where <tt class="docutils literal"><span class="pre">decltype</span></tt> breaks for addresses of template functions.</p>
+</div>
+<div class="section" id="apollo-push-function-static">
+<span id="f-apollo-push-function-static"></span><h3><tt class="docutils literal"><span class="pre">APOLLO_PUSH_FUNCTION_STATIC()</span></tt><a class="headerlink" href="#apollo-push-function-static" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#define APOLLO_PUSH_FUNCTION_STATIC(L, f) \</span>
+<span class="cp">    lua_pushcfunction(L, APOLLO_TO_RAW_FUNCTION(f))</span>
+<span class="c1">// Exposition only!</span>
+</pre></div>
+</div>
+<p>Converts <tt class="docutils literal"><span class="pre">f</span></tt> to a raw function using <a class="reference internal" href="#f-apollo-to-raw-function"><em>APOLLO_TO_RAW_FUNCTION()</em></a> and
+pushes it onto <tt class="docutils literal"><span class="pre">L</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="wrappers-for-constructors">
+<span id="sec-ctor"></span><h2>Wrappers for constructors<a class="headerlink" href="#wrappers-for-constructors" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/ctor_wrapper.hpp&gt;</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">For exposing constructors to Lua prefer
+<a class="reference internal" href="classes.html#f-get-raw-emplace-ctor-wrapper"><em>get_raw_emplace_ctor_wrapper()</em></a>.</p>
+</div>
+<div class="section" id="ctor-wrapper">
+<span id="f-ctor-wrapper"></span><h3><tt class="docutils literal"><span class="pre">ctor_wrapper()</span></tt><a class="headerlink" href="#ctor-wrapper" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="cm">/* explicit */</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="n">T</span> <span class="n">ctor_wrapper</span><span class="p">(</span><span class="n">Args</span><span class="p">...</span> <span class="n">args</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Returns <tt class="docutils literal"><span class="pre">T</span></tt> constructed from <tt class="docutils literal"><span class="pre">args</span></tt>. This is useful when you need to expose
+constructors to Lua.</p>
+</div>
+<div class="section" id="new-wrapper">
+<span id="f-new-wrapper"></span><h3><tt class="docutils literal"><span class="pre">new_wrapper()</span></tt><a class="headerlink" href="#new-wrapper" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="n">see</span><span class="o">-</span><span class="n">below</span> <span class="n">new_wrapper</span><span class="p">(</span><span class="n">Args</span><span class="p">...</span> <span class="n">args</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">T</span></tt> is a (smart) pointer type, returns <tt class="docutils literal"><span class="pre">T</span></tt> constructed from <tt class="docutils literal"><span class="pre">new</span> <span class="pre">obj_t</span></tt>
+with the given <tt class="docutils literal"><span class="pre">args</span></tt>, where <tt class="docutils literal"><span class="pre">obj_t</span></tt> is the pointee type of <tt class="docutils literal"><span class="pre">T</span></tt>. Otherwise
+returns <tt class="docutils literal"><span class="pre">new</span> <span class="pre">T</span></tt> constructed with <tt class="docutils literal"><span class="pre">args</span></tt> as <tt class="docutils literal"><span class="pre">T*</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="wrappers-for-c-operators">
+<span id="sec-op"></span><h2>Wrappers for C++ operators<a class="headerlink" href="#wrappers-for-c-operators" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/operator.hpp&gt;</span>
+</pre></div>
+</div>
+<p>Apollo provides wrapper functions for all C++ operators, except these that do
+in-place modifications to their operands (e.g. <tt class="docutils literal"><span class="pre">+=</span></tt> and <tt class="docutils literal"><span class="pre">--</span></tt>) and the
+pointer operators (unary <tt class="docutils literal"><span class="pre">*</span></tt> and <tt class="docutils literal"><span class="pre">-&gt;</span></tt>). They take the following form:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">apollo</span> <span class="p">{</span> <span class="k">namespace</span> <span class="n">op</span> <span class="p">{</span>
+
+<span class="c1">// For binary operators:</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">Lhs</span><span class="p">,</span> <span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">Rhs</span><span class="o">&gt;</span>
+<span class="k">auto</span> <span class="n">name</span><span class="p">(</span><span class="n">Lhs</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">Rhs</span> <span class="n">rhs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="k">decltype</span><span class="p">(</span><span class="n">lhs</span> <span class="n">OP</span> <span class="n">rhs</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">lhs</span> <span class="n">OP</span> <span class="n">rhs</span><span class="p">;</span> <span class="c1">// Exposition only!</span>
+<span class="p">}</span>
+
+<span class="c1">// For unary operators:</span>
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">Operand</span><span class="o">&gt;</span>
+<span class="k">auto</span> <span class="n">name</span><span class="p">(</span><span class="n">Operand</span> <span class="n">operand</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="k">decltype</span><span class="p">(</span><span class="n">OP</span> <span class="n">operand</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">OP</span> <span class="n">operand</span><span class="p">;</span> <span class="c1">// Exposition only!</span>
+<span class="p">}</span>
+
+<span class="p">}</span> <span class="p">}</span> <span class="c1">// namespace apollo::op</span>
+</pre></div>
+</div>
+<p>The names are the same as the ones of the corresponding Lua metamethods (without
+leading underscores of course) or follow their naming convention when none
+exists. In the following table, a “*” in the notes column indicates that there
+exists no corresponding Lua metamethod, a “3” indicates that it exists only
+since Lua 5.3 and a “u” indicates an unary (prefix) operator:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="27%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><tt class="docutils literal"><span class="pre">OP</span></tt></th>
+<th class="head">name</th>
+<th class="head">Notes</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">+</span></tt></td>
+<td>add</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">-</span></tt></td>
+<td>sub</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">*</span></tt></td>
+<td>mul</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">/</span></tt></td>
+<td>div</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">%</span></tt></td>
+<td>mod</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">-</span></tt></td>
+<td>unm</td>
+<td>u</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">==</span></tt></td>
+<td>eq</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">!=</span></tt></td>
+<td>ne</td>
+<td>*</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&gt;</span></tt></td>
+<td>gt</td>
+<td>*</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;</span></tt></td>
+<td>lt</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&gt;=</span></tt></td>
+<td>ge</td>
+<td>*</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;=</span></tt></td>
+<td>le</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&amp;&amp;</span></tt></td>
+<td>land</td>
+<td>*</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">||</span></tt></td>
+<td>lor</td>
+<td>*</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">!</span></tt></td>
+<td>lnot</td>
+<td>u*</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&amp;</span></tt></td>
+<td>band</td>
+<td>3</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">|</span></tt></td>
+<td>bor</td>
+<td>3</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">^</span></tt></td>
+<td>bxor</td>
+<td>3</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">~</span></tt></td>
+<td>bnot</td>
+<td>u3</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;&lt;</span></tt></td>
+<td>shl</td>
+<td>3</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">&gt;&gt;</span></tt></td>
+<td>shr</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="wrappers-to-get-and-set-public-data-members">
+<span id="sec-property"></span><h2>Wrappers to get and set public data members<a class="headerlink" href="#wrappers-to-get-and-set-public-data-members" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/property.hpp&gt;</span>
+</pre></div>
+</div>
+<p>To expose public data members to Lua, apollo provides the following macros:</p>
+<div class="section" id="apollo-member-setter">
+<span id="f-apollo-member-setter"></span><h3><tt class="docutils literal"><span class="pre">APOLLO_MEMBER_SETTER()</span></tt><a class="headerlink" href="#apollo-member-setter" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#define APOLLO_MEMBER_SETTER(m) </span><span class="cm">/* implementation detail */</span><span class="cp"></span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">m</span></tt> must be a member name of the form <tt class="docutils literal"><span class="pre">some_class::some_member</span></tt>.</p>
+<p>This macro expands to a function (not a function pointer!) of the following
+form:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">void</span> <span class="n">implementation</span><span class="o">-</span><span class="n">defined</span><span class="p">(</span><span class="n">some_class</span><span class="o">&amp;</span> <span class="n">obj</span><span class="p">,</span> <span class="k">decltype</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">v</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This function sets <tt class="docutils literal"><span class="pre">some_member</span></tt> in <tt class="docutils literal"><span class="pre">obj</span></tt> to <tt class="docutils literal"><span class="pre">v</span></tt>.</p>
+</div>
+<div class="section" id="apollo-member-getter">
+<span id="f-apollo-member-getter"></span><h3><tt class="docutils literal"><span class="pre">APOLLO_MEMBER_GETTER()</span></tt><a class="headerlink" href="#apollo-member-getter" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#define APOLLO_MEMBER_GETTER(m) </span><span class="cm">/* implementation detail */</span><span class="cp"></span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">m</span></tt> must be a member name of the form <tt class="docutils literal"><span class="pre">some_class::some_member</span></tt>.</p>
+<p>This macro expands to a function (not a function pointer!) of the following
+form:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">decltype</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">implementation</span><span class="o">-</span><span class="n">defined</span><span class="p">(</span><span class="n">some_class</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">obj</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This function returns a <tt class="docutils literal"><span class="pre">const&amp;</span></tt> to <tt class="docutils literal"><span class="pre">some_member</span></tt> in <tt class="docutils literal"><span class="pre">obj</span></tt>. Note that
+pushing a <tt class="docutils literal"><span class="pre">const&amp;</span></tt> using <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> will create a copy for Lua.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Functions</a><ul>
+<li><a class="reference internal" href="#function-converter">Function converter</a><ul>
+<li><a class="reference internal" href="#implementation-notes">Implementation notes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#raw-functions">Raw functions</a></li>
+<li><a class="reference internal" href="#converting-arbitrary-c-functions-to-raw-functions">Converting arbitrary C++ functions to raw functions</a><ul>
+<li><a class="reference internal" href="#to-raw-function"><tt class="docutils literal"><span class="pre">to_raw_function()</span></tt></a></li>
+<li><a class="reference internal" href="#apollo-to-raw-function"><tt class="docutils literal"><span class="pre">APOLLO_TO_RAW_FUNCTION()</span></tt></a></li>
+<li><a class="reference internal" href="#apollo-push-function-static"><tt class="docutils literal"><span class="pre">APOLLO_PUSH_FUNCTION_STATIC()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#wrappers-for-constructors">Wrappers for constructors</a><ul>
+<li><a class="reference internal" href="#ctor-wrapper"><tt class="docutils literal"><span class="pre">ctor_wrapper()</span></tt></a></li>
+<li><a class="reference internal" href="#new-wrapper"><tt class="docutils literal"><span class="pre">new_wrapper()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#wrappers-for-c-operators">Wrappers for C++ operators</a></li>
+<li><a class="reference internal" href="#wrappers-to-get-and-set-public-data-members">Wrappers to get and set public data members</a><ul>
+<li><a class="reference internal" href="#apollo-member-setter"><tt class="docutils literal"><span class="pre">APOLLO_MEMBER_SETTER()</span></tt></a></li>
+<li><a class="reference internal" href="#apollo-member-getter"><tt class="docutils literal"><span class="pre">APOLLO_MEMBER_GETTER()</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="converter-basics.html"
+                        title="previous chapter">Converters: Basics</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="classes.html"
+                        title="next chapter">Classes (user-defined types)</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="classes.html" title="Classes (user-defined types)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="converter-basics.html" title="Converters: Basics"
+             >previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Christian Neumüller.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Converters: Advanced topics &mdash; apollo 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="apollo 0.1 documentation" href="index.html" />
+    <link rel="prev" title="Lower level utilities" href="utilities.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="utilities.html" title="Lower level utilities"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="converters-advanced-topics">
+<span id="sec-converters-advanced"></span><h1>Converters: Advanced topics<a class="headerlink" href="#converters-advanced-topics" title="Permalink to this headline">¶</a></h1>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">Required reading: <a class="reference internal" href="converter-basics.html#sec-converters-basic"><em>Converters: Basics</em></a></p>
+</div>
+<div class="section" id="converter-concepts">
+<h2>Converter concepts<a class="headerlink" href="#converter-concepts" title="Permalink to this headline">¶</a></h2>
+<p>The two concepts of PushConverter and PullConverter, as described below form the
+foundation of apollo. They can be used directly with the <tt class="docutils literal"><span class="pre">_with</span></tt> variants of
+the basic converter functions (see <a class="reference internal" href="#sec-converters-advanced-fns"><em>Advanced converter functions</em></a> below) or
+they can be named in a special way to be used as default converters by the basic
+converter functions (see <a class="reference internal" href="#sec-converters-advanced-default"><em>Default converter protocol</em></a>).</p>
+<div class="section" id="converter">
+<h3>Converter<a class="headerlink" href="#converter" title="Permalink to this headline">¶</a></h3>
+<p>A Converter for a type <tt class="docutils literal"><span class="pre">T</span></tt> must be MoveConstructible and Destructible. It must
+expose <tt class="docutils literal"><span class="pre">T</span></tt> as a member type alias named <tt class="docutils literal"><span class="pre">type</span></tt>.</p>
+</div>
+<div class="section" id="pushconverter">
+<h3>PushConverter<a class="headerlink" href="#pushconverter" title="Permalink to this headline">¶</a></h3>
+<p>PushConverter is a refinement of the Converter concept.</p>
+<p>A PushConverter for a type <tt class="docutils literal"><span class="pre">T</span></tt> (where <tt class="docutils literal"><span class="pre">T</span></tt> is always cvr-unqualified) defines
+how to push a <tt class="docutils literal"><span class="pre">T</span></tt> onto the Lua stack.</p>
+<p>It needs to implement only one member function: <tt class="docutils literal"><span class="pre">push</span></tt> must be callable with
+arguments <tt class="docutils literal"><span class="pre">lua_State*</span></tt> and <tt class="docutils literal"><span class="pre">T</span></tt> and push the passed <tt class="docutils literal"><span class="pre">T</span></tt> onto the passed
+<tt class="docutils literal"><span class="pre">lua_State*</span></tt>&#8216;s stack, thus increasing the number of stack elements by exactly
+one. The <tt class="docutils literal"><span class="pre">push</span></tt> function may be non-static.</p>
+</div>
+<div class="section" id="pullconverter">
+<h3>PullConverter<a class="headerlink" href="#pullconverter" title="Permalink to this headline">¶</a></h3>
+<p>PullConverter is a refinement of the Converter concept.</p>
+<p>A PushConverter for <tt class="docutils literal"><span class="pre">T</span></tt> (where <tt class="docutils literal"><span class="pre">T</span></tt> is always withouth top-level cv) defines
+how to retrieve a <tt class="docutils literal"><span class="pre">T</span></tt> from the Lua stack.</p>
+<p>A member type(def) <tt class="docutils literal"><span class="pre">to_type</span></tt> must be provided that specifies the return type
+of <tt class="docutils literal"><span class="pre">from_stack</span></tt>.</p>
+<p>A data member <tt class="docutils literal"><span class="pre">n_consumed</span></tt> must be provided if the <tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt> or
+<tt class="docutils literal"><span class="pre">from_stack</span></tt> member functions does not implement the overload having the
+<tt class="docutils literal"><span class="pre">int*</span> <span class="pre">next_idx</span></tt> parameter. It will then be used to determine what stack
+elements have been processed by this converter (e.g. when converting function
+arguments, the next argument&#8217;s converter will receive <tt class="docutils literal"><span class="pre">idx</span> <span class="pre">+</span> <span class="pre">n_consumed</span></tt> as
+its <tt class="docutils literal"><span class="pre">idx</span></tt> argument).</p>
+<p>It needs to implement two member functions (both can be non-static and must not
+change the number of elements on the Lua stack):</p>
+<p><tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt> must have a prototype compatible to either of:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="kt">unsigned</span> <span class="nf">n_conversion_steps</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span> <span class="c1">// 1</span>
+<span class="kt">unsigned</span> <span class="nf">n_conversion_steps</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">,</span> <span class="kt">int</span><span class="o">*</span> <span class="n">next_idx</span><span class="p">);</span> <span class="c1">// 2</span>
+</pre></div>
+</div>
+<p>This function must return <tt class="docutils literal"><span class="pre">no_conversion</span></tt> (defined in
+<tt class="docutils literal"><span class="pre">&lt;apollo/converters_fwd.hpp&gt;</span></tt> which is always included by
+<tt class="docutils literal"><span class="pre">&lt;apollo/converters.hpp&gt;</span></tt>) if the stack element at index <tt class="docutils literal"><span class="pre">idx</span></tt> on <tt class="docutils literal"><span class="pre">L</span></tt> is
+not convertible to <tt class="docutils literal"><span class="pre">T</span></tt>. Otherwise it should return a number in the inclusive
+range from <tt class="docutils literal"><span class="pre">0</span></tt> to <tt class="docutils literal"><span class="pre">no_conversion</span> <span class="pre">-</span> <span class="pre">1</span></tt>, where <tt class="docutils literal"><span class="pre">0</span></tt> indicates a perfect
+conversion (such as the conversion from <tt class="docutils literal"><span class="pre">string</span></tt> to <tt class="docutils literal"><span class="pre">char</span> <span class="pre">const*</span></tt> and
+<tt class="docutils literal"><span class="pre">no_conversion</span> <span class="pre">-</span> <span class="pre">1</span></tt> indicates that the conversion should only be used as a
+fallback (such as the conversion from userdata to <tt class="docutils literal"><span class="pre">bool</span></tt>). This
+information is used e.g. by <a class="reference internal" href="converter-basics.html#f-is-convertible"><em>is_convertible()</em></a>, the grading is used for
+(currently undocumented) overload sets. The second overload must set
+<tt class="docutils literal"><span class="pre">*next_idx</span></tt> to the first stack index after <tt class="docutils literal"><span class="pre">idx</span></tt> that will not be used by
+<tt class="docutils literal"><span class="pre">from_stack</span></tt> if <tt class="docutils literal"><span class="pre">next_idx</span> <span class="pre">!=</span> <span class="pre">nullptr</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">from_stack</span></tt> must have a prototype compatible to either of:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">to_type</span> <span class="nf">from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span> <span class="c1">// 1</span>
+<span class="n">to_type</span> <span class="nf">from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">,</span> <span class="kt">int</span><span class="o">*</span> <span class="n">next_idx</span><span class="p">);</span> <span class="c1">// 2</span>
+</pre></div>
+</div>
+<p>It must have the same form as <tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt> (if one has the
+<tt class="docutils literal"><span class="pre">next_idx</span></tt> parameter, the other must too). This function must return the value
+at stack index <tt class="docutils literal"><span class="pre">idx</span></tt> of <tt class="docutils literal"><span class="pre">L</span></tt> converted to a type for which
+<tt class="docutils literal"><span class="pre">unwrap_bound_ref</span></tt> returns a <tt class="docutils literal"><span class="pre">T</span></tt>-compatible type (usually this type will be
+just <tt class="docutils literal"><span class="pre">T</span></tt>). It must only be called if <tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt> would return a
+value ≠ <tt class="docutils literal"><span class="pre">no_conversion</span></tt> (although <tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt> will not necessarily
+be called), thus it does not need to check for convertibility (the behavior may
+be undefined if the precondition is violated).  The value on the Lua stack
+should be left untouched. The semantics of <tt class="docutils literal"><span class="pre">next_idx</span></tt> are the same as for
+<tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt>.</p>
+</div>
+<div class="section" id="fullconverter">
+<h3>FullConverter<a class="headerlink" href="#fullconverter" title="Permalink to this headline">¶</a></h3>
+<p>A type fulfills the FullConverter concept if it is both a PushConverter and a
+PullConverter.</p>
+</div>
+</div>
+<div class="section" id="default-converter-protocol">
+<span id="sec-converters-advanced-default"></span><h2>Default converter protocol<a class="headerlink" href="#default-converter-protocol" title="Permalink to this headline">¶</a></h2>
+<p>A Converter used as default converter must be additionally DefaultConstructible.
+It must be specialization of the following <tt class="docutils literal"><span class="pre">struct</span></tt> template:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span> <span class="n">Enable</span><span class="o">=</span><span class="kt">void</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">converter</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>If it is not a PushConverter, <tt class="docutils literal"><span class="pre">push</span></tt> and related functions
+(including pushing a function with <tt class="docutils literal"><span class="pre">T</span></tt> as return type) will not work, except
+if <tt class="docutils literal"><span class="pre">T</span></tt> is cvr-qualified, because then the converter will never be selected for
+pushing.
+Similarly, if it is not a PullConverter, <tt class="docutils literal"><span class="pre">from_stack</span></tt>, <tt class="docutils literal"><span class="pre">is_convertible</span></tt> and related
+functions (including pushing a function with <tt class="docutils literal"><span class="pre">T</span></tt> parameters) will not work.</p>
+<p>push-functionality will use the converter type specified by
+<tt class="docutils literal"><span class="pre">push_converter_for&lt;T&gt;</span></tt>, and pull (<tt class="docutils literal"><span class="pre">from_stack</span></tt>) functionality will use
+<tt class="docutils literal"><span class="pre">pull_converter_for&lt;T&gt;</span></tt>. They are defined as follows:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">using</span> <span class="n">push_converter_for</span> <span class="o">=</span> <span class="n">converter</span><span class="o">&lt;</span><span class="n">T</span><span class="o">-</span><span class="n">withouth</span><span class="o">-</span><span class="n">cvr</span><span class="o">-</span><span class="n">qualifications</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="k">using</span> <span class="n">pull_converter_for</span> <span class="o">=</span> <span class="n">converter</span><span class="o">&lt;</span><span class="n">T</span><span class="o">-</span><span class="n">without</span><span class="o">-</span><span class="n">cv</span><span class="o">-</span><span class="n">qualifications</span><span class="o">&gt;</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>There is also the <tt class="docutils literal"><span class="pre">to_type_of&lt;Conv&gt;</span></tt> alias that evaluates to <tt class="docutils literal"><span class="pre">Con::to_type</span></tt>
+but removes cvr-qualifications from <tt class="docutils literal"><span class="pre">Conv</span></tt> itself.</p>
+</div>
+<div class="section" id="advanced-converter-functions">
+<span id="sec-converters-advanced-fns"></span><h2>Advanced converter functions<a class="headerlink" href="#advanced-converter-functions" title="Permalink to this headline">¶</a></h2>
+<p>The following functions are variants of the functions with the same name but
+without the <tt class="docutils literal"><span class="pre">_with</span></tt> suffix, that take the converter to use as an additional
+first argument:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">n_conversion_steps_with</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">is_convertible_with</span></tt> (see <a class="reference internal" href="converter-basics.html#f-is-convertible"><em>is_convertible()</em></a>)</li>
+<li><tt class="docutils literal"><span class="pre">unchecked_from_stack_with</span></tt> (see <a class="reference internal" href="converter-basics.html#f-unchecked-from-stack"><em>unchecked_from_stack()</em></a>)</li>
+<li><tt class="docutils literal"><span class="pre">from_stack_with</span></tt> (see <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a>).</li>
+</ul>
+<p>There is no <tt class="docutils literal"><span class="pre">push_with</span></tt> since it is easy to directly use a converter&#8217;s
+<tt class="docutils literal"><span class="pre">push</span></tt> member function. This is not the case for the functions above, since
+the underlying converter functions may or may not support a <tt class="docutils literal"><span class="pre">next_idx</span></tt>
+argument. <tt class="docutils literal"><span class="pre">n_conversion_steps_with</span></tt>, <tt class="docutils literal"><span class="pre">unchecked_from_stack_with</span></tt> and
+<tt class="docutils literal"><span class="pre">from_stack_with</span></tt> also have <tt class="docutils literal"><span class="pre">int*</span> <span class="pre">next_idx</span></tt> as an additional last parameter,
+but with a default argument of <tt class="docutils literal"><span class="pre">nullptr</span></tt>.</p>
+<div class="section" id="n-conversion-steps">
+<span id="f-n-conversion-steps"></span><h3><tt class="docutils literal"><span class="pre">n_conversion_steps()</span></tt><a class="headerlink" href="#n-conversion-steps" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">unsigned</span> <span class="n">n_conversion_steps</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Returns approximately how many conversion steps the default converter for <tt class="docutils literal"><span class="pre">T</span></tt>
+would need to convert the value at index <tt class="docutils literal"><span class="pre">idx</span></tt> on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> or
+<tt class="docutils literal"><span class="pre">no_conversion</span></tt> if it is not convertible at all. <tt class="docutils literal"><span class="pre">0</span></tt> is the best conversion,
+<tt class="docutils literal"><span class="pre">no_conversion</span> <span class="pre">-</span> <span class="pre">1</span></tt> means that the conversion is only usable as a fallback
+(such as the conversion from userdata to <tt class="docutils literal"><span class="pre">bool</span></tt>).</p>
+<p><a class="reference internal" href="converter-basics.html#f-is-convertible"><em>is_convertible()</em></a> is implemented in terms of this function,
+<tt class="docutils literal"><span class="pre">no_conversion</span></tt> leading to a return value of <tt class="docutils literal"><span class="pre">false</span></tt> and everything other to
+<tt class="docutils literal"><span class="pre">true</span></tt>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Converters: Advanced topics</a><ul>
+<li><a class="reference internal" href="#converter-concepts">Converter concepts</a><ul>
+<li><a class="reference internal" href="#converter">Converter</a></li>
+<li><a class="reference internal" href="#pushconverter">PushConverter</a></li>
+<li><a class="reference internal" href="#pullconverter">PullConverter</a></li>
+<li><a class="reference internal" href="#fullconverter">FullConverter</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#default-converter-protocol">Default converter protocol</a></li>
+<li><a class="reference internal" href="#advanced-converter-functions">Advanced converter functions</a><ul>
+<li><a class="reference internal" href="#n-conversion-steps"><tt class="docutils literal"><span class="pre">n_conversion_steps()</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="utilities.html"
+                        title="previous chapter">Lower level utilities</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="utilities.html" title="Lower level utilities"
+             >previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Christian Neumüller.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

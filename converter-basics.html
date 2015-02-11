@@ -1,0 +1,286 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Converters: Basics &mdash; apollo 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="apollo 0.1 documentation" href="index.html" />
+    <link rel="next" title="Functions" href="functions.html" />
+    <link rel="prev" title="Building apollo" href="building.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="functions.html" title="Functions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="building.html" title="Building apollo"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="converters-basics">
+<span id="sec-converters-basic"></span><h1>Converters: Basics<a class="headerlink" href="#converters-basics" title="Permalink to this headline">¶</a></h1>
+<p>The basic facility in apollo is the <em>converter</em>. A converter is a class that
+knows how to push an object of a certain type on the Lua stack or how to
+retrieve it from there. apollo uses the converters that are specializations of
+the <tt class="docutils literal"><span class="pre">apollo::converter&lt;T&gt;</span></tt> template by default. That&#8217;s why there are headers
+for each type: they define the appropriate specializations.</p>
+<p>The converters are used not only by the functions below, but also to retrieve
+the arguments of C++ functions that were pushed to Lua and to push their return
+values.</p>
+<p>A <em>PushConverter</em> is a converter used for pushing, a <em>PullConverter</em> is used
+for retrieving values from the Lua stack.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="basic-usage.html#sec-basic-converters"><em>Core primitives: push, from_stack &amp; friends</em></a></dt>
+<dd>A short tutorial that demonstrates the most important features.</dd>
+<dt><a class="reference internal" href="converter-advanced.html#sec-converters-advanced"><em>Converters: Advanced topics</em></a></dt>
+<dd>More on converters.</dd>
+</dl>
+</div>
+<div class="section" id="converter-functions">
+<h2>Converter functions<a class="headerlink" href="#converter-functions" title="Permalink to this headline">¶</a></h2>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/converters.hpp&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="push">
+<span id="f-push"></span><h3><tt class="docutils literal"><span class="pre">push()</span></tt><a class="headerlink" href="#push" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">MoreTs</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">push</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">v</span><span class="p">,</span> <span class="n">MoreTs</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">more</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Pushes <tt class="docutils literal"><span class="pre">v</span></tt> (and optionally <tt class="docutils literal"><span class="pre">more</span></tt>) on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> using <tt class="docutils literal"><span class="pre">T</span></tt>&#8216;s
+default PushConverter.</p>
+<p>If multiple arguments are pushed, they are pushed in direct order (as required
+for using this function with <tt class="docutils literal"><span class="pre">lua_call</span></tt>), i.e. the first argument is pushed
+first, then the second is pushed on top of it and so on, until the last one
+becomes the new stack top.</p>
+</div>
+<div class="section" id="from-stack">
+<span id="f-from-stack"></span><h3><tt class="docutils literal"><span class="pre">from_stack()</span></tt><a class="headerlink" href="#from-stack" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="o">&gt;</span> <span class="c1">// 1</span>
+<span class="n">to_type_of</span><span class="o">&lt;</span><span class="n">pull_converter_for</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span> <span class="n">from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="c1">// 2</span>
+<span class="n">to_type_of</span><span class="o">&lt;</span><span class="n">pull_converter_for</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span> <span class="n">from_stack</span><span class="p">(</span>
+    <span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">fallback</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Return the value at index <tt class="docutils literal"><span class="pre">idx</span></tt> on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> converted to <tt class="docutils literal"><span class="pre">T</span></tt>
+using <tt class="docutils literal"><span class="pre">T</span></tt>&#8216;s default PullConverter.</p>
+<p>The actual return type is usually exactly <tt class="docutils literal"><span class="pre">T</span></tt> but converters can substitute
+their own. This is currently used only by the converter for classes and is
+documented there.</p>
+<p>If the specified Lua value is not convertible to <tt class="docutils literal"><span class="pre">T</span></tt> (as determined with
+<a class="reference internal" href="#f-is-convertible"><em>is_convertible()</em></a>), a <tt class="docutils literal"><span class="pre">to_cpp_conversion_error</span></tt> is thrown for overload 1
+and <tt class="docutils literal"><span class="pre">fallback</span></tt> is returned for overload 2.</p>
+</div>
+<div class="section" id="is-convertible">
+<span id="f-is-convertible"></span><h3><tt class="docutils literal"><span class="pre">is_convertible()</span></tt><a class="headerlink" href="#is-convertible" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">bool</span> <span class="n">is_convertible</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Returns whether the value at index <tt class="docutils literal"><span class="pre">idx</span></tt> on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> can be
+converted to <tt class="docutils literal"><span class="pre">T</span></tt> using <tt class="docutils literal"><span class="pre">T</span></tt>&#8216;s default PullConverter.</p>
+</div>
+<div class="section" id="unchecked-from-stack">
+<span id="f-unchecked-from-stack"></span><h3><tt class="docutils literal"><span class="pre">unchecked_from_stack()</span></tt><a class="headerlink" href="#unchecked-from-stack" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">to_type_of</span><span class="o">&lt;</span><span class="n">pull_converter_for</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span> <span class="n">unchecked_from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Just like the first overload of <a class="reference internal" href="#f-from-stack"><em>from_stack()</em></a>: Return the value at index
+<tt class="docutils literal"><span class="pre">idx</span></tt> on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> converted to <tt class="docutils literal"><span class="pre">T</span></tt> using <tt class="docutils literal"><span class="pre">T</span></tt>&#8216;s default
+PullConverter.</p>
+<p>The only difference is the error handling: While <a class="reference internal" href="#f-from-stack"><em>from_stack()</em></a> throws an
+exception, this function has undefined behavior (e.g. exceptions or segfaults)
+if the value is not convertible.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Use this function only if you have already checked with
+<a class="reference internal" href="#f-is-convertible"><em>is_convertible()</em></a> or if you can otherwise be 100% sure that the
+specified Lua value is convertible to <tt class="docutils literal"><span class="pre">T</span></tt>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="lua-builtin-types">
+<h1>Lua builtin types<a class="headerlink" href="#lua-builtin-types" title="Permalink to this headline">¶</a></h1>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/builtin_types.hpp&gt;</span>
+</pre></div>
+</div>
+<p>The following table shows how C++ types are converted to Lua types when pushed /
+as which C++ type a Lua type can be retrieved:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="86%" />
+<col width="14%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">C++ types</th>
+<th class="head">Lua type</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>all arithmetic types (except <tt class="docutils literal"><span class="pre">bool</span></tt> and <tt class="docutils literal"><span class="pre">char</span></tt>)</td>
+<td>number</td>
+</tr>
+<tr class="row-odd"><td>enums</td>
+<td>number</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">std::string</span></tt>, <tt class="docutils literal"><span class="pre">char[]</span></tt>, <tt class="docutils literal"><span class="pre">char*</span></tt>, <tt class="docutils literal"><span class="pre">char</span></tt></td>
+<td>string</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">bool</span></tt></td>
+<td>boolean</td>
+</tr>
+</tbody>
+</table>
+<p>There are a few things to note:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">char</span></tt></dt>
+<dd><p class="first">A Lua string can only be converted to <tt class="docutils literal"><span class="pre">char</span></tt> if it is exactly one byte
+long. The result will then be the only byte in this string.</p>
+<p class="last">Since numbers are implicitly converted to strings in Lua, apollo follows this
+convention and accepts integer numbers from 0 to 9. The result is the single
+digit of the number.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">char</span></tt>, <tt class="docutils literal"><span class="pre">signed</span> <span class="pre">char</span></tt></dt>
+<dd>Although plain <tt class="docutils literal"><span class="pre">char</span></tt> is treated as a string, both <tt class="docutils literal"><span class="pre">signed</span> <span class="pre">char</span></tt> and
+<tt class="docutils literal"><span class="pre">unsigned</span> <span class="pre">char</span></tt> (these C++ types are both always distinct from <tt class="docutils literal"><span class="pre">char</span></tt>)
+are treated as numbers.</dd>
+<dt>string</dt>
+<dd><p class="first">Pushing character arrays or <tt class="docutils literal"><span class="pre">std::string</span></tt> will preserve embedded
+null-bytes, while <tt class="docutils literal"><span class="pre">char*</span></tt> cannot. For <tt class="docutils literal"><span class="pre">std::string</span></tt> the <tt class="docutils literal"><span class="pre">size()</span></tt> is
+used for the length, for <tt class="docutils literal"><span class="pre">char[N]</span></tt>, the length is <tt class="docutils literal"><span class="pre">N</span> <span class="pre">-</span> <span class="pre">1</span></tt> if the last
+character is a null-byte and <tt class="docutils literal"><span class="pre">N</span></tt> otherwise.</p>
+<div class="last admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>Be careful with that if you push a local
+string buffer that you want to be null-terminated:</p>
+<div class="last highlight-c++"><div class="highlight"><pre><span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">512</span><span class="p">];</span>
+<span class="n">std</span><span class="o">::</span><span class="n">scanf</span><span class="p">(</span><span class="s">&quot;%511s&quot;</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+<span class="n">apollo</span><span class="o">::</span><span class="n">push</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span> <span class="c1">// Wrong! String will contain junk after &#39;\0&#39;!</span>
+<span class="n">apollo</span><span class="o">::</span><span class="n">push</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">);</span> <span class="c1">// Correct! String will end at &#39;\0&#39;.</span>
+</pre></div>
+</div>
+</div>
+</dd>
+<dt>Lua 5.3 only: integer vs. number</dt>
+<dd><p class="first">apollo will push an integral C++ type as integer if its value fits inside a
+<tt class="docutils literal"><span class="pre">lua_Integer</span></tt>, or as a number otherwise. For retrieving a number that is
+an integer in Lua as a C++ integral type, apollo will always use
+<tt class="docutils literal"><span class="pre">lua_tointeger</span></tt>.</p>
+<p class="last">Enums are always pushed and retrieved as integers, without checking if the
+enumerator value fits, as enumerator values tend to be not that big.</p>
+</dd>
+</dl>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Converters: Basics</a><ul>
+<li><a class="reference internal" href="#converter-functions">Converter functions</a><ul>
+<li><a class="reference internal" href="#push"><tt class="docutils literal"><span class="pre">push()</span></tt></a></li>
+<li><a class="reference internal" href="#from-stack"><tt class="docutils literal"><span class="pre">from_stack()</span></tt></a></li>
+<li><a class="reference internal" href="#is-convertible"><tt class="docutils literal"><span class="pre">is_convertible()</span></tt></a></li>
+<li><a class="reference internal" href="#unchecked-from-stack"><tt class="docutils literal"><span class="pre">unchecked_from_stack()</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lua-builtin-types">Lua builtin types</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="building.html"
+                        title="previous chapter">Building apollo</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="functions.html"
+                        title="next chapter">Functions</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="functions.html" title="Functions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="building.html" title="Building apollo"
+             >previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Christian Neumüller.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

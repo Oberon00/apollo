@@ -1,0 +1,393 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Basic usage &mdash; apollo 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="apollo 0.1 documentation" href="index.html" />
+    <link rel="next" title="Building apollo" href="building.html" />
+    <link rel="prev" title="Welcome to apollo’s documentation!" href="index.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="building.html" title="Building apollo"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to apollo’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="basic-usage">
+<h1>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="core-primitives-push-from-stack-friends">
+<span id="sec-basic-converters"></span><h2>Core primitives: <tt class="docutils literal"><span class="pre">push</span></tt>, <tt class="docutils literal"><span class="pre">from_stack</span></tt> &amp; friends<a class="headerlink" href="#core-primitives-push-from-stack-friends" title="Permalink to this headline">¶</a></h2>
+<p>apollo&#8217;s core functions are <tt class="docutils literal"><span class="pre">push</span></tt> and <tt class="docutils literal"><span class="pre">from_stack</span></tt>, defined in the
+<tt class="docutils literal"><span class="pre">&lt;converters.hpp&gt;</span></tt> header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">MoreTs</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">push</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">v</span><span class="p">,</span> <span class="n">MoreTs</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">more</span><span class="p">);</span>
+
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">T</span> <span class="n">from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>That is, <tt class="docutils literal"><span class="pre">push</span></tt> takes an arbitrary number of values (at least one) and pushes
+them on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> in order. <tt class="docutils literal"><span class="pre">from_stack</span></tt> takes an explicit template
+type parameter <tt class="docutils literal"><span class="pre">T</span></tt> and converts the value at the stack of <tt class="docutils literal"><span class="pre">L</span></tt> at the index
+<tt class="docutils literal"><span class="pre">idx</span></tt> to the type <tt class="docutils literal"><span class="pre">T</span></tt>. If the given element is not convertible to <tt class="docutils literal"><span class="pre">T</span></tt>, a
+<tt class="docutils literal"><span class="pre">to_cpp_conversion_error</span></tt> is thrown. To check if some stack element is
+convertible, apollo provides the <tt class="docutils literal"><span class="pre">is_convertible</span></tt> function:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">bool</span> <span class="n">is_convertible</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Since after checking for convertibility the additional check by <tt class="docutils literal"><span class="pre">from_stack</span></tt>
+is a unnecessary performance hit, <tt class="docutils literal"><span class="pre">unchecked_from_stack</span></tt> can be used:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">T</span> <span class="n">unchecked_from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>This function is like <tt class="docutils literal"><span class="pre">from_stack</span></tt>, but has undefined behavior if the given
+element is not convertible to <tt class="docutils literal"><span class="pre">T</span></tt>.</p>
+<p>To make these functions actually work, you need to include headers for the types
+you want to use (each of these includes <tt class="docutils literal"><span class="pre">converters.hpp</span></tt> already, so there is
+no need to do this manually):</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="55%" />
+<col width="45%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Type</th>
+<th class="head">Header</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>builtin types (<tt class="docutils literal"><span class="pre">int</span></tt>, …)</td>
+<td><tt class="docutils literal"><span class="pre">builtin_types.hpp</span></tt></td>
+</tr>
+<tr class="row-odd"><td>C++ functions</td>
+<td><tt class="docutils literal"><span class="pre">function.hpp</span></tt></td>
+</tr>
+<tr class="row-even"><td>user-defined types</td>
+<td><tt class="docutils literal"><span class="pre">class.hpp</span></tt></td>
+</tr>
+</tbody>
+</table>
+<p>Let&#8217;s try this out:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/builtin_types.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/closing_lstate.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/function.hpp&gt;</span>
+
+<span class="cp">#include &lt;functional&gt;</span>
+<span class="cp">#include &lt;cassert&gt;</span>
+
+<span class="k">namespace</span> <span class="p">{</span>
+
+<span class="kt">bool</span> <span class="n">is_odd</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">}</span> <span class="c1">// anonymous namespace</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">apollo</span><span class="o">::</span><span class="n">closing_lstate</span> <span class="n">L</span><span class="p">;</span>
+    <span class="n">luaL_openlibs</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+
+    <span class="n">apollo</span><span class="o">::</span><span class="n">push</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">42</span><span class="p">);</span> <span class="c1">// Same as lua_pushinteger(L, 42)</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">apollo</span><span class="o">::</span><span class="n">from_stack</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">42</span><span class="p">);</span>
+    <span class="n">lua_pop</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="n">apollo</span><span class="o">::</span><span class="n">push</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">is_odd</span><span class="p">);</span> <span class="c1">// Functions can be pushed just like other types.</span>
+    <span class="n">lua_setglobal</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;is_odd&quot;</span><span class="p">);</span>
+    <span class="n">luaL_dostring</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;print(is_odd(4), is_odd(5))&quot;</span><span class="p">);</span> <span class="c1">// --&gt; false	true</span>
+
+    <span class="c1">// Pushed functions can be retrieved back:</span>
+    <span class="n">lua_getglobal</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;is_odd&quot;</span><span class="p">);</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">apollo</span><span class="o">::</span><span class="n">from_stack</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">int</span><span class="p">)</span><span class="o">&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">is_odd</span><span class="p">);</span>
+
+
+    <span class="c1">// Lua functions can be retrieved as boost:: or std::function</span>
+    <span class="n">luaL_dostring</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;function is_even(n) return n % 2 == 0 end&quot;</span><span class="p">);</span>
+    <span class="n">lua_getglobal</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;is_even&quot;</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="n">is_even</span> <span class="o">=</span> <span class="n">apollo</span><span class="o">::</span><span class="n">from_stack</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">is_even</span><span class="p">(</span><span class="mi">4</span><span class="p">));</span>
+    <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">is_even</span><span class="p">(</span><span class="mi">5</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">There is a hidden dependency on the <tt class="docutils literal"><span class="pre">lua_State</span></tt> in the
+<tt class="docutils literal"><span class="pre">std::function</span></tt>: In its destructor it will attempt to <tt class="docutils literal"><span class="pre">luaL_unref</span></tt> the
+referenced Lua function. Thus, you must not close the state before the
+function&#8217;s destructor was run. To easily achieve this, this example uses
+<tt class="docutils literal"><span class="pre">apollo::closing_lstate</span></tt>. This utility class closes the state in its
+destructor, which is fine since order of destruction is reverse of
+construction in C++.</p>
+</div>
+<p>Of course, higher-order functions (functions taking or returning functions) are
+also supported, as are <tt class="docutils literal"><span class="pre">boost::function</span></tt> and <tt class="docutils literal"><span class="pre">std::function</span></tt>.</p>
+</div>
+<div class="section" id="syntactic-sugar-new-table-and-rawset-table">
+<span id="sec-basic-sugar"></span><h2>Syntactic sugar: <tt class="docutils literal"><span class="pre">new_table</span></tt> and <tt class="docutils literal"><span class="pre">rawset_table</span></tt><a class="headerlink" href="#syntactic-sugar-new-table-and-rawset-table" title="Permalink to this headline">¶</a></h2>
+<p>Because exporting functions and other things by first pushing them and then
+using <tt class="docutils literal"><span class="pre">lua_setfield</span></tt>/<tt class="docutils literal"><span class="pre">lua_setglobal</span></tt> is quite tendious and verbose, apollo
+offers convenient syntactic sugar in the <tt class="docutils literal"><span class="pre">create_table.hpp</span></tt> header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">implementation</span><span class="o">-</span><span class="n">defined</span> <span class="n">rawset_table</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">table_idx</span><span class="p">);</span>
+<span class="n">implementation</span><span class="o">-</span><span class="n">defined</span> <span class="n">new_table</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>These functions return implementation defined proxy objects that support setting
+table by chaining <tt class="docutils literal"><span class="pre">operator()</span></tt> calls. Nested tables are also supported using
+<tt class="docutils literal"><span class="pre">subtable(key)</span></tt> and <tt class="docutils literal"><span class="pre">end_subtable()</span></tt>, as are metatables with <tt class="docutils literal"><span class="pre">metatable</span></tt>
+and <tt class="docutils literal"><span class="pre">end_metatable</span></tt>.</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/builtin_types.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/closing_lstate.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/create_table.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/function.hpp&gt;</span>
+
+<span class="k">namespace</span> <span class="p">{</span>
+
+<span class="kt">bool</span> <span class="n">is_odd</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">double</span> <span class="n">sqr</span><span class="p">(</span><span class="kt">double</span> <span class="n">n</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">n</span> <span class="o">*</span> <span class="n">n</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">double</span> <span class="n">half</span><span class="p">(</span><span class="kt">double</span> <span class="n">n</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">n</span> <span class="o">/</span> <span class="mi">2</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="p">}</span> <span class="c1">// anonymous namespace</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">apollo</span><span class="o">::</span><span class="n">closing_lstate</span> <span class="n">L</span><span class="p">;</span>
+    <span class="n">luaL_openlibs</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+
+    <span class="n">lua_pushglobaltable</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+    <span class="n">apollo</span><span class="o">::</span><span class="n">rawset_table</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">(</span><span class="s">&quot;global_constant&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)</span>
+        <span class="p">(</span><span class="s">&quot;is_odd&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">is_odd</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">subtable</span><span class="p">(</span><span class="s">&quot;mymodule&quot;</span><span class="p">)</span>
+            <span class="p">(</span><span class="s">&quot;module_version&quot;</span><span class="p">,</span> <span class="s">&quot;0.1.0-dev&quot;</span><span class="p">)</span>
+            <span class="p">(</span><span class="s">&quot;sqr&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sqr</span><span class="p">)</span>
+            <span class="p">(</span><span class="s">&quot;half&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">half</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">end_subtable</span><span class="p">();</span>
+    <span class="n">lua_pop</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="n">luaL_dostring</span><span class="p">(</span><span class="n">L</span><span class="p">,</span>
+        <span class="s">&quot;print(global_constant, is_odd)</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="s">&quot;print(mymodule, mymodule.module_version)</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="s">&quot;print(is_odd(3), is_odd(5))</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="s">&quot;print(mymodule.half(61), mymodule.sqr(8))</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-basics-of-using-classes">
+<span id="sec-basic-cls"></span><h2>The basics of using classes<a class="headerlink" href="#the-basics-of-using-classes" title="Permalink to this headline">¶</a></h2>
+<p>apollo&#8217;s class system only has the following two primitive functions:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">Bases</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">register_class</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">);</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">push_class_metatable</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>You first register a class <tt class="docutils literal"><span class="pre">T</span></tt> for usage in a certain <tt class="docutils literal"><span class="pre">lua_State*</span> <span class="pre">L</span></tt> by
+calling <tt class="docutils literal"><span class="pre">register_class&lt;T&gt;(L)</span></tt>. apollo will then wrap objects of this class in
+an implementation defined <em>holder</em> and push it as a userdata object. To make
+this usable from Lua, apollo always sets a per-type metatable that you can
+access and change using <tt class="docutils literal"><span class="pre">push_class_metatable&lt;T&gt;(L)</span></tt>. The only field in this
+metatable that is preset is the <tt class="docutils literal"><span class="pre">__gc</span></tt> field that unsets the userdata&#8217;s
+metatable (to prevent access to the destroyed object) and calls <tt class="docutils literal"><span class="pre">T</span></tt>&#8216;s
+destructor. Otherwise you can use classes together with <tt class="docutils literal"><span class="pre">push</span></tt>,
+<tt class="docutils literal"><span class="pre">from_stack</span></tt>, <tt class="docutils literal"><span class="pre">rawset_table</span></tt>, etc. like any other type. There&#8217;s one gotcha
+though: For efficiency reasons (and to implement implicit constructors)
+<tt class="docutils literal"><span class="pre">from_stack&lt;T</span> <span class="pre">const&amp;&gt;</span></tt> and <tt class="docutils literal"><span class="pre">from_stack&lt;T&gt;</span></tt> do not return the specified type
+for classes but instead a implementation defined reference wrapper object. Use
+it&#8217;s <tt class="docutils literal"><span class="pre">get()</span></tt> member function or <tt class="docutils literal"><span class="pre">apollo::unwrap_bound_ref()</span></tt> to obtain the
+underlying reference. Note that when using implicit constructors, the lifetime
+of the underlying class can be bound to the reference wrapper, so better keep it
+alive as long as you use the object.</p>
+<p>Since there is no direct way to access public data members of classes from Lua,
+apollo provides wrapper getter and setter functions that can be used to expose
+them in the <tt class="docutils literal"><span class="pre">property.hpp</span></tt> header. Namely, these are the
+<tt class="docutils literal"><span class="pre">APOLLO_MEMBER_SETTER(my_class::my_member)</span></tt> and the corresponding
+<tt class="docutils literal"><span class="pre">APOLLO_MEMBER_GETTER</span></tt> macros. They evaluate to a function (yes, a function not
+a function pointer!) that takes the member type by <tt class="docutils literal"><span class="pre">const&amp;</span></tt> and sets it or
+gets it by value respectively.</p>
+<p>A similar wrapper is provided for  constructors: <tt class="docutils literal"><span class="pre">ctor_wrapper&lt;T,</span> <span class="pre">Args...&gt;</span></tt> is
+a function taht returns a <tt class="docutils literal"><span class="pre">T</span></tt> constructed from <tt class="docutils literal"><span class="pre">Args...</span></tt>.</p>
+<p>Let&#8217;s see some class foo in action:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/builtin_types.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/class.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/closing_lstate.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/create_table.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/ctor_wrapper.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/function.hpp&gt;</span>
+<span class="cp">#include &lt;apollo/property.hpp&gt;</span>
+
+<span class="cp">#include &lt;iostream&gt;</span>
+
+<span class="k">namespace</span> <span class="p">{</span>
+
+<span class="k">class</span> <span class="nc">my_class</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">my_class</span><span class="p">(</span><span class="kt">int</span> <span class="n">foo_</span><span class="p">,</span> <span class="kt">char</span> <span class="n">bar</span><span class="p">)</span><span class="o">:</span> <span class="n">foo</span><span class="p">(</span><span class="n">foo_</span><span class="p">),</span> <span class="n">m_bar</span><span class="p">(</span><span class="n">bar</span><span class="p">)</span>
+    <span class="p">{</span> <span class="p">}</span>
+
+    <span class="kt">int</span> <span class="n">foo</span><span class="p">;</span> <span class="c1">// Just for demonstration.</span>
+
+    <span class="kt">void</span> <span class="nf">print_bar</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;my_class::m_bar: &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">m_bar</span> <span class="o">&lt;&lt;</span> <span class="sc">&#39;\n&#39;</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="k">private</span><span class="o">:</span>
+    <span class="kt">char</span> <span class="n">m_bar</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="p">}</span> <span class="c1">// anonymous namespace</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">apollo</span><span class="o">::</span><span class="n">closing_lstate</span> <span class="n">L</span><span class="p">;</span>
+    <span class="n">luaL_openlibs</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+
+    <span class="n">apollo</span><span class="o">::</span><span class="n">register_class</span><span class="o">&lt;</span><span class="n">my_class</span><span class="o">&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+
+
+    <span class="n">lua_pushglobaltable</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+    <span class="n">apollo</span><span class="o">::</span><span class="n">rawset_table</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">(</span><span class="s">&quot;MyClass&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">apollo</span><span class="o">::</span><span class="n">ctor_wrapper</span><span class="o">&lt;</span><span class="n">my_class</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">char</span><span class="o">&gt;</span><span class="p">);</span>
+    <span class="n">lua_pop</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="n">apollo</span><span class="o">::</span><span class="n">push_class_metatable</span><span class="o">&lt;</span><span class="n">my_class</span><span class="o">&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
+    <span class="n">apollo</span><span class="o">::</span><span class="n">rawset_table</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">.</span><span class="n">thistable_as</span><span class="p">(</span><span class="s">&quot;__index&quot;</span><span class="p">)</span> <span class="c1">// getmetatable(T).__index = getmetatable(T)</span>
+        <span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">,</span>       <span class="o">&amp;</span><span class="n">APOLLO_MEMBER_GETTER</span><span class="p">(</span><span class="n">my_class</span><span class="o">::</span><span class="n">foo</span><span class="p">))</span>
+        <span class="p">(</span><span class="s">&quot;set_foo&quot;</span><span class="p">,</span>   <span class="o">&amp;</span><span class="n">APOLLO_MEMBER_SETTER</span><span class="p">(</span><span class="n">my_class</span><span class="o">::</span><span class="n">foo</span><span class="p">))</span>
+        <span class="p">(</span><span class="s">&quot;print_bar&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">my_class</span><span class="o">::</span><span class="n">print_bar</span><span class="p">);</span>
+    <span class="n">lua_pop</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="n">luaL_dostring</span><span class="p">(</span><span class="n">L</span><span class="p">,</span>
+        <span class="s">&quot;local mc = MyClass(42, &#39;a&#39;)</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="s">&quot;mc:print_bar()</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="s">&quot;print(mc:foo())</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="s">&quot;mc:set_foo(7)</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="s">&quot;print(mc:foo())</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Basic usage</a><ul>
+<li><a class="reference internal" href="#core-primitives-push-from-stack-friends">Core primitives: <tt class="docutils literal"><span class="pre">push</span></tt>, <tt class="docutils literal"><span class="pre">from_stack</span></tt> &amp; friends</a></li>
+<li><a class="reference internal" href="#syntactic-sugar-new-table-and-rawset-table">Syntactic sugar: <tt class="docutils literal"><span class="pre">new_table</span></tt> and <tt class="docutils literal"><span class="pre">rawset_table</span></tt></a></li>
+<li><a class="reference internal" href="#the-basics-of-using-classes">The basics of using classes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to apollo&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="building.html"
+                        title="next chapter">Building apollo</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="building.html" title="Building apollo"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to apollo’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Christian Neumüller.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Building apollo &mdash; apollo 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="apollo 0.1 documentation" href="index.html" />
+    <link rel="next" title="Converters: Basics" href="converter-basics.html" />
+    <link rel="prev" title="Basic usage" href="basic-usage.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="converter-basics.html" title="Converters: Basics"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="basic-usage.html" title="Basic usage"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="building-apollo">
+<h1>Building apollo<a class="headerlink" href="#building-apollo" title="Permalink to this headline">¶</a></h1>
+<p>apollo requires that you have installed the following libraries:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://www.boost.org/">Boost</a> in version 1.56 (later versions may/should also work).</li>
+<li><a class="reference external" href="http://www.lua.org/">Lua</a> in version 5.1 to 5.3.</li>
+</ul>
+<p><a class="reference external" href="http://www.cmake.org/">CMake</a> in a reasonably recent version is used as the build system.</p>
+<p>Especially on Windows, make sure that any environment variables neccessary to
+let CMake find the librarys are set correctly: <tt class="docutils literal"><span class="pre">BOOST_ROOT</span></tt> for Boost and
+<tt class="docutils literal"><span class="pre">LUA_DIR</span></tt> for Lua.</p>
+<p>As an alternative to setting these variables you can also install the libraries
+to the (CMake) standard locations or add the containing directories to
+<tt class="docutils literal"><span class="pre">CMAKE_PREFIX_PATH</span></tt>.</p>
+<p>What&#8217;s left to do is a standard CMake build. The following contains nothing
+special, so if you are familiar with CMake, you can just skip the rest.</p>
+<div class="section" id="unix-like">
+<h2>Unix-like<a class="headerlink" href="#unix-like" title="Permalink to this headline">¶</a></h2>
+<p>Navigate to the apollo root directory (with the <tt class="docutils literal"><span class="pre">include</span></tt> and <tt class="docutils literal"><span class="pre">src</span></tt>
+subfolders) in your shell, then execute the following commands:</p>
+<div class="highlight-sh"><div class="highlight"><pre>mkdir build <span class="c"># Name basically arbitrary, but build is already in .gitignore</span>
+<span class="nb">cd </span>build    <span class="c">#</span>
+cmake .. <span class="c"># Use the -i flag to see build options (e.g. debug build).</span>
+make
+sudo make install <span class="c"># Optional.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="visual-studio">
+<h2>Visual Studio<a class="headerlink" href="#visual-studio" title="Permalink to this headline">¶</a></h2>
+<p>Use the Visual Studio command prompt as your shell and do as in Unix, with the
+following modifications: You may need to add <tt class="docutils literal"><span class="pre">-G</span> <span class="pre">&quot;Visual</span> <span class="pre">Studio</span> <span class="pre">12&quot;</span></tt> (or 13
+for Visual Studio 2015) to the cmake command line. Then use <tt class="docutils literal"><span class="pre">msbuild</span>
+<span class="pre">ALL_BUILD.vcxproj</span></tt> instead of <tt class="docutils literal"><span class="pre">make</span></tt> and <tt class="docutils literal"><span class="pre">msbuild</span> <span class="pre">INSTALL.vcxproj</span></tt> instead
+of <tt class="docutils literal"><span class="pre">sudo</span> <span class="pre">make</span> <span class="pre">install</span></tt> if you want to install apollo. As in Unix, you
+will need administrative rights for the latter, but because Windows has no
+<tt class="docutils literal"><span class="pre">sudo</span></tt> equivalent, you may need to e.g.  launch a new VS command prompt as
+administrator. Also, use the <tt class="docutils literal"><span class="pre">/p:Configuration=RelWithDebInfo</span></tt> (or
+<tt class="docutils literal"><span class="pre">=Release</span></tt>) option to build the release version instead of the default Debug
+configuration.</p>
+</div>
+</div>
+<div class="section" id="configuring-your-compiler-for-using-apollo">
+<h1>Configuring your compiler for using apollo<a class="headerlink" href="#configuring-your-compiler-for-using-apollo" title="Permalink to this headline">¶</a></h1>
+<p>Nothing special: You need to add the <tt class="docutils literal"><span class="pre">include</span></tt> directory to your compiler&#8217;s
+include paths and link the apollo library for release and the apollo-d library
+for debug builds. For Boost, no addidional libraries need to be linked, just
+making the includes available is enough. Of course you will also need to add
+Lua&#8217;s include directory and link the library.</p>
+<p>If you use CMake, you can use <tt class="docutils literal"><span class="pre">FindApollo.cmake</span></tt>: Make it available to CMake
+by either altering the <tt class="docutils literal"><span class="pre">CMAKE_MODULE_PATH</span></tt> CMake variable or copying it to a
+standard location. Then you can use <tt class="docutils literal"><span class="pre">find_package(apollo</span> <span class="pre">REQUIRED)</span></tt> and it
+will look in standard locations and in the ones specified by the <tt class="docutils literal"><span class="pre">APOLLO_DIR</span></tt>
+environment or CMake variable. It then makes <tt class="docutils literal"><span class="pre">APOLLO_INCLUDE_DIRS</span></tt> and
+<tt class="docutils literal"><span class="pre">APOLLO_LIBRARIES</span></tt> available.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Building apollo</a><ul>
+<li><a class="reference internal" href="#unix-like">Unix-like</a></li>
+<li><a class="reference internal" href="#visual-studio">Visual Studio</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#configuring-your-compiler-for-using-apollo">Configuring your compiler for using apollo</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="basic-usage.html"
+                        title="previous chapter">Basic usage</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="converter-basics.html"
+                        title="next chapter">Converters: Basics</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="converter-basics.html" title="Converters: Basics"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="basic-usage.html" title="Basic usage"
+             >previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Christian Neumüller.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to apollo’s documentation! &mdash; apollo 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="apollo 0.1 documentation" href="#" />
+    <link rel="next" title="Basic usage" href="basic-usage.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="basic-usage.html" title="Basic usage"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="welcome-to-apollo-s-documentation">
+<h1>Welcome to apollo&#8217;s documentation!<a class="headerlink" href="#welcome-to-apollo-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>apollo is a library that enables working with C++ classes and functions as if
+they were builtin Lua types. It provides both relatively low-level APIs that you
+can use to build your own abstractions and ready-to-use syntactic sugar for
+table and class creation.</p>
+<p>apollo was inspired by luabind but prioritizes flexibility, performance and
+seamless integration with the Lua API. As a consequence, apollo offers (as of
+yet) no complete class model (Lua doesn&#8217;t have one) but instead provides you
+with the means to easily build your own.</p>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="basic-usage.html">Basic usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#core-primitives-push-from-stack-friends">Core primitives: <tt class="docutils literal"><span class="pre">push</span></tt>, <tt class="docutils literal"><span class="pre">from_stack</span></tt> &amp; friends</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#syntactic-sugar-new-table-and-rawset-table">Syntactic sugar: <tt class="docutils literal"><span class="pre">new_table</span></tt> and <tt class="docutils literal"><span class="pre">rawset_table</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic-usage.html#the-basics-of-using-classes">The basics of using classes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building apollo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="building.html#unix-like">Unix-like</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building.html#visual-studio">Visual Studio</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#configuring-your-compiler-for-using-apollo">Configuring your compiler for using apollo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="converter-basics.html">Converters: Basics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="converter-basics.html#converter-functions">Converter functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="converter-basics.html#lua-builtin-types">Lua builtin types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="functions.html">Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="functions.html#function-converter">Function converter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="functions.html#raw-functions">Raw functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="functions.html#converting-arbitrary-c-functions-to-raw-functions">Converting arbitrary C++ functions to raw functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="functions.html#wrappers-for-constructors">Wrappers for constructors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="functions.html#wrappers-for-c-operators">Wrappers for C++ operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="functions.html#wrappers-to-get-and-set-public-data-members">Wrappers to get and set public data members</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="classes.html">Classes (user-defined types)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="classes.html#pointer-and-reference-semantics-smart-pointer-support">Pointer and reference semantics, smart pointer support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="classes.html#using-from-stack-with-class-types">Using <tt class="docutils literal"><span class="pre">from_stack</span></tt> with class types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="classes.html#function-reference">Function reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="classes.html#implicit-constructors-conversion-support">Implicit constructors/conversion support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sugar.html">Helpers for table creation/modification</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sugar.html#free-functions">Free functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sugar.html#table-setter-objects">Table setter objects</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utilities.html">Lower level utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#safely-calling-lua-functions-from-c">Safely calling Lua functions from C++</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#safely-calling-c-functions-from-lua">Safely calling C++ functions from Lua</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#garbage-collection-and-low-level-userdata-utilities">Garbage collection and low level userdata utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#closing-lstate"><tt class="docutils literal"><span class="pre">closing_lstate</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#references-to-the-lua-registry">References to the Lua registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#references-to-the-lua-stack">References to the Lua stack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#stack-balance"><tt class="docutils literal"><span class="pre">stack_balance</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#type-information">Type information</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="converter-advanced.html">Converters: Advanced topics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="converter-advanced.html#converter-concepts">Converter concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="converter-advanced.html#default-converter-protocol">Default converter protocol</a></li>
+<li class="toctree-l2"><a class="reference internal" href="converter-advanced.html#advanced-converter-functions">Advanced converter functions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to apollo&#8217;s documentation!</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="basic-usage.html"
+                        title="next chapter">Basic usage</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="basic-usage.html" title="Basic usage"
+             >next</a> |</li>
+        <li><a href="#">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Christian Neumüller.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Helpers for table creation/modification &mdash; apollo 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/pyramid.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="apollo 0.1 documentation" href="index.html" />
+    <link rel="next" title="Lower level utilities" href="utilities.html" />
+    <link rel="prev" title="Classes (user-defined types)" href="classes.html" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Nobile:regular,italic,bold,bolditalic&amp;subset=latin" type="text/css" media="screen" charset="utf-8" />
+<!--[if lte IE 6]>
+<link rel="stylesheet" href="_static/ie6.css" type="text/css" media="screen" charset="utf-8" />
+<![endif]-->
+
+  </head>
+  <body>
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="utilities.html" title="Lower level utilities"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="classes.html" title="Classes (user-defined types)"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="helpers-for-table-creation-modification">
+<h1>Helpers for table creation/modification<a class="headerlink" href="#helpers-for-table-creation-modification" title="Permalink to this headline">¶</a></h1>
+<p>These helpers offer a convenient syntax for <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <cite>lua_rawset</cite>.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="basic-usage.html#sec-basic-sugar"><em>Syntactic sugar: new_table and rawset_table</em></a></dt>
+<dd>A short tutorial that demonstrates the most important features.</dd>
+</dl>
+</div>
+<p>Header:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/create_table.hpp&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="free-functions">
+<h2>Free functions<a class="headerlink" href="#free-functions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="rawset-table">
+<span id="f-rawset-table"></span><h3><tt class="docutils literal"><span class="pre">rawset_table()</span></tt><a class="headerlink" href="#rawset-table" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">table</span><span class="o">-</span><span class="n">setter</span> <span class="n">rawset_table</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">table_idx</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Returns a table setter that will modify the table at index <tt class="docutils literal"><span class="pre">table_idx</span></tt> on the
+stack of <tt class="docutils literal"><span class="pre">L</span></tt>.</p>
+</div>
+<div class="section" id="new-table">
+<span id="f-new-table"></span><h3><tt class="docutils literal"><span class="pre">new_table()</span></tt><a class="headerlink" href="#new-table" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">table</span><span class="o">-</span><span class="n">setter</span> <span class="n">new_table</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Pushes a new table onto <tt class="docutils literal"><span class="pre">L</span></tt>&#8216;s stack and returns a table setter that will
+modify it.</p>
+</div>
+</div>
+<div class="section" id="table-setter-objects">
+<h2>Table setter objects<a class="headerlink" href="#table-setter-objects" title="Permalink to this headline">¶</a></h2>
+<p>Table setter objects modify their reference tables using <tt class="docutils literal"><span class="pre">lua_rawset</span></tt> with the
+methods below. All methods return a rvalue reference to the table setter they
+were called on so that they are chainable.</p>
+<p>You should not store a table setter! Just use it in the expression it was
+created in.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Due to C++&#8217;s undefined order of argument evaluation, it is
+important that any methods you call in this expression leave the Lua stack
+balanced.</p>
+</div>
+<div class="section" id="operator">
+<span id="f-ts-operator-call"></span><h3><tt class="docutils literal"><span class="pre">operator()</span></tt><a class="headerlink" href="#operator" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">K</span><span class="p">,</span> <span class="k">typename</span> <span class="n">V</span><span class="o">&gt;</span>
+<span class="n">table</span><span class="o">-</span><span class="n">setter</span><span class="o">&amp;&amp;</span> <span class="k">operator</span><span class="p">()</span> <span class="p">(</span><span class="n">K</span><span class="o">&amp;&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">V</span><span class="o">&amp;&amp;</span> <span class="n">value</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Sets <tt class="docutils literal"><span class="pre">value</span></tt> as the value of the current table at <tt class="docutils literal"><span class="pre">key</span></tt>.</p>
+</div>
+<div class="section" id="subtable">
+<span id="f-ts-subtable"></span><h3><tt class="docutils literal"><span class="pre">subtable()</span></tt><a class="headerlink" href="#subtable" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">K</span><span class="o">&gt;</span>
+<span class="n">table</span><span class="o">-</span><span class="n">setter</span><span class="o">&amp;&amp;</span> <span class="n">subtable</span><span class="p">(</span><span class="n">K</span><span class="o">&amp;&amp;</span> <span class="n">key</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Creates a new table, sets it as the value of the current table at <tt class="docutils literal"><span class="pre">key</span></tt> and
+makes the table setter modify that new table until <a class="reference internal" href="#f-ts-end-subtable"><em>end_subtable()</em></a> is
+called. Note that every call to <tt class="docutils literal"><span class="pre">subtable()</span></tt> must be matched by a corresponding
+call to <tt class="docutils literal"><span class="pre">end_subtable()</span></tt>, even if you do not intend to modify the previous
+table.</p>
+<p>Subtables may be nested.</p>
+</div>
+<div class="section" id="end-subtable">
+<span id="f-ts-end-subtable"></span><h3><tt class="docutils literal"><span class="pre">end_subtable()</span></tt><a class="headerlink" href="#end-subtable" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">table</span><span class="o">-</span><span class="n">setter</span><span class="o">&amp;&amp;</span> <span class="n">end_subtable</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Ends a subtable began by <a class="reference internal" href="#f-ts-subtable"><em>subtable()</em></a>. See that method for more
+information.</p>
+</div>
+<div class="section" id="thistable-as">
+<span id="f-ts-thistable-as"></span><h3><tt class="docutils literal"><span class="pre">thistable_as()</span></tt><a class="headerlink" href="#thistable-as" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">K</span><span class="o">&gt;</span>
+<span class="n">table</span><span class="o">-</span><span class="n">setter</span><span class="o">&amp;&amp;</span> <span class="n">thistable_as</span><span class="p">(</span><span class="n">K</span><span class="o">&amp;&amp;</span> <span class="n">key</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Sets the current table as the value of itself at <tt class="docutils literal"><span class="pre">key</span></tt>.</p>
+</div>
+<div class="section" id="thistable-index">
+<span id="f-ts-thistable-index"></span><h3><tt class="docutils literal"><span class="pre">thistable_index()</span></tt><a class="headerlink" href="#thistable-index" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">table</span><span class="o">-</span><span class="n">setter</span><span class="o">&amp;&amp;</span> <span class="n">thistable_index</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Equivalent to calling <a class="reference internal" href="#f-ts-thistable-as"><em>thistable_as()</em></a> with <tt class="docutils literal"><span class="pre">&quot;__index&quot;</span></tt> as key.</p>
+</div>
+<div class="section" id="metatable">
+<span id="f-ts-metatable"></span><h3><tt class="docutils literal"><span class="pre">metatable()</span></tt><a class="headerlink" href="#metatable" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">table</span><span class="o">-</span><span class="n">setter</span><span class="o">&amp;&amp;</span> <span class="n">metatable</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>If the current table does not have a metatable, creates a new table and sets it
+as metatable. Then makes the table setter modify the current table&#8217;s metatable
+until <a class="reference internal" href="#f-ts-end-metatable"><em>end_metatable()</em></a> is called. Note that every call to
+<tt class="docutils literal"><span class="pre">metatable()</span></tt> must be matched by a corresponding call to <tt class="docutils literal"><span class="pre">end_metatable()</span></tt>,
+even if you do not intend to modify the previous table.</p>
+<p><tt class="docutils literal"><span class="pre">metatable()</span></tt> calls may be nested, they will modify the metatable&#8217;s metatable
+and so on.</p>
+</div>
+<div class="section" id="end-metatable">
+<span id="f-ts-end-metatable"></span><h3><tt class="docutils literal"><span class="pre">end_metatable()</span></tt><a class="headerlink" href="#end-metatable" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">table</span><span class="o">-</span><span class="n">setter</span><span class="o">&amp;&amp;</span> <span class="n">end_metatable</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Ends a metatable began by <a class="reference internal" href="#f-ts-metatable"><em>metatable()</em></a>. See that method for more
+information.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Helpers for table creation/modification</a><ul>
+<li><a class="reference internal" href="#free-functions">Free functions</a><ul>
+<li><a class="reference internal" href="#rawset-table"><tt class="docutils literal"><span class="pre">rawset_table()</span></tt></a></li>
+<li><a class="reference internal" href="#new-table"><tt class="docutils literal"><span class="pre">new_table()</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#table-setter-objects">Table setter objects</a><ul>
+<li><a class="reference internal" href="#operator"><tt class="docutils literal"><span class="pre">operator()</span></tt></a></li>
+<li><a class="reference internal" href="#subtable"><tt class="docutils literal"><span class="pre">subtable()</span></tt></a></li>
+<li><a class="reference internal" href="#end-subtable"><tt class="docutils literal"><span class="pre">end_subtable()</span></tt></a></li>
+<li><a class="reference internal" href="#thistable-as"><tt class="docutils literal"><span class="pre">thistable_as()</span></tt></a></li>
+<li><a class="reference internal" href="#thistable-index"><tt class="docutils literal"><span class="pre">thistable_index()</span></tt></a></li>
+<li><a class="reference internal" href="#metatable"><tt class="docutils literal"><span class="pre">metatable()</span></tt></a></li>
+<li><a class="reference internal" href="#end-metatable"><tt class="docutils literal"><span class="pre">end_metatable()</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="classes.html"
+                        title="previous chapter">Classes (user-defined types)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="utilities.html"
+                        title="next chapter">Lower level utilities</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="utilities.html" title="Lower level utilities"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="classes.html" title="Classes (user-defined types)"
+             >previous</a> |</li>
+        <li><a href="index.html">apollo 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Christian Neumüller.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
