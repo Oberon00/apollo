@@ -40,10 +40,12 @@ Header::
 ::
 
    template <typename T, typename... MoreTs>
-   void push(lua_State* L, T&& v, MoreTs&&... more);
+   int push(lua_State* L, T&& v, MoreTs&&... more);
 
 Pushes ``v`` (and optionally ``more``) on the stack of ``L`` using ``T``'s
-default PushConverter.
+default PushConverter. Returns how many values were pushed (this is not
+necessarily the number of arguments, since some C++ values could be pushed as no
+or multiple Lua values).
 
 If multiple arguments are pushed, they are pushed in direct order (as required
 for using this function with ``lua_call``), i.e. the first argument is pushed

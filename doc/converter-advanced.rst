@@ -32,8 +32,9 @@ how to push a ``T`` onto the Lua stack.
 
 It needs to implement only one member function: ``push`` must be callable with
 arguments ``lua_State*`` and ``T`` and push the passed ``T`` onto the passed
-``lua_State*``'s stack, thus increasing the number of stack elements by exactly
-one. The ``push`` function may be non-static.
+``lua_State*``'s stack, returning as an ``int`` how many values were pushed
+(this will usually be 1, but can also be 0 or more than 1). The ``push``
+function may be non-static.
 
 
 PullConverter

@@ -10,16 +10,16 @@ apollo's core functions are ``push`` and ``from_stack``, defined in the
 ``<converters.hpp>`` header::
 
    template <typename T, typename... MoreTs>
-   void push(lua_State* L, T&& v, MoreTs&&... more);
-
+   int push(lua_State* L, T&& v, MoreTs&&... more);
 
    template <typename T>
    T from_stack(lua_State* L, int idx);
 
 That is, ``push`` takes an arbitrary number of values (at least one) and pushes
-them on the stack of ``L`` in order. ``from_stack`` takes an explicit template
-type parameter ``T`` and converts the value at the stack of ``L`` at the index
-``idx`` to the type ``T``. If the given element is not convertible to ``T``, a
+them on the stack of ``L`` in order, returning how many values were pushed on
+the Lua stack. ``from_stack`` takes an explicit template type parameter ``T``
+and converts the value at the stack of ``L`` at the index ``idx`` to the type
+``T``. If the given element is not convertible to ``T``, a
 ``to_cpp_conversion_error`` is thrown. To check if some stack element is
 convertible, apollo provides the ``is_convertible`` function::
 
