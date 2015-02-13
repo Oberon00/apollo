@@ -47,11 +47,11 @@ struct function_converter<FObj<R(Args...)>> {
         return [luaFunction](Args... args) -> R {
             lua_State* L_ = luaFunction.L();
             stack_balance b(L_);
+            int const oldtop = lua_gettop(L_);
             luaFunction.push();
-            // Use push_impl to allow empty Args.
             int const n_args = push_impl(L_, std::forward<Args>(args)...);
-            pcall(L_, n_args, 1);
-            return apollo::from_stack<R>(L_, -1);
+            pcall(L_, n_args, LUA_MULTRET);
+            return apollo::from_stack<R>(L_, oldtop + 1);
         };
     }
 
