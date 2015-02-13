@@ -48,10 +48,9 @@ int call_with_stack_args_and_push_impl(
     ResultConverter&& rconverter, Converters&&... converters)
 {
     (void)rconverter; // Avoid MSVC warning if push is static.
-     rconverter.push(L, call_with_stack_args_with(
+     return rconverter.push(L, call_with_stack_args_with(
         L, std::forward<F>(f),
         std::forward<Converters>(converters)...));
-    return 1;
 }
 
 template <typename F, typename ResultConverter, typename... Converters>
@@ -255,7 +254,7 @@ struct converter<detail::converted_function<F, ResultConverter, Converters...>>
 public:
     using type = detail::converted_function<F, ResultConverter, Converters...>;
 
-    static void push(lua_State* L, type&& f)
+    static int push(lua_State* L, type&& f)
     {
         push_impl(L, std::move(f.fn()), detail::is_light_function<F>());
         static_assert(detail::fn_upval_fn == 1, "");
@@ -271,6 +270,7 @@ public:
             ++nups;
 
         lua_pushcclosure(L, &f.entry_point, nups);
+        return 1;
     }
 
 private:

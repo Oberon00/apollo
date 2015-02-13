@@ -52,13 +52,14 @@ public:
     using type = detail::light_converted_function<
         F, FVal, ResultConverter, Converters...>;
 
-    static void push(lua_State* L, type&& f)
+    static int push(lua_State* L, type&& f)
     {
         lua_pushcclosure(
             L,
             &f.entry_point,
             type::dispatch_t::push_converters(L, std::move(f.converters)) ?
                 1 : 0);
+        return 1;
     }
 };
 

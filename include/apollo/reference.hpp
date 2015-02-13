@@ -43,7 +43,7 @@ private:
 template<>
 struct converter<registry_reference>: converter_base<registry_reference> {
 
-    static void push(lua_State* L, registry_reference const& r)
+    static int push(lua_State* L, registry_reference const& r)
     {
         if (r.empty()) {
             lua_pushnil(L);
@@ -51,6 +51,7 @@ struct converter<registry_reference>: converter_base<registry_reference> {
             BOOST_ASSERT(r.L() == L);
             r.push();
         }
+        return 1;
     }
 
     static unsigned n_conversion_steps(lua_State*, int)
@@ -90,7 +91,7 @@ private:
 template<>
 struct converter<stack_reference>: converter_base<stack_reference> {
 
-    static void push(lua_State* L, stack_reference const& r)
+    static int push(lua_State* L, stack_reference const& r)
     {
         if (r.empty()) {
             lua_pushnil(L);
@@ -98,6 +99,7 @@ struct converter<stack_reference>: converter_base<stack_reference> {
             BOOST_ASSERT(r.valid(L));
             lua_pushvalue(L, r.get());
         }
+        return 1;
     }
 
     static unsigned n_conversion_steps(lua_State*, int)

@@ -101,24 +101,27 @@ using pull_converter_for = converter<typename std::remove_cv<T>::type>;
 
 namespace detail {
 
-inline void push_impl(lua_State*)
-{ }
+inline int push_impl(lua_State*)
+{
+    return 0;
+}
 
 template <typename Head, typename... Tail>
-void push_impl(lua_State* L, Head&& head, Tail&&... tail)
+int push_impl(lua_State* L, Head&& head, Tail&&... tail)
 {
-    push_converter_for<Head>().push(
+    int const n_pushed = push_converter_for<Head>().push(
         L, std::forward<Head>(head));
-    push_impl(L, std::forward<Tail>(tail)...);
+    return n_pushed + push_impl(L, std::forward<Tail>(tail)...);
 }
 
 } // namespace detail
 
 
 template <typename T, typename... MoreTs>
-void push(lua_State* L, T&& v, MoreTs&&... more)
+int push(lua_State* L, T&& v, MoreTs&&... more)
 {
-    detail::push_impl(L, std::forward<T>(v), std::forward<MoreTs>(more)...);
+    return detail::push_impl(L,
+        std::forward<T>(v), std::forward<MoreTs>(more)...);
 }
 
 namespace detail {

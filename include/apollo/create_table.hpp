@@ -137,10 +137,11 @@ template <>
 struct converter<detail::table_setter>
 {
     template <typename T>
-    static void push(lua_State*, T) {
+    static int push(lua_State*, T) {
         static_assert(!std::is_same<T, T>::value, // Make dependent.
             "Use subtable() instead of nested"
             " calls to newtable/rawset_table/etc.");
+        return {};
     }
 
     template <typename T>

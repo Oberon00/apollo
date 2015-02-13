@@ -49,8 +49,8 @@ struct function_converter<FObj<R(Args...)>> {
             stack_balance b(L_);
             luaFunction.push();
             // Use push_impl to allow empty Args.
-            push_impl(L_, std::forward<Args>(args)...);
-            pcall(L_, sizeof...(Args), 1);
+            int const n_args = push_impl(L_, std::forward<Args>(args)...);
+            pcall(L_, n_args, 1);
             return apollo::from_stack<R>(L_, -1);
         };
     }
@@ -124,9 +124,10 @@ private:
     using fconverter = detail::function_converter<fn_t>;
 
 public:
-    static void push(lua_State* L, fn_t const& f)
+    static int push(lua_State* L, fn_t const& f)
     {
         apollo::push(L, make_function(f));
+        return 1;
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)

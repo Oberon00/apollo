@@ -25,7 +25,7 @@ private:
         std::is_signed<T>::value == std::is_signed<lua_Integer>::value;
 
 public:
-    static void push(lua_State* L, T n)
+    static int push(lua_State* L, T n)
     {
 #ifdef BOOST_MSVC
 #   pragma warning(push)
@@ -43,6 +43,7 @@ public:
         } else {
             lua_pushnumber(L, static_cast<lua_Number>(n));
         }
+        return 1;
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
@@ -85,9 +86,10 @@ struct converter<T,
         typename std::enable_if<std::is_enum<T>::value>::type
     >: converter_base<T> {
 
-    static void push(lua_State* L, T n)
+    static int push(lua_State* L, T n)
     {
         lua_pushinteger(L, static_cast<lua_Integer>(n));
+        return 1;
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
@@ -108,9 +110,10 @@ struct converter<T,
 template<>
 struct converter<bool>: converter_base<bool> {
 
-    static void push(lua_State* L, bool b)
+    static int push(lua_State* L, bool b)
     {
         lua_pushboolean(L, static_cast<int>(b));
+        return 1;
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
@@ -234,9 +237,10 @@ struct converter<T, typename std::enable_if<
         detail::lua_type_id<T>::value == LUA_TSTRING>::type>: converter_base<T> {
     using to_type = typename detail::to_string<T>::type;
 
-    static void push(lua_State* L, T const& s)
+    static int push(lua_State* L, T const& s)
     {
         detail::push_string(L, s);
+        return 1;
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
@@ -252,9 +256,10 @@ struct converter<T, typename std::enable_if<
 
 template <>
 struct converter<void*>: converter_base<void*> {
-    static void push(lua_State* L, void* p)
+    static int push(lua_State* L, void* p)
     {
         lua_pushlightuserdata(L, p);
+        return 1;
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)

@@ -21,10 +21,11 @@ struct light_key {
 template<>
 struct converter<detail::light_key>: converter_base<detail::light_key> {
 
-    static void push(lua_State* L, detail::light_key const& lk)
+    static int push(lua_State* L, detail::light_key const& lk)
     {
         lua_pushlightuserdata(L, const_cast<void*>(
             static_cast<void const*>(lk)));
+        return 1;
     }
 };
 

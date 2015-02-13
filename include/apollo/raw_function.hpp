@@ -30,9 +30,10 @@ struct raw_function {
 
 template <>
 struct converter<raw_function>: converter_base<raw_function> {
-    static void push(lua_State* L, raw_function const& rf)
+    static int push(lua_State* L, raw_function const& rf)
     {
         lua_pushcfunction(L, rf.f);
+        return 1;
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)

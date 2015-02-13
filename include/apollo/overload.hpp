@@ -124,9 +124,10 @@ private:
 
 template <>
 struct converter<detail::overloadset>: converter_base<detail::overloadset> {
-    static void push(lua_State* L, detail::overloadset&& ovls)
+    static int push(lua_State* L, detail::overloadset&& ovls)
     {
         ovls.push(L);
+        return 1;
     }
 };
 

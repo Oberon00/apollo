@@ -284,11 +284,12 @@ struct converter: detail::object_converter<T>
     // Did you forget to #include <apollo/function.hpp>?
 
     template <typename U>
-    static void push(lua_State* L, U&& v)
+    static int push(lua_State* L, U&& v)
     {
         static_assert(std::is_same<
             typename detail::remove_qualifiers<U>::type , T>::value, "");
         push_object(L, std::forward<U>(v));
+        return 1;
     }
 };
 
