@@ -64,14 +64,14 @@ BOOST_AUTO_TEST_CASE(implicit_ctor_conversion)
 
     apollo::push(L, bar_cls());
     BOOST_REQUIRE(apollo::is_convertible<foo_cls>(L, -1));
-    foo = apollo::from_stack<foo_cls>(L, -1);
+    foo = apollo::from_stack<foo_cls>(L, -1).get();
     lua_pop(L, 1);
     BOOST_CHECK_EQUAL(foo.i, foo_cls::got_bar_cls);
 
     // Test that implicit ctors don't block normal conversion.
     apollo::push(L, foo);
     BOOST_REQUIRE(apollo::is_convertible<foo_cls>(L, -1));
-    foo = apollo::from_stack<foo_cls>(L, -1);
+    foo = apollo::from_stack<foo_cls>(L, -1).get();
     lua_pop(L, 1);
     BOOST_CHECK_EQUAL(foo.i, foo_cls::got_bar_cls);
 }

@@ -67,8 +67,6 @@ enough for cases where you just pass the result of ``from_stack`` to another
 function that does not store a reference to its argument). Then you can use the
 wrapped object by:
 
-- Employing the implicit conversion of the reference wrapper to ``C`` (copies
-  the value).
 - Using the ``get()`` member function that returns a ``C const&``.
 - Passing the wrapper to the ``unwrap_bound_ref`` function, which returns the
   same as ``get()`` but is useful in generic code, because if the argument is not
