@@ -16,6 +16,7 @@ set(apollo_HDRS_PUBLIC
     "gc.hpp"
     "implicit_ctor.hpp"
     "lapi.hpp"
+    "lua_include.hpp"
     "make_function.hpp"
     "operator.hpp"
     "overload.hpp"
