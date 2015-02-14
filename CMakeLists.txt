@@ -111,5 +111,5 @@ if (BUILD_TESTING)
 endif()
 
 install(FILES "cmake/Modules/FindApollo.cmake" DESTINATION CMake/Modules)
-install(FILES "cmake/Modules/FindLua52.cmake" DESTINATION CMake/Modules)
+install(FILES "cmake/Modules/FindLua.cmake" DESTINATION CMake/Modules)
 install(FILES ${APOLLO_BUILDINFO_HPP} DESTINATION "include/apollo")
