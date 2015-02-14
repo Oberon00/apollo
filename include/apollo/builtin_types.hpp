@@ -21,7 +21,7 @@ private:
     using llimits = std::numeric_limits<lua_Integer>;
     static bool const is_integral = std::is_integral<T>::value;
     static bool const is_safe_integral = is_integral &&
-        sizeof(T) >= sizeof(lua_Integer) &&
+        sizeof(T) <= sizeof(lua_Integer) &&
         std::is_signed<T>::value == std::is_signed<lua_Integer>::value;
 
 public:

@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(number_converter)
     check_roundtrip(L, -42L); // long
     check_roundtrip(L, 42uL); // unsigned long
     check_roundtrip(L, -42LL); // long long
-    check_roundtrip(L, 0xfffffffffffffLL); // unsigned long long
+    check_roundtrip(L, 0xfffffffffffffLL); // long long
     check_roundtrip(L, static_cast<short>(-42));
     check_roundtrip(L, static_cast<unsigned short>(42));
 
