@@ -48,12 +48,12 @@ BOOST_AUTO_TEST_CASE(implicit_ctor_conversion)
     APOLLO_PUSH_FUNCTION_STATIC(L, &needs_cref);
     lua_pushinteger(L, 42);
 
-    auto& unmoved = apollo::unwrap_bound_ref(
+    auto& unmoved = apollo::unwrap_ref(
         apollo::to<unmoveable>(L, -1));
     (void)unmoved;
 
     BOOST_REQUIRE(apollo::is_convertible<foo_cls>(L, -1));
-    auto foo = apollo::unwrap_bound_ref(apollo::to<foo_cls>(L, -1));
+    auto foo = apollo::unwrap_ref(apollo::to<foo_cls>(L, -1));
     BOOST_CHECK_EQUAL(foo.i, 42);
     BOOST_CHECK(!apollo::is_convertible<foo_cls&>(L, -1));
     BOOST_REQUIRE(apollo::is_convertible<foo_cls const&>(L, -1));

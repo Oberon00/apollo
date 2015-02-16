@@ -52,16 +52,16 @@ private:
 
 
 template <typename T>
-T&& unwrap_bound_ref(T&& v) { return std::forward<T>(v); }
+T&& unwrap_ref(T&& v) { return std::forward<T>(v); }
 
 template <typename T>
-T& unwrap_bound_ref(detail::ref_binder<T> const& rv) { return rv.get(); }
+T& unwrap_ref(detail::ref_binder<T> const& rv) { return rv.get(); }
 
 template <typename T>
-T& unwrap_bound_ref(detail::ref_binder<T>& rv) { return rv.get(); }
+T& unwrap_ref(detail::ref_binder<T>& rv) { return rv.get(); }
 
 template <typename T>
-T& unwrap_bound_ref(detail::ref_binder<T>&& rv) { return rv.get(); }
+T& unwrap_ref(detail::ref_binder<T>&& rv) { return rv.get(); }
 
 } // namespace apollo
 

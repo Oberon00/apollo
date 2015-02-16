@@ -12,7 +12,7 @@ namespace detail {
 template <typename T, typename ArgTuple, int... Is>
 int emplace_ctor_wrapper_impl(lua_State* L, ArgTuple& args, iseq<Is...>)
 {
-    emplace_object<T>(L, unwrap_bound_ref(std::get<Is>(args))...);
+    emplace_object<T>(L, unwrap_ref(std::get<Is>(args))...);
     (void)args;
     return 1;
 }

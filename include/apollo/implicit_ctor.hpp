@@ -16,14 +16,14 @@ class implicit_ctor_impl: public implicit_ctor {
     void* to_impl(lua_State* L, int idx, std::false_type)
     {
          return new to_t(std::move(m_ctor(
-            unwrap_bound_ref(apollo::to<from_t>(L, idx)))));
+            unwrap_ref(apollo::to<from_t>(L, idx)))));
     }
 
     // Pointer to_t
     void* to_impl(lua_State* L, int idx, std::true_type)
     {
          return m_ctor(
-            unwrap_bound_ref(apollo::to<from_t>(L, idx)));
+            unwrap_ref(apollo::to<from_t>(L, idx)));
     }
 
 

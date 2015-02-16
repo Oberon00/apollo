@@ -94,7 +94,7 @@ call_with_stack_args_impl(
 {
     auto args = to_tuple(L, 1, std::forward<Converters>(convs)...);
     static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
-    return f(unwrap_bound_ref(std::get<Is>(args))...);
+    return f(unwrap_ref(std::get<Is>(args))...);
 }
 
 // (Const) member function pointer:
@@ -113,8 +113,8 @@ call_with_stack_args_impl(
         this_conv, L, 1, &i0);
     auto args = to_tuple(L, i0, std::forward<Converters>(convs)...);
     (void)args; // Silence gcc's -Wunused-but-set-variable
-    return (unwrap_bound_ref(instance).*f)(
-        unwrap_bound_ref(std::get<Is>(args))...);
+    return (unwrap_ref(instance).*f)(
+        unwrap_ref(std::get<Is>(args))...);
 }
 
 } // namespace detail
