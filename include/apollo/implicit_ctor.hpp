@@ -13,26 +13,26 @@ class implicit_ctor_impl: public implicit_ctor {
     using from_t = signature_element<1, Ctor>;
 
     // Non-pointer to_t
-    void* from_stack_impl(lua_State* L, int idx, std::false_type)
+    void* to_impl(lua_State* L, int idx, std::false_type)
     {
          return new to_t(std::move(m_ctor(
-            unwrap_bound_ref(apollo::from_stack<from_t>(L, idx)))));
+            unwrap_bound_ref(apollo::to<from_t>(L, idx)))));
     }
 
     // Pointer to_t
-    void* from_stack_impl(lua_State* L, int idx, std::true_type)
+    void* to_impl(lua_State* L, int idx, std::true_type)
     {
          return m_ctor(
-            unwrap_bound_ref(apollo::from_stack<from_t>(L, idx)));
+            unwrap_bound_ref(apollo::to<from_t>(L, idx)));
     }
 
 
 public:
     implicit_ctor_impl(Ctor ctor): m_ctor(ctor) {}
 
-    void* from_stack(lua_State* L, int idx) override
+    void* to(lua_State* L, int idx) override
     {
-        return from_stack_impl(L, idx, std::is_pointer<to_t>());
+        return to_impl(L, idx, std::is_pointer<to_t>());
     }
 
 private:

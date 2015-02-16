@@ -59,7 +59,7 @@ struct converter<registry_reference>: converter_base<registry_reference> {
         return no_conversion - 1;
     }
 
-    static registry_reference from_stack(lua_State* L, int idx)
+    static registry_reference to(lua_State* L, int idx)
     {
         return registry_reference(L, idx, ref_mode::copy);
     }
@@ -107,7 +107,7 @@ struct converter<stack_reference>: converter_base<stack_reference> {
         return no_conversion - 1;
     }
 
-    static stack_reference from_stack(lua_State* L, int idx)
+    static stack_reference to(lua_State* L, int idx)
     {
         return stack_reference(L, idx);
     }

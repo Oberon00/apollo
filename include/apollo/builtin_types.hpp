@@ -62,7 +62,7 @@ public:
         return no_conversion;
     }
 
-    static T from_stack(lua_State* L, int idx)
+    static T to(lua_State* L, int idx)
     {
 #if LUA_VERSION_NUM >= 503
 #   ifdef BOOST_MSVC
@@ -99,7 +99,7 @@ struct converter<T,
         return no_conversion;
     }
 
-    static T from_stack(lua_State* L, int idx)
+    static T to(lua_State* L, int idx)
     {
         return static_cast<T>(lua_tointeger(L, idx));
     }
@@ -122,7 +122,7 @@ struct converter<bool>: converter_base<bool> {
         return lua_isboolean(L, idx) ? 0 : no_conversion - 1;
     }
 
-    static bool from_stack(lua_State* L, int idx)
+    static bool to(lua_State* L, int idx)
     {
         // Avoid MSVC "performance warning" about int to bool conversion with
         // ternary operator.
@@ -138,7 +138,7 @@ struct converter<void>: converter_base<void> {
         return no_conversion - 1;
     }
 
-    static void from_stack(lua_State*, int)
+    static void to(lua_State*, int)
     { }
 };
 
@@ -180,7 +180,7 @@ inline void push_string(lua_State* L, std::string const& s)
 template <typename T>
 struct to_string { // char*, char const*, char[N]
     using type = char const*;
-    static type from_stack(lua_State* L, int idx)
+    static type to(lua_State* L, int idx)
     {
         return lua_tostring(L, idx);
     }
@@ -189,7 +189,7 @@ struct to_string { // char*, char const*, char[N]
 template <>
 struct to_string<std::string> {
     using type = std::string;
-    static type from_stack(lua_State* L, int idx)
+    static type to(lua_State* L, int idx)
     {
         std::size_t len;
         char const* s = lua_tolstring(L, idx, &len);
@@ -200,7 +200,7 @@ struct to_string<std::string> {
 template <>
 struct to_string<char> {
     using type = char;
-    static type from_stack(lua_State* L, int idx)
+    static type to(lua_State* L, int idx)
     {
         std::size_t len;
         char const* s = lua_tolstring(L, idx, &len);
@@ -248,9 +248,9 @@ struct converter<T, typename std::enable_if<
        return detail::string_conversion_steps<T>::get(L, idx);
     }
 
-    static to_type from_stack(lua_State* L, int idx)
+    static to_type to(lua_State* L, int idx)
     {
-        return detail::to_string<T>::from_stack(L, idx);
+        return detail::to_string<T>::to(L, idx);
     }
 };
 
@@ -267,7 +267,7 @@ struct converter<void*>: converter_base<void*> {
         return lua_islightuserdata(L, idx) ? 0 : no_conversion;
     }
 
-    static void* from_stack(lua_State* L, int idx)
+    static void* to(lua_State* L, int idx)
     {
         return lua_touserdata(L, idx);
     }

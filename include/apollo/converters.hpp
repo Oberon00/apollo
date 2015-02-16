@@ -144,29 +144,29 @@ template <typename Converter>
 typename std::enable_if<
     !detail::converter_has_idx_param<Converter>::value,
     to_type_of<Converter>>::type
-unchecked_from_stack_with(
+unchecked_to_with(
     Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
     (void)conv; // Silence MSVC.
     if (next_idx)
         *next_idx = idx + conv.n_consumed;
-    return conv.from_stack(L, idx);
+    return conv.to(L, idx);
 }
 
 template <typename Converter>
 typename std::enable_if<
     detail::converter_has_idx_param<Converter>::value,
     to_type_of<Converter>>::type
-unchecked_from_stack_with(
+unchecked_to_with(
     Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
-    return conv.from_stack(L, idx, next_idx);
+    return conv.to(L, idx, next_idx);
 }
 
 template <typename T>
-to_type_of<pull_converter_for<T>> unchecked_from_stack(lua_State* L, int idx)
+to_type_of<pull_converter_for<T>> unchecked_to(lua_State* L, int idx)
 {
-    return unchecked_from_stack_with(pull_converter_for<T>(), L, idx);
+    return unchecked_to_with(pull_converter_for<T>(), L, idx);
 }
 
 template <typename Converter>
@@ -213,7 +213,7 @@ bool is_convertible(lua_State* L, int idx)
 }
 
 template <typename Converter>
-to_type_of<Converter> from_stack_with(
+to_type_of<Converter> to_with(
     Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
     if (!is_convertible_with(conv, L, idx)) {
@@ -225,22 +225,21 @@ to_type_of<Converter> from_stack_with(
             << errinfo::stack_index(idx)
             << errinfo::lua_state(L));
     }
-    return unchecked_from_stack_with(conv, L, idx, next_idx);
+    return unchecked_to_with(conv, L, idx, next_idx);
 }
 
 template <typename T>
-to_type_of<pull_converter_for<T>> from_stack(lua_State* L, int idx)
+to_type_of<pull_converter_for<T>> to(lua_State* L, int idx)
 {
-    return from_stack_with(pull_converter_for<T>(), L, idx);
+    return to_with(pull_converter_for<T>(), L, idx);
 }
 
 template <typename T>
-to_type_of<pull_converter_for<T>> from_stack(
-    lua_State* L, int idx, T&& fallback)
+to_type_of<pull_converter_for<T>> to(lua_State* L, int idx, T&& fallback)
 {
     if (!is_convertible<T>(L, idx))
         return fallback;
-    return unchecked_from_stack<T>(L, idx);
+    return unchecked_to<T>(L, idx);
 }
 
 } // namepace apollo

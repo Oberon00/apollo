@@ -69,7 +69,7 @@ namespace apollo {
             return lua_isuserdata(L, idx) ? 0 : no_conversion;
         }
 
-        static test_struct& from_stack(lua_State* L, int idx)
+        static test_struct& to(lua_State* L, int idx)
         {
             return *static_cast<test_struct*>(lua_touserdata(L, idx));
         }
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(plain_proc)
     apollo::pcall(L, 0, 0);
     BOOST_REQUIRE_EQUAL(g_n_calls, 1u);
     BOOST_REQUIRE(apollo::is_convertible<decltype(&proc0)>(L, -2));
-    auto proc0ptr = apollo::from_stack<decltype(&proc0)>(L, -2);
+    auto proc0ptr = apollo::to<decltype(&proc0)>(L, -2);
     lua_pop(L, 2);
     BOOST_CHECK_EQUAL(proc0ptr, &proc0);
 
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(plain_proc)
     apollo::pcall(L, 1, 0);
     BOOST_REQUIRE_EQUAL(g_n_calls, 2u);
     BOOST_REQUIRE(apollo::is_convertible<decltype(&proc1)>(L, -1));
-    auto proc1ptr = apollo::from_stack<decltype(&proc1)>(L, -1);
+    auto proc1ptr = apollo::to<decltype(&proc1)>(L, -1);
     lua_pop(L, 1);
     BOOST_CHECK_EQUAL(proc1ptr, &proc1);
 
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(plain_proc)
     apollo::pcall(L, 4, 0);
     BOOST_REQUIRE_EQUAL(g_n_calls, 3u);
     BOOST_REQUIRE(apollo::is_convertible<decltype(&proc4)>(L, -1));
-    auto proc4ptr = apollo::from_stack<decltype(&proc4)>(L, -1);
+    auto proc4ptr = apollo::to<decltype(&proc4)>(L, -1);
     lua_pop(L, 1);
     BOOST_CHECK_EQUAL(proc4ptr, &proc4);
 
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(plain_func)
     BOOST_CHECK_EQUAL(static_cast<unsigned>(lua_tointeger(L, -1)), g_n_calls);
     lua_pop(L, 1);
     BOOST_REQUIRE(apollo::is_convertible<decltype(&func0)>(L, -2));
-    auto func0ptr = apollo::from_stack<decltype(&func0)>(L, -2);
+    auto func0ptr = apollo::to<decltype(&func0)>(L, -2);
     lua_pop(L, 2);
     BOOST_CHECK_EQUAL(func0ptr, &func0);
 
@@ -145,10 +145,10 @@ BOOST_AUTO_TEST_CASE(plain_func)
     lua_pushinteger(L, 42);
     apollo::pcall(L, 1, 1);
     BOOST_REQUIRE_EQUAL(g_n_calls, 2u);
-    BOOST_CHECK_EQUAL(apollo::from_stack<std::string>(L, -1), "foo");
+    BOOST_CHECK_EQUAL(apollo::to<std::string>(L, -1), "foo");
     lua_pop(L, 1);
     BOOST_REQUIRE(apollo::is_convertible<decltype(&func1)>(L, -1));
-    auto func1ptr = apollo::from_stack<decltype(&func1)>(L, -1);
+    auto func1ptr = apollo::to<decltype(&func1)>(L, -1);
     lua_pop(L, 1);
     BOOST_CHECK_EQUAL(func1ptr, &func1);
 
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(plain_func)
     BOOST_CHECK_EQUAL(lua_toboolean(L, -1) ? true : false, false);
     lua_pop(L, 1);
     BOOST_REQUIRE(apollo::is_convertible<decltype(&func4)>(L, -1));
-    auto func4ptr = apollo::from_stack<decltype(&func4)>(L, -1);
+    auto func4ptr = apollo::to<decltype(&func4)>(L, -1);
     lua_pop(L, 1);
     BOOST_CHECK_EQUAL(func4ptr, &func4);
 }
@@ -173,7 +173,7 @@ static void check_proc(lua_State* L)
 {
     g_n_calls = 0;
 
-    auto proc0obj = apollo::from_stack<std::function<void()>>(L, -1);
+    auto proc0obj = apollo::to<std::function<void()>>(L, -1);
     lua_pop(L, 1);
     proc0obj();
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
@@ -182,12 +182,12 @@ static void check_proc(lua_State* L)
     lua_pushnil(L);
 
     // Check that the std::function was not wrapped in a pcall lambda:
-    auto proc0obj_copy = apollo::from_stack<decltype(proc0obj)>(L, -2);
+    auto proc0obj_copy = apollo::to<decltype(proc0obj)>(L, -2);
     BOOST_CHECK_EQUAL(
         proc0obj_copy.target_type().name(),
         proc0obj.target_type().name());
 
-    auto proc0objb = apollo::from_stack<boost::function<void()>>(L, -2);
+    auto proc0objb = apollo::to<boost::function<void()>>(L, -2);
     proc0objb();
     BOOST_CHECK_EQUAL(g_n_calls, 2u);
     lua_pop(L, 1); // Pop nil.
@@ -197,12 +197,12 @@ static void check_proc(lua_State* L)
     apollo::push(L, proc0objb);
 
     // Check that the boost::function was not wrapped in a pcall lambda:
-    auto proc0objb_copy = apollo::from_stack<decltype(proc0objb)>(L, -1);
+    auto proc0objb_copy = apollo::to<decltype(proc0objb)>(L, -1);
     BOOST_CHECK_EQUAL(
         proc0objb_copy.target_type().name(),
         proc0objb.target_type().name());
 
-    proc0obj = apollo::from_stack<std::function<void()>>(L, -1);
+    proc0obj = apollo::to<std::function<void()>>(L, -1);
     proc0obj();
     BOOST_CHECK_EQUAL(g_n_calls, 4u);
     apollo::pcall(L, 0, 0);
@@ -213,11 +213,11 @@ BOOST_AUTO_TEST_CASE(proc_obj)
 {
     apollo::push(L, &proc0);
     BOOST_CHECK_EQUAL(
-        *apollo::from_stack<std::function<void()>>(L, -1)
+        *apollo::to<std::function<void()>>(L, -1)
             .target<void(*)()>(),
         &proc0);
     BOOST_CHECK_EQUAL(
-        *apollo::from_stack<boost::function<void()>>(L, -1)
+        *apollo::to<boost::function<void()>>(L, -1)
             .target<void(*)()>(),
         &proc0);
     check_proc(L);
@@ -241,7 +241,7 @@ static void check_func(lua_State* L)
 {
     g_n_calls = 0;
 
-    auto func1obj = apollo::from_stack<std::function<char const*(int)>>(L, -1);
+    auto func1obj = apollo::to<std::function<char const*(int)>>(L, -1);
     lua_pop(L, 1);
     BOOST_CHECK_EQUAL(func1obj(42), std::string("foo"));
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
@@ -250,12 +250,12 @@ static void check_func(lua_State* L)
     lua_pushnil(L);
 
     // Check that the std::function was not wrapped in a pcall lambda:
-    auto func1obj_copy = apollo::from_stack<decltype(func1obj)>(L, -2);
+    auto func1obj_copy = apollo::to<decltype(func1obj)>(L, -2);
     BOOST_CHECK_EQUAL(
         func1obj_copy.target_type().name(),
         func1obj.target_type().name());
 
-    auto func1objb = apollo::from_stack<boost::function<char const*(int)>>(L, -2);
+    auto func1objb = apollo::to<boost::function<char const*(int)>>(L, -2);
     BOOST_CHECK_EQUAL(func1objb(42), std::string("foo"));
     BOOST_CHECK_EQUAL(g_n_calls, 2u);
     lua_pop(L, 1); // Pop nil.
@@ -268,12 +268,12 @@ static void check_func(lua_State* L)
     apollo::push(L, func1objb);
 
     // Check that the boost::function was not wrapped in a pcall lambda:
-    auto func1objb_copy = apollo::from_stack<decltype(func1objb)>(L, -1);
+    auto func1objb_copy = apollo::to<decltype(func1objb)>(L, -1);
     BOOST_CHECK_EQUAL(
         func1objb_copy.target_type().name(),
         func1objb.target_type().name());
 
-    func1obj = apollo::from_stack<std::function<char const*(int)>>(L, -1);
+    func1obj = apollo::to<std::function<char const*(int)>>(L, -1);
     BOOST_CHECK_EQUAL(func1obj(42), std::string("foo"));
     BOOST_CHECK_EQUAL(g_n_calls, 4u);
     lua_pushinteger(L, 42);
@@ -287,11 +287,11 @@ BOOST_AUTO_TEST_CASE(func_obj)
 {
     apollo::push(L, &func1);
     BOOST_CHECK_EQUAL(
-        *apollo::from_stack<std::function<char const*(int)>>(L, -1)
+        *apollo::to<std::function<char const*(int)>>(L, -1)
             .target<char const*(*)(int)>(),
         &func1);
     BOOST_CHECK_EQUAL(
-        *apollo::from_stack<boost::function<char const*(int)>>(L, -1)
+        *apollo::to<boost::function<char const*(int)>>(L, -1)
             .target<char const*(*)(int)>(),
         &func1);
     check_func(L);
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(mem_func)
     g_n_calls = 0;
     apollo::push(L, &test_struct::memproc0);
     BOOST_CHECK_EQUAL(
-        apollo::from_stack<decltype(&test_struct::memproc0)>(L, -1),
+        apollo::to<decltype(&test_struct::memproc0)>(L, -1),
         &test_struct::memproc0);
     apollo::push_gc_object(L, test_struct());
     apollo::pcall(L, 1, 0);
@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(mem_func)
 
     apollo::push(L, &test_struct::memproc0c);
     BOOST_CHECK_EQUAL(
-        apollo::from_stack<decltype(&test_struct::memproc0c)>(L, -1),
+        apollo::to<decltype(&test_struct::memproc0c)>(L, -1),
         &test_struct::memproc0c);
     apollo::push_gc_object(L, test_struct());
     apollo::pcall(L, 1, 0);
@@ -330,7 +330,7 @@ BOOST_AUTO_TEST_CASE(mem_func)
     // TODO: Duplicate from plain_func test case.
     apollo::push(L, &test_struct::memfunc4);
     BOOST_CHECK_EQUAL(
-        apollo::from_stack<decltype(&test_struct::memfunc4)>(L, -1),
+        apollo::to<decltype(&test_struct::memfunc4)>(L, -1),
         &test_struct::memfunc4);
     apollo::push_gc_object(L, test_struct());
     lua_pushinteger(L, 42);

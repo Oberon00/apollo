@@ -41,7 +41,7 @@ struct converter<raw_function>: converter_base<raw_function> {
         return lua_iscfunction(L, idx) ? 0 : no_conversion;
     }
 
-    static raw_function from_stack(lua_State* L, int idx)
+    static raw_function to(lua_State* L, int idx)
     {
         return lua_tocfunction(L, idx);
     }

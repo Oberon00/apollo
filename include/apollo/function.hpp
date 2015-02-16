@@ -25,7 +25,7 @@ template <template<class> class FObj, typename R, typename... Args>
 struct function_converter<FObj<R(Args...)>> {
     using type = FObj<R(Args...)>;
 
-    static type from_stack(lua_State* L, int idx)
+    static type to(lua_State* L, int idx)
     {
         auto const& fty = function_type(L, idx);
         if (fty == boost::typeindex::type_id<type>()) {
@@ -38,7 +38,7 @@ struct function_converter<FObj<R(Args...)>> {
         // Plain function pointer in Lua? Then construct from it.
         using plainfconv = function_converter<R(*)(Args...)>;
         if (fty == boost::typeindex::type_id<typename plainfconv::type>())
-            return plainfconv::from_stack(L, idx);
+            return plainfconv::to(L, idx);
 
         // TODO?: optimization: Before falling back to the pcall lambda,
         // try boost::function and std::function.
@@ -51,7 +51,7 @@ struct function_converter<FObj<R(Args...)>> {
             luaFunction.push();
             int const n_args = push_impl(L_, std::forward<Args>(args)...);
             pcall(L_, n_args, LUA_MULTRET);
-            return apollo::from_stack<R>(L_, oldtop + 1);
+            return apollo::to<R>(L_, oldtop + 1);
         };
     }
 
@@ -76,13 +76,13 @@ struct function_converter<F, typename std::enable_if<
 
     using is_light = is_light_function<F>;
 
-    static F from_stack(lua_State* L, int idx)
+    static F to(lua_State* L, int idx)
     {
         stack_balance balance(L);
         BOOST_VERIFY(lua_getupvalue(L, idx, fn_upval_fn));
         BOOST_ASSERT(lua_isuserdata(L, -1));
         void* ud = lua_touserdata(L, -1);
-        return from_stack_impl(ud, is_light());
+        return to_impl(ud, is_light());
     }
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
@@ -93,13 +93,13 @@ struct function_converter<F, typename std::enable_if<
 
 private:
     // Light function:
-    static F from_stack_impl(void* ud, std::true_type)
+    static F to_impl(void* ud, std::true_type)
     {
         return reinterpret_cast<light_function_holder<F>&>(ud).f;
     }
 
     // Non-light function:
-    static F& from_stack_impl(void* ud, std::false_type)
+    static F& to_impl(void* ud, std::false_type)
     {
         return *static_cast<F*>(ud);
     }
@@ -135,9 +135,9 @@ public:
         return fconverter::n_conversion_steps(L, idx);
     }
 
-    static typename fconverter::type from_stack(lua_State* L, int idx)
+    static typename fconverter::type to(lua_State* L, int idx)
     {
-        return fconverter::from_stack(L, idx);
+        return fconverter::to(L, idx);
     }
 };
 

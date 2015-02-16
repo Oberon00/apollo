@@ -1,5 +1,5 @@
 set (EXAMPLES
-    basic-push-from_stack
+    basic-push-to
     basic-create_table
     basic-class
     raw_function
@@ -13,4 +13,4 @@ foreach(example ${EXAMPLES})
         COMPILE_DEFINITIONS "BOOST_TEST_MODULE=${example}")
 endforeach()
 
-needs_apollo_dll(ex_basic-push-from_stack) # Any target is enough.
+needs_apollo_dll(ex_basic-push-to) # Any target is enough.

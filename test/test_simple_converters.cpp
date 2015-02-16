@@ -15,7 +15,7 @@ static void check_roundtrip(lua_State* L, T&& v)
     apollo::stack_balance balance(L);
     apollo::push(L, std::forward<T>(v));
     BOOST_REQUIRE(apollo::is_convertible<T2>(L, -1));
-    BOOST_CHECK_EQUAL(v, apollo::from_stack<T2>(L, -1));
+    BOOST_CHECK_EQUAL(v, apollo::to<T2>(L, -1));
 }
 
 BOOST_AUTO_TEST_CASE(number_converter)
@@ -37,11 +37,11 @@ BOOST_AUTO_TEST_CASE(number_converter)
 
     apollo::push(L, 42);
     apollo::push(L, "foo");
-    BOOST_CHECK_THROW(apollo::from_stack<int>(L, -1), apollo::conversion_error);
-    BOOST_CHECK_EQUAL(apollo::from_stack<int>(L, -2), 42);
-    BOOST_CHECK_EQUAL(apollo::from_stack<int const&>(L, -2), 42);
-    BOOST_CHECK_EQUAL(apollo::from_stack<int const&&>(L, -2), 42);
-    BOOST_CHECK_EQUAL(apollo::from_stack<int const>(L, -2), 42);
+    BOOST_CHECK_THROW(apollo::to<int>(L, -1), apollo::conversion_error);
+    BOOST_CHECK_EQUAL(apollo::to<int>(L, -2), 42);
+    BOOST_CHECK_EQUAL(apollo::to<int const&>(L, -2), 42);
+    BOOST_CHECK_EQUAL(apollo::to<int const&&>(L, -2), 42);
+    BOOST_CHECK_EQUAL(apollo::to<int const>(L, -2), 42);
     lua_pop(L, 2);
 }
 
@@ -51,7 +51,7 @@ static void check_bool_fallback(lua_State* L, bool expected = true)
     BOOST_CHECK_EQUAL(
         apollo::converter<bool>::n_conversion_steps(L, -1),
         apollo::no_conversion - 1);
-    BOOST_CHECK_EQUAL(apollo::from_stack<bool>(L, -1), expected);
+    BOOST_CHECK_EQUAL(apollo::to<bool>(L, -1), expected);
     lua_pop(L, 1);
 }
 
@@ -71,11 +71,11 @@ BOOST_AUTO_TEST_CASE(bool_converter)
 
     apollo::push(L, true);
     apollo::push(L, false);
-    BOOST_CHECK_EQUAL(apollo::from_stack<bool>(L, -2), true);
-    BOOST_CHECK_EQUAL(apollo::from_stack<bool>(L, -1), false);
-    BOOST_CHECK_EQUAL(apollo::from_stack<bool const&>(L, -1), false);
-    BOOST_CHECK_EQUAL(apollo::from_stack<bool const&&>(L, -1), false);
-    BOOST_CHECK_EQUAL(apollo::from_stack<bool const>(L, -1), false);
+    BOOST_CHECK_EQUAL(apollo::to<bool>(L, -2), true);
+    BOOST_CHECK_EQUAL(apollo::to<bool>(L, -1), false);
+    BOOST_CHECK_EQUAL(apollo::to<bool const&>(L, -1), false);
+    BOOST_CHECK_EQUAL(apollo::to<bool const&&>(L, -1), false);
+    BOOST_CHECK_EQUAL(apollo::to<bool const>(L, -1), false);
     lua_pop(L, 2);
 }
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(raw_function_converter)
 {
     apollo::push(L, apollo::raw_function(test_f));
     BOOST_REQUIRE(apollo::is_convertible<apollo::raw_function>(L, -1));
-    lua_CFunction f = apollo::from_stack<apollo::raw_function>(L, -1);
+    lua_CFunction f = apollo::to<apollo::raw_function>(L, -1);
     BOOST_CHECK_EQUAL(&test_f, f);
     BOOST_CHECK_EQUAL(lua_pcall(L, 0, 0, 0), LUA_OK);
     BOOST_CHECK_EQUAL(g_n_calls, 1u);
@@ -143,39 +143,39 @@ BOOST_AUTO_TEST_CASE(string_converter)
     apollo::push(L, buf);
     apollo::push(L, true);
     BOOST_CHECK_THROW(
-        apollo::from_stack<char const*>(L, -1), apollo::conversion_error);
+        apollo::to<char const*>(L, -1), apollo::conversion_error);
     BOOST_CHECK_THROW(
-        apollo::from_stack<std::string>(L, -1), apollo::conversion_error);
-    BOOST_CHECK_EQUAL(apollo::from_stack<std::string>(L, -2), stdstr);
+        apollo::to<std::string>(L, -1), apollo::conversion_error);
+    BOOST_CHECK_EQUAL(apollo::to<std::string>(L, -2), stdstr);
     BOOST_CHECK_EQUAL(
-        apollo::from_stack<char const*>(L, -2), std::string("abc"));
+        apollo::to<char const*>(L, -2), std::string("abc"));
 
 #define CHECK_THROW_CHAR BOOST_CHECK_THROW( \
-    apollo::from_stack<char>(L, -1), apollo::conversion_error)
+    apollo::to<char>(L, -1), apollo::conversion_error)
 
     apollo::push(L, 'c');
     lua_replace(L, -3);
     CHECK_THROW_CHAR;
-    BOOST_CHECK_EQUAL(apollo::from_stack<char>(L, -2), 'c');
+    BOOST_CHECK_EQUAL(apollo::to<char>(L, -2), 'c');
     lua_pop(L, 2);
 
     apollo::push(L, 42);
-    BOOST_CHECK_EQUAL(apollo::from_stack<std::string>(L, -1), "42");
-    BOOST_CHECK_EQUAL(apollo::from_stack<std::string const&>(L, -1), "42");
-    BOOST_CHECK_EQUAL(apollo::from_stack<std::string const&&>(L, -1), "42");
-    BOOST_CHECK_EQUAL(apollo::from_stack<std::string const>(L, -1), "42");
+    BOOST_CHECK_EQUAL(apollo::to<std::string>(L, -1), "42");
+    BOOST_CHECK_EQUAL(apollo::to<std::string const&>(L, -1), "42");
+    BOOST_CHECK_EQUAL(apollo::to<std::string const&&>(L, -1), "42");
+    BOOST_CHECK_EQUAL(apollo::to<std::string const>(L, -1), "42");
 
     CHECK_THROW_CHAR;
     lua_pop(L, 1);
     apollo::push(L, 4);
-    BOOST_CHECK_EQUAL(apollo::from_stack<char>(L, -1), '4');
+    BOOST_CHECK_EQUAL(apollo::to<char>(L, -1), '4');
 
     lua_pop(L, 1);
     apollo::push(L, 9);
-    BOOST_CHECK_EQUAL(apollo::from_stack<char>(L, -1), '9');
-    BOOST_CHECK_EQUAL(apollo::from_stack<char const&>(L, -1), '9');
-    BOOST_CHECK_EQUAL(apollo::from_stack<char const&&>(L, -1), '9');
-    BOOST_CHECK_EQUAL(apollo::from_stack<char const>(L, -1), '9');
+    BOOST_CHECK_EQUAL(apollo::to<char>(L, -1), '9');
+    BOOST_CHECK_EQUAL(apollo::to<char const&>(L, -1), '9');
+    BOOST_CHECK_EQUAL(apollo::to<char const&&>(L, -1), '9');
+    BOOST_CHECK_EQUAL(apollo::to<char const>(L, -1), '9');
 
     lua_pop(L, 1);
     apollo::push(L, 4.1);
@@ -196,10 +196,10 @@ BOOST_AUTO_TEST_CASE(multi_push)
 {
     apollo::push(L, 1.2, false, "foo", 42);
     BOOST_REQUIRE_EQUAL(lua_gettop(L), 4);
-    BOOST_CHECK_EQUAL(apollo::from_stack<double>(L, 1), 1.2);
-    BOOST_CHECK_EQUAL(apollo::from_stack<bool>(L, 2), false);
-    BOOST_CHECK_EQUAL(apollo::from_stack<std::string>(L, 3), "foo");
-    BOOST_CHECK_EQUAL(apollo::from_stack<int>(L, 4), 42);
+    BOOST_CHECK_EQUAL(apollo::to<double>(L, 1), 1.2);
+    BOOST_CHECK_EQUAL(apollo::to<bool>(L, 2), false);
+    BOOST_CHECK_EQUAL(apollo::to<std::string>(L, 3), "foo");
+    BOOST_CHECK_EQUAL(apollo::to<int>(L, 4), 42);
     lua_pop(L, 4);
 }
 

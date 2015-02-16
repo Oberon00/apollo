@@ -153,7 +153,7 @@ struct converter<detail::table_setter>
     }
 
     template <typename T>
-    static detail::table_setter from_stack(lua_State*, T) {
+    static detail::table_setter to(lua_State*, T) {
         static_assert(!std::is_same<T, T>::value, // Make dependent.
             "Use subtable() instead of nested"
             " calls to newtable/rawset_table/etc.");

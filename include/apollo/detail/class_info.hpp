@@ -49,7 +49,7 @@ using cast_function = void*(*)(void*);
 class implicit_ctor {
 public:
     // Returns a owning pointer to the object allocated with new.
-    virtual void* from_stack(lua_State* L, int idx) = 0;
+    virtual void* to(lua_State* L, int idx) = 0;
     virtual ~implicit_ctor() {}
 };
 

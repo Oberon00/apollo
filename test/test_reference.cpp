@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(stackref_converter)
     BOOST_CHECK_EQUAL(lua_tointeger(L, -1), 42);
     BOOST_CHECK_EQUAL(lua_tointeger(L, -2), 42);
     BOOST_CHECK_EQUAL(lua_tointeger(L, -3), 42);
-    r = apollo::from_stack<apollo::stack_reference>(L, -1);
+    r = apollo::to<apollo::stack_reference>(L, -1);
     BOOST_CHECK_EQUAL(r.get(), lua_gettop(L));
     lua_pop(L, 3);
 }
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(regref_converter)
     lua_pop(L, 1);
     apollo::push(L, std::move(r));
     BOOST_CHECK_EQUAL(lua_tointeger(L, -1), 42);
-    r = apollo::from_stack<apollo::registry_reference>(L, -1);
+    r = apollo::to<apollo::registry_reference>(L, -1);
     BOOST_CHECK_EQUAL(r.L(), L);
     lua_pop(L, 1);
     BOOST_CHECK_EQUAL(lua_gettop(L), 0);

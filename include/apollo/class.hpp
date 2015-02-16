@@ -82,19 +82,19 @@ public:
             return get_ctor_opt(L, idx) ? 1 : no_conversion;
 
         // Reject null pointers.
-        return object_converter<T const*>::from_stack(L, idx) ?
+        return object_converter<T const*>::to(L, idx) ?
             n_steps : no_conversion;
     }
 
-    static ref_binder<T const> from_stack(lua_State* L, int idx)
+    static ref_binder<T const> to(lua_State* L, int idx)
     {
         auto n_steps = object_converter<T const*>::n_conversion_steps(L, idx);
         if (n_steps == no_conversion) {
             return {
-                static_cast<T*>(get_ctor_opt(L, idx)->from_stack(L, idx)),
+                static_cast<T*>(get_ctor_opt(L, idx)->to(L, idx)),
                 true};
         }
-        return {object_converter<T const*>::from_stack(L, idx), false};
+        return {object_converter<T const*>::to(L, idx), false};
     }
 };
 
@@ -112,13 +112,13 @@ public:
             return no_conversion;
 
         // Reject null pointers.
-        return object_converter<T*>::from_stack(L, idx) ?
+        return object_converter<T*>::to(L, idx) ?
             n_steps : no_conversion;
     }
 
-    static T& from_stack(lua_State* L, int idx)
+    static T& to(lua_State* L, int idx)
     {
-        return *object_converter<T*>::from_stack(L, idx);
+        return *object_converter<T*>::to(L, idx);
     }
 };
 
@@ -161,7 +161,7 @@ public:
         return no_conversion;
     }
 
-    static Ptr from_stack(lua_State* L, int idx)
+    static Ptr to(lua_State* L, int idx)
     {
 #ifdef BOOST_MSVC
 #   pragma warning(push)
@@ -210,7 +210,7 @@ public:
             holder->type(), static_class_id<obj_t>::id);
     }
 
-    static Ptr from_stack(lua_State* L, int idx)
+    static Ptr to(lua_State* L, int idx)
     {
         if (lua_isnil(L, idx))
             return nullptr;
@@ -301,12 +301,12 @@ unsigned n_object_conversion_steps(lua_State* L, int idx)
 }
 
 template <typename T>
-auto object_from_stack(lua_State* L, int idx)
+auto object_to(lua_State* L, int idx)
 -> decltype(detail::object_converter<
-    typename std::remove_cv<T>::type>::from_stack(L, idx))
+    typename std::remove_cv<T>::type>::to(L, idx))
 {
     return detail::object_converter<
-        typename std::remove_cv<T>::type>::from_stack(L, idx);
+        typename std::remove_cv<T>::type>::to(L, idx);
 }
 
 
