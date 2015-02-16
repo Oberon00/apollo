@@ -1,6 +1,8 @@
 #ifndef APOLLO_DETAIL_REF_BINDER_HPP_INCLUDED
 #define APOLLO_DETAIL_REF_BINDER_HPP_INCLUDED APOLLO_DETAIL_REF_BINDER_HPP_INCLUDED
 
+#include <utility> // std::move, std::forward
+
 namespace apollo {
 
 namespace detail {
