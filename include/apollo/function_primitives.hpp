@@ -25,14 +25,14 @@ struct bool_and: std::is_same<iseq<Bs...>, iseq<(Bs || true)... >> {};
 template <typename... Ts>
 struct all_empty: bool_and<std::is_empty<Ts>::value...> {};
 
-inline std::tuple<> to_as_tuple(lua_State*, int)
+inline std::tuple<> to_tuple(lua_State*, int)
 {
     return {};
 }
 
 template <typename Converter0, typename... Converters>
 std::tuple<to_type_of<Converter0>, to_type_of<Converters>...>
-to_as_tuple(
+to_tuple(
     lua_State* L, int i, Converter0&& conv0, Converters&&... convs)
 {
     // Keep these statements separate to make sure the
@@ -40,7 +40,7 @@ to_as_tuple(
     std::tuple<to_type_of<Converter0>> arg0(
         to_with(std::forward<Converter0>(conv0), L, i, &i));
     static_assert(std::tuple_size<decltype(arg0)>::value == 1, "");
-    return std::tuple_cat(std::move(arg0), to_as_tuple(
+    return std::tuple_cat(std::move(arg0), to_tuple(
         L, i, std::forward<Converters>(convs)...));
 }
 
@@ -92,7 +92,7 @@ call_with_stack_args_impl(
     Converters&&... convs
 )
 {
-    auto args = to_as_tuple(L, 1, std::forward<Converters>(convs)...);
+    auto args = to_tuple(L, 1, std::forward<Converters>(convs)...);
     static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
     return f(unwrap_bound_ref(std::get<Is>(args))...);
 }
@@ -111,7 +111,7 @@ call_with_stack_args_impl(
     int i0;
     to_type_of<ThisConverter> instance = to_with(
         this_conv, L, 1, &i0);
-    auto args = to_as_tuple(L, i0, std::forward<Converters>(convs)...);
+    auto args = to_tuple(L, i0, std::forward<Converters>(convs)...);
     (void)args; // Silence gcc's -Wunused-but-set-variable
     return (unwrap_bound_ref(instance).*f)(
         unwrap_bound_ref(std::get<Is>(args))...);

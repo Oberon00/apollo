@@ -301,7 +301,7 @@ unsigned n_object_conversion_steps(lua_State* L, int idx)
 }
 
 template <typename T>
-auto object_to(lua_State* L, int idx)
+auto to_object(lua_State* L, int idx)
 -> decltype(detail::object_converter<
     typename std::remove_cv<T>::type>::to(L, idx))
 {
