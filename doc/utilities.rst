@@ -265,10 +265,10 @@ A ``registry_reference`` is considered ``empty()`` if it references
 ``nullptr`` if there is none) and ``get()`` returns the registry index of the
 value referenced there (or ``LUA_NOREF`` if there is none).
 
-This class is usable with :ref:`f-push` and :ref:`f-from_stack`: Pushing just
+This class is usable with :ref:`f-push` and :ref:`f-to`: Pushing just
 calls the ``push`` method or pushes nil if the reference is empty. If an attempt
 is made to push a reference that references another state as that on which it
-should be pushed, the behaviour is undefined.  ``from_stack(L, idx)`` will
+should be pushed, the behaviour is undefined.  ``to(L, idx)`` will
 return a ``registry_reference`` constructed with these arguments and
 ``ref_mode::copy``. Thus, :ref:`f-is_convertible` is always true for
 ``stack_reference``.
@@ -305,11 +305,11 @@ lua_gettop(L)``.
 ``get()`` returns the stored index.
 
 The usefulness of ``stack_reference`` comes from the fact that it can be used
-with :ref:`f-push` and :ref:`f-from_stack`. Thus it can be used e.g. with
+with :ref:`f-push` and :ref:`f-to`. Thus it can be used e.g. with
 :ref:`f-rawset_table` or :ref:`f-new_table`.
 
 ``push()`` will (re)push the referenced value on top of the stack (using
-``lua_pushvalue()``) or push nil if the reference is empty. ``from_stack(L,
+``lua_pushvalue()``) or push nil if the reference is empty. ``to(L,
 idx)`` will just construct a ``stack_reference`` with these arguments. Thus,
 :ref:`f-is_convertible` is always true for ``stack_reference``.
 

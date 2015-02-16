@@ -53,18 +53,18 @@ first, then the second is pushed on top of it and so on, until the last one
 becomes the new stack top.
 
 
-.. _f-from_stack:
+.. _f-to:
 
-``from_stack()``
+``to()``
 ^^^^^^^^^^^^^^^^
 
 ::
 
    template <typename /* explicit */ T> // 1
-   to_type_of<pull_converter_for<T>> from_stack(lua_State* L, int idx);
+   to_type_of<pull_converter_for<T>> to(lua_State* L, int idx);
 
    template <typename T> // 2
-   to_type_of<pull_converter_for<T>> from_stack(
+   to_type_of<pull_converter_for<T>> to(
        lua_State* L, int idx, T&& fallback)
 
 Return the value at index ``idx`` on the stack of ``L`` converted to ``T``
@@ -94,22 +94,22 @@ converted to ``T`` using ``T``'s default PullConverter.
 
 
 
-.. _f-unchecked_from_stack:
+.. _f-unchecked_to:
 
-``unchecked_from_stack()``
+``unchecked_to()``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
    template <typename /* explicit */ T>
-   to_type_of<pull_converter_for<T>> unchecked_from_stack(lua_State* L, int idx);
+   to_type_of<pull_converter_for<T>> unchecked_to(lua_State* L, int idx);
 
 
-Just like the first overload of :ref:`f-from_stack`: Return the value at index
+Just like the first overload of :ref:`f-to`: Return the value at index
 ``idx`` on the stack of ``L`` converted to ``T`` using ``T``'s default
 PullConverter.
 
-The only difference is the error handling: While :ref:`f-from_stack` throws an
+The only difference is the error handling: While :ref:`f-to` throws an
 exception, this function has undefined behavior (e.g. exceptions or segfaults)
 if the value is not convertible.
 

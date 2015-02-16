@@ -22,14 +22,14 @@ apollo's function converter supports pushing
    - ``boost::function``
    - ``std::function``
 
-Arguments will be retrieved using :ref:`f-from_stack` and the return value
+Arguments will be retrieved using :ref:`f-to` and the return value
 is pushed using :ref:`f-push`. Exceptions are converted to Lua errors using
 :ref:`f-exceptions_to_lua_errors`. The ``this`` argument for member functions
 of a class ``C`` is retrieved as ``C&`` for non-const member functions and as
 ``C const&`` for const member functions (see :ref:`sec-classes`).
 
 Additionally, function pointers pushed with apollo can be retrieved back using
-:ref:`f-from_stack` as the exact same type they were pushed. A ``boost::`` or
+:ref:`f-to` as the exact same type they were pushed. A ``boost::`` or
 ``std::function`` can be obtained from any Lua function or other value that has
 a ``__call`` metamethod.  If the value was pushed as the exact same function
 object type or as a pointer to a compatible free function, invoking the function
@@ -62,7 +62,7 @@ Header::
 
 Sometimes, you want to just directly push a raw ``lua_CFunction`` to Lua using
 :ref:`f-push`. However, if you just do that, apollo will try to use
-``from_stack`` for the ``lua_State*`` and ``push`` a single ``int`` back. To
+``to`` for the ``lua_State*`` and ``push`` a single ``int`` back. To
 inform apollo that it should just use ``lua_pushcfunction()``, you need to wrap
 your function into an ``apollo::raw_function`` (defined in the
 ``<apollo/builtin_types.hpp>`` header)::
@@ -103,7 +103,7 @@ Header::
 
 Takes a function pointer type and value as explicit template arguments and
 returns a raw function that wraps it, converting arguments using
-:ref:`f-from_stack` and the return value using :ref:`f-push`.
+:ref:`f-to` and the return value using :ref:`f-push`.
 
 Note that a function pushed this way cannot be really retrieved back as it does
 not contain any type information (which is the advantage at the same time: zero

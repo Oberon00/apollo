@@ -7,7 +7,7 @@ Header::
 
    #include <apollo/class.hpp>
 
-apollo allows you to use class types with :ref:`f-push` and :ref:`f-from_stack`,
+apollo allows you to use class types with :ref:`f-push` and :ref:`f-to`,
 provided you tell the library about the type first using
 :ref:`f-register_class`. However, to make the type usable in Lua, you also need
 to set the appropriate metatable fields (usually at least ``__index``).
@@ -42,19 +42,19 @@ it, as long as the ``lua_State`` is not closed).
 Pointers to ``const`` will make the Lua representation of the object act as
 ``const`` (i.e. it is only convertible to ``const&``, ``const*`` or the value
 type, which also means that only const member functions can be called on it,
-since apollo will use ``from_stack<C&>`` for non-const member functions).
+since apollo will use ``to<C&>`` for non-const member functions).
 
 
-.. _sec-cls-from_stack:
+.. _sec-cls-to:
 
-Using ``from_stack`` with class types
+Using ``to`` with class types
 --------------------------------------
 
-For a class type ``C``, ``from_stack`` can be used with a template argument of
+For a class type ``C``, ``to`` can be used with a template argument of
 ``C*``, ``C&`` to obtain a mutable pointer/reference to the object on the Lua
 stack, as expected. ``C const*``, also as expected, obtains a pointer to const.
 
-However, just ``from_stack<C>`` or ``C const&`` (both equivalent) return not
+However, just ``to<C>`` or ``C const&`` (both equivalent) return not
 exactly what you asked for but instead they return an implementation defined
 reference wrapper object. This is necessary for ``const&`` because the object
 retrieved might not actually live in Lua but be an :ref:`implicitly constructed
@@ -63,12 +63,12 @@ the reference wrapper's. So how do you use an object wrapped in such a reference
 wrapper? First, make sure the wrapper stays alive for the time you use the
 object if you use it as ``const&`` (C++ ensures that objects stay alive inside
 the *full expression* in which they were constructed, which is already
-enough for cases where you just pass the result of ``from_stack`` to another
+enough for cases where you just pass the result of ``to`` to another
 function that does not store a reference to its argument). Then you can use the
 wrapped object by:
 
 - Using the ``get()`` member function that returns a ``C const&``.
-- Passing the wrapper to the ``unwrap_bound_ref`` function, which returns the
+- Passing the wrapper to the ``unwrap_ref`` function, which returns the
   same as ``get()`` but is useful in generic code, because if the argument is not
   a reference wrapper, it is returned unchanged.
 
@@ -207,9 +207,9 @@ Header::
    void add_implicit_ctor(lua_State* L, To(*ctor)(From));
 
 By adding an implicit constructor / conversion function from ``From`` to ``To``,
-:ref:`f-from_stack` will be able to convert types that have the type ``From`` in
+:ref:`f-to` will be able to convert types that have the type ``From`` in
 Lua to a value type of just ``To`` or to a const reference ``To const&`` (that's
-why a :ref:`reference wrapper <sec-cls-from_stack>` is returned for these two
+why a :ref:`reference wrapper <sec-cls-to>` is returned for these two
 kinds of types).
 
 ``To`` can also be a raw pointer to a class type. This is actually recommended,
