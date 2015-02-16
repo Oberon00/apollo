@@ -59,4 +59,43 @@ APOLLO_API void pcall(lua_State* L, int nargs, int nresults)
     cleanup();
 }
 
+APOLLO_API void extend_table(lua_State* L, int t, int with)
+{
+    extend_table_deep(L, t, with, 1);
+}
+
+APOLLO_API void extend_table_deep(lua_State* L,
+    int t, int with, unsigned max_depth)
+{
+    if (max_depth == 0)
+        return;
+
+    t = lua_absindex(L, t);
+    with = lua_absindex(L, with);
+    lua_pushnil(L);
+    while (lua_next(L, with)) {
+        bool extended = false;
+        lua_pushvalue(L, -2); // copy key
+        // Stack (A): -3; k, -2: with[k], -1: k
+        if (max_depth > 1 && lua_type(L, -2) == LUA_TTABLE) {
+            lua_rawget(L, t);
+            // Stack (B): -3; k, -2: with[k], -1: t[k]
+            if (lua_type(L, -1) == LUA_TTABLE) {
+                extend_table_deep(L, -1, -2, max_depth - 1);
+                lua_pop(L, 2);
+                extended = true;
+            } else {
+                lua_pop(L, 1);
+                lua_pushvalue(L, -2); // copy key again
+            }
+        }
+        if (!extended) {
+            // Stack is same as (A)
+            lua_insert(L, -2); // move key copy under value
+            // -3: k, -2: k, -1: v
+            lua_rawset(L, t);
+        }
+    }
+}
+
 } // namespace apollo
