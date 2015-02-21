@@ -1,3 +1,7 @@
+// Part of the apollo library -- Copyright (c) Christian Neumüller 2015
+// This file is subject to the terms of the BSD 2-Clause License.
+// See LICENSE.txt or http://opensource.org/licenses/BSD-2-Clause
+
 #include <apollo/converters_fwd.hpp> // no_conversion
 #include <apollo/error.hpp>
 #include <apollo/gc.hpp>

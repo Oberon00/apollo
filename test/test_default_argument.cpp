@@ -1,3 +1,7 @@
+// Part of the apollo library -- Copyright (c) Christian Neumüller 2015
+// This file is subject to the terms of the BSD 2-Clause License.
+// See LICENSE.txt or http://opensource.org/licenses/BSD-2-Clause
+
 #include <apollo/builtin_types.hpp>
 #include <apollo/function.hpp>
 #include <apollo/to_raw_function.hpp>
@@ -66,7 +70,7 @@ static void test_default_light(lua_State* L, T v)
 {
     BOOST_TEST_MESSAGE("at (light) " +
         boost::typeindex::type_id<T>().pretty_name());
-    
+
     using tp_container = testproc_container<T>;
     tp_container::n_calls = 0;
     tp_container::v = v;

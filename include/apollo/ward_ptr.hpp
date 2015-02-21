@@ -1,3 +1,7 @@
+// Part of the apollo library -- Copyright (c) Christian Neumüller 2015
+// This file is subject to the terms of the BSD 2-Clause License.
+// See LICENSE.txt or http://opensource.org/licenses/BSD-2-Clause
+
 #ifndef APOLLO_WARD_PTR_HPP_INCLUDED
 #define APOLLO_WARD_PTR_HPP_INCLUDED WEAK_REF_HPP_INCLUDED
 
