@@ -21,7 +21,9 @@ struct foo_cls {
     static int const got_bar_cls;
     explicit foo_cls(int i_): i(i_) {}
     explicit foo_cls(bar_cls): i(got_bar_cls) {}
-    ~foo_cls() { i = 0xdeadbeef; }
+    ~foo_cls() { i = static_cast<int>(0xdeadbeef); }
+    foo_cls(foo_cls const&) = default;
+    foo_cls& operator= (foo_cls const&) = default;
 
     int i;
 };
