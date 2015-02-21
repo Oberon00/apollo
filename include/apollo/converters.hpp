@@ -243,7 +243,7 @@ template <typename T>
 to_type_of<pull_converter_for<T>> to(lua_State* L, int idx, T&& fallback)
 {
     if (!is_convertible<T>(L, idx))
-        return fallback;
+        return std::forward<T>(fallback);
     return unchecked_to<T>(L, idx);
 }
 
