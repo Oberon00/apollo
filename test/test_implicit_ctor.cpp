@@ -17,6 +17,7 @@ struct foo_cls {
     static int const got_bar_cls;
     explicit foo_cls(int i_): i(i_) {}
     explicit foo_cls(bar_cls): i(got_bar_cls) {}
+    ~foo_cls() { i = 0xdeadbeef; }
 
     int i;
 };
@@ -59,6 +60,7 @@ BOOST_AUTO_TEST_CASE(implicit_ctor_conversion)
     BOOST_REQUIRE(apollo::is_convertible<foo_cls const&>(L, -1));
     BOOST_CHECK_EQUAL(apollo::to<foo_cls const&>(L, -1).get().i, 42);
     BOOST_CHECK(apollo::to<foo_cls const&>(L, -1).owns_object());
+    BOOST_CHECK_EQUAL(APOLLO_TO_ARG(L, -1, foo_cls const&).i, 42);
 
     apollo::pcall(L, 1, 0);
 

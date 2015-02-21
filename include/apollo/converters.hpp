@@ -4,6 +4,7 @@
 #include <apollo/converters_fwd.hpp>
 #include <apollo/error.hpp>
 #include <apollo/detail/meta_util.hpp>
+#include <apollo/detail/ref_binder.hpp>
 
 #include <boost/exception/errinfo_type_info_name.hpp>
 #include <boost/exception/info.hpp>
@@ -233,6 +234,10 @@ to_type_of<pull_converter_for<T>> to(lua_State* L, int idx)
 {
     return to_with(pull_converter_for<T>(), L, idx);
 }
+
+// Cannot use function here, it would potentially return a reference to local.
+#define APOLLO_TO_ARG(L, idx, ...) \
+    ::apollo::unwrap_ref(::apollo::to<__VA_ARGS__>(L, idx))
 
 template <typename T>
 to_type_of<pull_converter_for<T>> to(lua_State* L, int idx, T&& fallback)

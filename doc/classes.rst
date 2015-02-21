@@ -72,6 +72,13 @@ wrapped object by:
   same as ``get()`` but is useful in generic code, because if the argument is not
   a reference wrapper, it is returned unchanged.
 
+Alternatively, you can use the ``APOLLO_TO_ARG(L, idx, T)`` macro which is just
+like ``to`` but calls ``unwrap_ref`` on its return value. Note that the value of
+this macro may become invalid after the full expression containing it (see
+above).  The name ``APOLLO_TO_ARG`` comes from the fact that it is most useful
+to pass the return value directly as an argument (to a function that does not
+store the reference).
+
 Note that an object that is ``const`` in Lua is only convertible to  ``C``, ``C
 const&`` and ``C const*``.
 

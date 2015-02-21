@@ -81,6 +81,8 @@ BOOST_AUTO_TEST_CASE(object_converter)
             auto foo_cref_binder = apollo::to<foo_cls const&>(L, -1);
             BOOST_CHECK(!foo_cref_binder.owns_object());
             foo_cls const& foo_cref = foo_cref_binder.get();
+            BOOST_CHECK_EQUAL(
+                &foo_cref, &APOLLO_TO_ARG(L, -1, foo_cls const&));
             BOOST_CHECK_EQUAL(foo_cref.i, 42);
             BOOST_CHECK_EQUAL(foo_cref.n_copies, 1u);
             BOOST_CHECK_EQUAL(foo_cref.n_moves, 0u);
