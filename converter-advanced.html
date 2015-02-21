@@ -77,8 +77,9 @@ expose <tt class="docutils literal"><span class="pre">T</span></tt> as a member 
 how to push a <tt class="docutils literal"><span class="pre">T</span></tt> onto the Lua stack.</p>
 <p>It needs to implement only one member function: <tt class="docutils literal"><span class="pre">push</span></tt> must be callable with
 arguments <tt class="docutils literal"><span class="pre">lua_State*</span></tt> and <tt class="docutils literal"><span class="pre">T</span></tt> and push the passed <tt class="docutils literal"><span class="pre">T</span></tt> onto the passed
-<tt class="docutils literal"><span class="pre">lua_State*</span></tt>&#8216;s stack, thus increasing the number of stack elements by exactly
-one. The <tt class="docutils literal"><span class="pre">push</span></tt> function may be non-static.</p>
+<tt class="docutils literal"><span class="pre">lua_State*</span></tt>&#8216;s stack, returning as an <tt class="docutils literal"><span class="pre">int</span></tt> how many values were pushed
+(this will usually be 1, but can also be 0 or more than 1). The <tt class="docutils literal"><span class="pre">push</span></tt>
+function may be non-static.</p>
 </div>
 <div class="section" id="pullconverter">
 <h3>PullConverter<a class="headerlink" href="#pullconverter" title="Permalink to this headline">¶</a></h3>
@@ -86,9 +87,9 @@ one. The <tt class="docutils literal"><span class="pre">push</span></tt> functio
 <p>A PushConverter for <tt class="docutils literal"><span class="pre">T</span></tt> (where <tt class="docutils literal"><span class="pre">T</span></tt> is always withouth top-level cv) defines
 how to retrieve a <tt class="docutils literal"><span class="pre">T</span></tt> from the Lua stack.</p>
 <p>A member type(def) <tt class="docutils literal"><span class="pre">to_type</span></tt> must be provided that specifies the return type
-of <tt class="docutils literal"><span class="pre">from_stack</span></tt>.</p>
+of <tt class="docutils literal"><span class="pre">to</span></tt>.</p>
 <p>A data member <tt class="docutils literal"><span class="pre">n_consumed</span></tt> must be provided if the <tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt> or
-<tt class="docutils literal"><span class="pre">from_stack</span></tt> member functions does not implement the overload having the
+<tt class="docutils literal"><span class="pre">to</span></tt> member functions does not implement the overload having the
 <tt class="docutils literal"><span class="pre">int*</span> <span class="pre">next_idx</span></tt> parameter. It will then be used to determine what stack
 elements have been processed by this converter (e.g. when converting function
 arguments, the next argument&#8217;s converter will receive <tt class="docutils literal"><span class="pre">idx</span> <span class="pre">+</span> <span class="pre">n_consumed</span></tt> as
@@ -111,16 +112,16 @@ fallback (such as the conversion from userdata to <tt class="docutils literal"><
 information is used e.g. by <a class="reference internal" href="converter-basics.html#f-is-convertible"><em>is_convertible()</em></a>, the grading is used for
 (currently undocumented) overload sets. The second overload must set
 <tt class="docutils literal"><span class="pre">*next_idx</span></tt> to the first stack index after <tt class="docutils literal"><span class="pre">idx</span></tt> that will not be used by
-<tt class="docutils literal"><span class="pre">from_stack</span></tt> if <tt class="docutils literal"><span class="pre">next_idx</span> <span class="pre">!=</span> <span class="pre">nullptr</span></tt>.</p>
-<p><tt class="docutils literal"><span class="pre">from_stack</span></tt> must have a prototype compatible to either of:</p>
-<div class="highlight-c++"><div class="highlight"><pre><span class="n">to_type</span> <span class="nf">from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span> <span class="c1">// 1</span>
-<span class="n">to_type</span> <span class="nf">from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">,</span> <span class="kt">int</span><span class="o">*</span> <span class="n">next_idx</span><span class="p">);</span> <span class="c1">// 2</span>
+<tt class="docutils literal"><span class="pre">to</span></tt> if <tt class="docutils literal"><span class="pre">next_idx</span> <span class="pre">!=</span> <span class="pre">nullptr</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">to</span></tt> must have a prototype compatible to either of:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">to_type</span> <span class="nf">to</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span> <span class="c1">// 1</span>
+<span class="n">to_type</span> <span class="nf">to</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">,</span> <span class="kt">int</span><span class="o">*</span> <span class="n">next_idx</span><span class="p">);</span> <span class="c1">// 2</span>
 </pre></div>
 </div>
 <p>It must have the same form as <tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt> (if one has the
 <tt class="docutils literal"><span class="pre">next_idx</span></tt> parameter, the other must too). This function must return the value
 at stack index <tt class="docutils literal"><span class="pre">idx</span></tt> of <tt class="docutils literal"><span class="pre">L</span></tt> converted to a type for which
-<tt class="docutils literal"><span class="pre">unwrap_bound_ref</span></tt> returns a <tt class="docutils literal"><span class="pre">T</span></tt>-compatible type (usually this type will be
+<tt class="docutils literal"><span class="pre">unwrap_ref</span></tt> returns a <tt class="docutils literal"><span class="pre">T</span></tt>-compatible type (usually this type will be
 just <tt class="docutils literal"><span class="pre">T</span></tt>). It must only be called if <tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt> would return a
 value ≠ <tt class="docutils literal"><span class="pre">no_conversion</span></tt> (although <tt class="docutils literal"><span class="pre">n_conversion_steps</span></tt> will not necessarily
 be called), thus it does not need to check for convertibility (the behavior may
@@ -146,10 +147,10 @@ It must be specialization of the following <tt class="docutils literal"><span cl
 (including pushing a function with <tt class="docutils literal"><span class="pre">T</span></tt> as return type) will not work, except
 if <tt class="docutils literal"><span class="pre">T</span></tt> is cvr-qualified, because then the converter will never be selected for
 pushing.
-Similarly, if it is not a PullConverter, <tt class="docutils literal"><span class="pre">from_stack</span></tt>, <tt class="docutils literal"><span class="pre">is_convertible</span></tt> and related
+Similarly, if it is not a PullConverter, <tt class="docutils literal"><span class="pre">to</span></tt>, <tt class="docutils literal"><span class="pre">is_convertible</span></tt> and related
 functions (including pushing a function with <tt class="docutils literal"><span class="pre">T</span></tt> parameters) will not work.</p>
 <p>push-functionality will use the converter type specified by
-<tt class="docutils literal"><span class="pre">push_converter_for&lt;T&gt;</span></tt>, and pull (<tt class="docutils literal"><span class="pre">from_stack</span></tt>) functionality will use
+<tt class="docutils literal"><span class="pre">push_converter_for&lt;T&gt;</span></tt>, and pull (<tt class="docutils literal"><span class="pre">to</span></tt>) functionality will use
 <tt class="docutils literal"><span class="pre">pull_converter_for&lt;T&gt;</span></tt>. They are defined as follows:</p>
 <div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="k">using</span> <span class="n">push_converter_for</span> <span class="o">=</span> <span class="n">converter</span><span class="o">&lt;</span><span class="n">T</span><span class="o">-</span><span class="n">withouth</span><span class="o">-</span><span class="n">cvr</span><span class="o">-</span><span class="n">qualifications</span><span class="o">&gt;</span><span class="p">;</span>
@@ -169,14 +170,14 @@ first argument:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">n_conversion_steps_with</span></tt></li>
 <li><tt class="docutils literal"><span class="pre">is_convertible_with</span></tt> (see <a class="reference internal" href="converter-basics.html#f-is-convertible"><em>is_convertible()</em></a>)</li>
-<li><tt class="docutils literal"><span class="pre">unchecked_from_stack_with</span></tt> (see <a class="reference internal" href="converter-basics.html#f-unchecked-from-stack"><em>unchecked_from_stack()</em></a>)</li>
-<li><tt class="docutils literal"><span class="pre">from_stack_with</span></tt> (see <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a>).</li>
+<li><tt class="docutils literal"><span class="pre">unchecked_to_with</span></tt> (see <a class="reference internal" href="converter-basics.html#f-unchecked-to"><em>unchecked_to()</em></a>)</li>
+<li><tt class="docutils literal"><span class="pre">to_with</span></tt> (see <a class="reference internal" href="converter-basics.html#f-to"><em>to()</em></a>).</li>
 </ul>
 <p>There is no <tt class="docutils literal"><span class="pre">push_with</span></tt> since it is easy to directly use a converter&#8217;s
 <tt class="docutils literal"><span class="pre">push</span></tt> member function. This is not the case for the functions above, since
 the underlying converter functions may or may not support a <tt class="docutils literal"><span class="pre">next_idx</span></tt>
-argument. <tt class="docutils literal"><span class="pre">n_conversion_steps_with</span></tt>, <tt class="docutils literal"><span class="pre">unchecked_from_stack_with</span></tt> and
-<tt class="docutils literal"><span class="pre">from_stack_with</span></tt> also have <tt class="docutils literal"><span class="pre">int*</span> <span class="pre">next_idx</span></tt> as an additional last parameter,
+argument. <tt class="docutils literal"><span class="pre">n_conversion_steps_with</span></tt>, <tt class="docutils literal"><span class="pre">unchecked_to_with</span></tt> and
+<tt class="docutils literal"><span class="pre">to_with</span></tt> also have <tt class="docutils literal"><span class="pre">int*</span> <span class="pre">next_idx</span></tt> as an additional last parameter,
 but with a default argument of <tt class="docutils literal"><span class="pre">nullptr</span></tt>.</p>
 <div class="section" id="n-conversion-steps">
 <span id="f-n-conversion-steps"></span><h3><tt class="docutils literal"><span class="pre">n_conversion_steps()</span></tt><a class="headerlink" href="#n-conversion-steps" title="Permalink to this headline">¶</a></h3>

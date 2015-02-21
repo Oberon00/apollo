@@ -62,7 +62,7 @@
 <div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;apollo/class.hpp&gt;</span>
 </pre></div>
 </div>
-<p>apollo allows you to use class types with <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a>,
+<p>apollo allows you to use class types with <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <a class="reference internal" href="converter-basics.html#f-to"><em>to()</em></a>,
 provided you tell the library about the type first using
 <a class="reference internal" href="#f-register-class"><em>register_class()</em></a>. However, to make the type usable in Lua, you also need
 to set the appropriate metatable fields (usually at least <tt class="docutils literal"><span class="pre">__index</span></tt>).</p>
@@ -93,14 +93,14 @@ it, as long as the <tt class="docutils literal"><span class="pre">lua_State</spa
 <p>Pointers to <tt class="docutils literal"><span class="pre">const</span></tt> will make the Lua representation of the object act as
 <tt class="docutils literal"><span class="pre">const</span></tt> (i.e. it is only convertible to <tt class="docutils literal"><span class="pre">const&amp;</span></tt>, <tt class="docutils literal"><span class="pre">const*</span></tt> or the value
 type, which also means that only const member functions can be called on it,
-since apollo will use <tt class="docutils literal"><span class="pre">from_stack&lt;C&amp;&gt;</span></tt> for non-const member functions).</p>
+since apollo will use <tt class="docutils literal"><span class="pre">to&lt;C&amp;&gt;</span></tt> for non-const member functions).</p>
 </div>
-<div class="section" id="using-from-stack-with-class-types">
-<span id="sec-cls-from-stack"></span><h2>Using <tt class="docutils literal"><span class="pre">from_stack</span></tt> with class types<a class="headerlink" href="#using-from-stack-with-class-types" title="Permalink to this headline">¶</a></h2>
-<p>For a class type <tt class="docutils literal"><span class="pre">C</span></tt>, <tt class="docutils literal"><span class="pre">from_stack</span></tt> can be used with a template argument of
+<div class="section" id="using-to-with-class-types">
+<span id="sec-cls-to"></span><h2>Using <tt class="docutils literal"><span class="pre">to</span></tt> with class types<a class="headerlink" href="#using-to-with-class-types" title="Permalink to this headline">¶</a></h2>
+<p>For a class type <tt class="docutils literal"><span class="pre">C</span></tt>, <tt class="docutils literal"><span class="pre">to</span></tt> can be used with a template argument of
 <tt class="docutils literal"><span class="pre">C*</span></tt>, <tt class="docutils literal"><span class="pre">C&amp;</span></tt> to obtain a mutable pointer/reference to the object on the Lua
 stack, as expected. <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const*</span></tt>, also as expected, obtains a pointer to const.</p>
-<p>However, just <tt class="docutils literal"><span class="pre">from_stack&lt;C&gt;</span></tt> or <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const&amp;</span></tt> (both equivalent) return not
+<p>However, just <tt class="docutils literal"><span class="pre">to&lt;C&gt;</span></tt> or <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const&amp;</span></tt> (both equivalent) return not
 exactly what you asked for but instead they return an implementation defined
 reference wrapper object. This is necessary for <tt class="docutils literal"><span class="pre">const&amp;</span></tt> because the object
 retrieved might not actually live in Lua but be an <a class="reference internal" href="#sec-cls-implicit"><em>implicitly constructed
@@ -109,17 +109,21 @@ the reference wrapper&#8217;s. So how do you use an object wrapped in such a ref
 wrapper? First, make sure the wrapper stays alive for the time you use the
 object if you use it as <tt class="docutils literal"><span class="pre">const&amp;</span></tt> (C++ ensures that objects stay alive inside
 the <em>full expression</em> in which they were constructed, which is already
-enough for cases where you just pass the result of <tt class="docutils literal"><span class="pre">from_stack</span></tt> to another
+enough for cases where you just pass the result of <tt class="docutils literal"><span class="pre">to</span></tt> to another
 function that does not store a reference to its argument). Then you can use the
 wrapped object by:</p>
 <ul class="simple">
-<li>Employing the implicit conversion of the reference wrapper to <tt class="docutils literal"><span class="pre">C</span></tt> (copies
-the value).</li>
 <li>Using the <tt class="docutils literal"><span class="pre">get()</span></tt> member function that returns a <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const&amp;</span></tt>.</li>
-<li>Passing the wrapper to the <tt class="docutils literal"><span class="pre">unwrap_bound_ref</span></tt> function, which returns the
+<li>Passing the wrapper to the <tt class="docutils literal"><span class="pre">unwrap_ref</span></tt> function, which returns the
 same as <tt class="docutils literal"><span class="pre">get()</span></tt> but is useful in generic code, because if the argument is not
 a reference wrapper, it is returned unchanged.</li>
 </ul>
+<p>Alternatively, you can use the <tt class="docutils literal"><span class="pre">APOLLO_TO_ARG(L,</span> <span class="pre">idx,</span> <span class="pre">T)</span></tt> macro which is just
+like <tt class="docutils literal"><span class="pre">to</span></tt> but calls <tt class="docutils literal"><span class="pre">unwrap_ref</span></tt> on its return value. Note that the value of
+this macro may become invalid after the full expression containing it (see
+above).  The name <tt class="docutils literal"><span class="pre">APOLLO_TO_ARG</span></tt> comes from the fact that it is most useful
+to pass the return value directly as an argument (to a function that does not
+store the reference).</p>
 <p>Note that an object that is <tt class="docutils literal"><span class="pre">const</span></tt> in Lua is only convertible to  <tt class="docutils literal"><span class="pre">C</span></tt>, <tt class="docutils literal"><span class="pre">C</span>
 <span class="pre">const&amp;</span></tt> and <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const*</span></tt>.</p>
 <p>A nil value is converted to a <tt class="docutils literal"><span class="pre">nullptr</span></tt> / default-constructed smart pointer.</p>
@@ -220,9 +224,9 @@ to Lua, this should be preferred for efficiency reasons. It is necessary when
 </pre></div>
 </div>
 <p>By adding an implicit constructor / conversion function from <tt class="docutils literal"><span class="pre">From</span></tt> to <tt class="docutils literal"><span class="pre">To</span></tt>,
-<a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a> will be able to convert types that have the type <tt class="docutils literal"><span class="pre">From</span></tt> in
+<a class="reference internal" href="converter-basics.html#f-to"><em>to()</em></a> will be able to convert types that have the type <tt class="docutils literal"><span class="pre">From</span></tt> in
 Lua to a value type of just <tt class="docutils literal"><span class="pre">To</span></tt> or to a const reference <tt class="docutils literal"><span class="pre">To</span> <span class="pre">const&amp;</span></tt> (that&#8217;s
-why a <a class="reference internal" href="#sec-cls-from-stack"><em>reference wrapper</em></a> is returned for these two
+why a <a class="reference internal" href="#sec-cls-to"><em>reference wrapper</em></a> is returned for these two
 kinds of types).</p>
 <p><tt class="docutils literal"><span class="pre">To</span></tt> can also be a raw pointer to a class type. This is actually recommended,
 since it is more efficient with the current implementation. If a value type is
@@ -245,7 +249,7 @@ returned, it needs to be moveable.</p>
   <ul>
 <li><a class="reference internal" href="#">Classes (user-defined types)</a><ul>
 <li><a class="reference internal" href="#pointer-and-reference-semantics-smart-pointer-support">Pointer and reference semantics, smart pointer support</a></li>
-<li><a class="reference internal" href="#using-from-stack-with-class-types">Using <tt class="docutils literal"><span class="pre">from_stack</span></tt> with class types</a><ul>
+<li><a class="reference internal" href="#using-to-with-class-types">Using <tt class="docutils literal"><span class="pre">to</span></tt> with class types</a><ul>
 <li><a class="reference internal" href="#smart-pointer-retrieval-limitations">Smart pointer retrieval limitations</a></li>
 </ul>
 </li>

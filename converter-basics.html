@@ -71,7 +71,7 @@ for retrieving values from the Lua stack.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="basic-usage.html#sec-basic-converters"><em>Core primitives: push, from_stack &amp; friends</em></a></dt>
+<dt><a class="reference internal" href="basic-usage.html#sec-basic-converters"><em>Core primitives: push, to &amp; friends</em></a></dt>
 <dd>A short tutorial that demonstrates the most important features.</dd>
 <dt><a class="reference internal" href="converter-advanced.html#sec-converters-advanced"><em>Converters: Advanced topics</em></a></dt>
 <dd>More on converters.</dd>
@@ -86,23 +86,25 @@ for retrieving values from the Lua stack.</p>
 <div class="section" id="push">
 <span id="f-push"></span><h3><tt class="docutils literal"><span class="pre">push()</span></tt><a class="headerlink" href="#push" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">MoreTs</span><span class="o">&gt;</span>
-<span class="kt">void</span> <span class="n">push</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">v</span><span class="p">,</span> <span class="n">MoreTs</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">more</span><span class="p">);</span>
+<span class="kt">int</span> <span class="n">push</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">v</span><span class="p">,</span> <span class="n">MoreTs</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">more</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>Pushes <tt class="docutils literal"><span class="pre">v</span></tt> (and optionally <tt class="docutils literal"><span class="pre">more</span></tt>) on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> using <tt class="docutils literal"><span class="pre">T</span></tt>&#8216;s
-default PushConverter.</p>
+default PushConverter. Returns how many values were pushed (this is not
+necessarily the number of arguments, since some C++ values could be pushed as no
+or multiple Lua values).</p>
 <p>If multiple arguments are pushed, they are pushed in direct order (as required
 for using this function with <tt class="docutils literal"><span class="pre">lua_call</span></tt>), i.e. the first argument is pushed
 first, then the second is pushed on top of it and so on, until the last one
 becomes the new stack top.</p>
 </div>
-<div class="section" id="from-stack">
-<span id="f-from-stack"></span><h3><tt class="docutils literal"><span class="pre">from_stack()</span></tt><a class="headerlink" href="#from-stack" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="to">
+<span id="f-to"></span><h3><tt class="docutils literal"><span class="pre">to()</span></tt><a class="headerlink" href="#to" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="o">&gt;</span> <span class="c1">// 1</span>
-<span class="n">to_type_of</span><span class="o">&lt;</span><span class="n">pull_converter_for</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span> <span class="n">from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+<span class="n">to_type_of</span><span class="o">&lt;</span><span class="n">pull_converter_for</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span> <span class="n">to</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
 
 <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span> <span class="c1">// 2</span>
-<span class="n">to_type_of</span><span class="o">&lt;</span><span class="n">pull_converter_for</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span> <span class="n">from_stack</span><span class="p">(</span>
+<span class="n">to_type_of</span><span class="o">&lt;</span><span class="n">pull_converter_for</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span> <span class="n">to</span><span class="p">(</span>
     <span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">fallback</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -124,16 +126,16 @@ and <tt class="docutils literal"><span class="pre">fallback</span></tt> is retur
 <p>Returns whether the value at index <tt class="docutils literal"><span class="pre">idx</span></tt> on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> can be
 converted to <tt class="docutils literal"><span class="pre">T</span></tt> using <tt class="docutils literal"><span class="pre">T</span></tt>&#8216;s default PullConverter.</p>
 </div>
-<div class="section" id="unchecked-from-stack">
-<span id="f-unchecked-from-stack"></span><h3><tt class="docutils literal"><span class="pre">unchecked_from_stack()</span></tt><a class="headerlink" href="#unchecked-from-stack" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="unchecked-to">
+<span id="f-unchecked-to"></span><h3><tt class="docutils literal"><span class="pre">unchecked_to()</span></tt><a class="headerlink" href="#unchecked-to" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="cm">/* explicit */</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="n">to_type_of</span><span class="o">&lt;</span><span class="n">pull_converter_for</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span> <span class="n">unchecked_from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+<span class="n">to_type_of</span><span class="o">&lt;</span><span class="n">pull_converter_for</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;&gt;</span> <span class="n">unchecked_to</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>Just like the first overload of <a class="reference internal" href="#f-from-stack"><em>from_stack()</em></a>: Return the value at index
+<p>Just like the first overload of <a class="reference internal" href="#f-to"><em>to()</em></a>: Return the value at index
 <tt class="docutils literal"><span class="pre">idx</span></tt> on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> converted to <tt class="docutils literal"><span class="pre">T</span></tt> using <tt class="docutils literal"><span class="pre">T</span></tt>&#8216;s default
 PullConverter.</p>
-<p>The only difference is the error handling: While <a class="reference internal" href="#f-from-stack"><em>from_stack()</em></a> throws an
+<p>The only difference is the error handling: While <a class="reference internal" href="#f-to"><em>to()</em></a> throws an
 exception, this function has undefined behavior (e.g. exceptions or segfaults)
 if the value is not convertible.</p>
 <div class="admonition warning">
@@ -230,9 +232,9 @@ enumerator value fits, as enumerator values tend to be not that big.</p>
 <li><a class="reference internal" href="#">Converters: Basics</a><ul>
 <li><a class="reference internal" href="#converter-functions">Converter functions</a><ul>
 <li><a class="reference internal" href="#push"><tt class="docutils literal"><span class="pre">push()</span></tt></a></li>
-<li><a class="reference internal" href="#from-stack"><tt class="docutils literal"><span class="pre">from_stack()</span></tt></a></li>
+<li><a class="reference internal" href="#to"><tt class="docutils literal"><span class="pre">to()</span></tt></a></li>
 <li><a class="reference internal" href="#is-convertible"><tt class="docutils literal"><span class="pre">is_convertible()</span></tt></a></li>
-<li><a class="reference internal" href="#unchecked-from-stack"><tt class="docutils literal"><span class="pre">unchecked_from_stack()</span></tt></a></li>
+<li><a class="reference internal" href="#unchecked-to"><tt class="docutils literal"><span class="pre">unchecked_to()</span></tt></a></li>
 </ul>
 </li>
 </ul>

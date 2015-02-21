@@ -3,36 +3,36 @@ Basic usage
 
 .. _sec-basic-converters:
 
-Core primitives: ``push``, ``from_stack`` & friends
+Core primitives: ``push``, ``to`` & friends
 ---------------------------------------------------
 
-apollo's core functions are ``push`` and ``from_stack``, defined in the
+apollo's core functions are ``push`` and ``to``, defined in the
 ``<converters.hpp>`` header::
 
    template <typename T, typename... MoreTs>
-   void push(lua_State* L, T&& v, MoreTs&&... more);
-
+   int push(lua_State* L, T&& v, MoreTs&&... more);
 
    template <typename T>
-   T from_stack(lua_State* L, int idx);
+   T to(lua_State* L, int idx);
 
 That is, ``push`` takes an arbitrary number of values (at least one) and pushes
-them on the stack of ``L`` in order. ``from_stack`` takes an explicit template
-type parameter ``T`` and converts the value at the stack of ``L`` at the index
-``idx`` to the type ``T``. If the given element is not convertible to ``T``, a
+them on the stack of ``L`` in order, returning how many values were pushed on
+the Lua stack. ``to`` takes an explicit template type parameter ``T``
+and converts the value at the stack of ``L`` at the index ``idx`` to the type
+``T``. If the given element is not convertible to ``T``, a
 ``to_cpp_conversion_error`` is thrown. To check if some stack element is
 convertible, apollo provides the ``is_convertible`` function::
 
    template <typename T>
    bool is_convertible(lua_State* L, int idx);
 
-Since after checking for convertibility the additional check by ``from_stack``
-is a unnecessary performance hit, ``unchecked_from_stack`` can be used::
+Since after checking for convertibility the additional check by ``to``
+is a unnecessary performance hit, ``unchecked_to`` can be used::
 
    template <typename T>
-   T unchecked_from_stack(lua_State* L, int idx);
+   T unchecked_to(lua_State* L, int idx);
 
-This function is like ``from_stack``, but has undefined behavior if the given
+This function is like ``to``, but has undefined behavior if the given
 element is not convertible to ``T``.
 
 To make these functions actually work, you need to include headers for the types
@@ -49,7 +49,7 @@ user-defined types         ``class.hpp``
 
 Let's try this out:
 
-.. literalinclude:: examples/basic-push-from_stack.cpp
+.. literalinclude:: examples/basic-push-to.cpp
 
 .. warning:: There is a hidden dependency on the ``lua_State`` in the
    ``std::function``: In its destructor it will attempt to ``luaL_unref`` the
@@ -104,11 +104,11 @@ access and change using ``push_class_metatable<T>(L)``. The only field in this
 metatable that is preset is the ``__gc`` field that unsets the userdata's
 metatable (to prevent access to the destroyed object) and calls ``T``'s
 destructor. Otherwise you can use classes together with ``push``,
-``from_stack``, ``rawset_table``, etc. like any other type. There's one gotcha
+``to``, ``rawset_table``, etc. like any other type. There's one gotcha
 though: For efficiency reasons (and to implement implicit constructors)
-``from_stack<T const&>`` and ``from_stack<T>`` do not return the specified type
+``to<T const&>`` and ``to<T>`` do not return the specified type
 for classes but instead a implementation defined reference wrapper object. Use
-it's ``get()`` member function or ``apollo::unwrap_bound_ref()`` to obtain the
+it's ``get()`` member function or ``apollo::unwrap_ref()`` to obtain the
 underlying reference. Note that when using implicit constructors, the lifetime
 of the underlying class can be bound to the reference wrapper, so better keep it
 alive as long as you use the object.

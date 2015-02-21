@@ -271,10 +271,10 @@ referenced states stack. Precondition: <tt class="docutils literal"><span class=
 <tt class="docutils literal"><span class="pre">LUA_NOREF</span></tt>. <tt class="docutils literal"><span class="pre">L</span></tt> returns the currently referenced <tt class="docutils literal"><span class="pre">lua_State*</span></tt> (or
 <tt class="docutils literal"><span class="pre">nullptr</span></tt> if there is none) and <tt class="docutils literal"><span class="pre">get()</span></tt> returns the registry index of the
 value referenced there (or <tt class="docutils literal"><span class="pre">LUA_NOREF</span></tt> if there is none).</p>
-<p>This class is usable with <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a>: Pushing just
+<p>This class is usable with <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <a class="reference internal" href="converter-basics.html#f-to"><em>to()</em></a>: Pushing just
 calls the <tt class="docutils literal"><span class="pre">push</span></tt> method or pushes nil if the reference is empty. If an attempt
 is made to push a reference that references another state as that on which it
-should be pushed, the behaviour is undefined.  <tt class="docutils literal"><span class="pre">from_stack(L,</span> <span class="pre">idx)</span></tt> will
+should be pushed, the behaviour is undefined.  <tt class="docutils literal"><span class="pre">to(L,</span> <span class="pre">idx)</span></tt> will
 return a <tt class="docutils literal"><span class="pre">registry_reference</span></tt> constructed with these arguments and
 <tt class="docutils literal"><span class="pre">ref_mode::copy</span></tt>. Thus, <a class="reference internal" href="converter-basics.html#f-is-convertible"><em>is_convertible()</em></a> is always true for
 <tt class="docutils literal"><span class="pre">stack_reference</span></tt>.</p>
@@ -304,10 +304,10 @@ constructor). If <tt class="docutils literal"><span class="pre">idx</span></tt> 
 <span class="pre">lua_gettop(L)</span></tt>.</p>
 <p><tt class="docutils literal"><span class="pre">get()</span></tt> returns the stored index.</p>
 <p>The usefulness of <tt class="docutils literal"><span class="pre">stack_reference</span></tt> comes from the fact that it can be used
-with <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a>. Thus it can be used e.g. with
+with <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a> and <a class="reference internal" href="converter-basics.html#f-to"><em>to()</em></a>. Thus it can be used e.g. with
 <a class="reference internal" href="sugar.html#f-rawset-table"><em>rawset_table()</em></a> or <a class="reference internal" href="sugar.html#f-new-table"><em>new_table()</em></a>.</p>
 <p><tt class="docutils literal"><span class="pre">push()</span></tt> will (re)push the referenced value on top of the stack (using
-<tt class="docutils literal"><span class="pre">lua_pushvalue()</span></tt>) or push nil if the reference is empty. <tt class="docutils literal"><span class="pre">from_stack(L,</span>
+<tt class="docutils literal"><span class="pre">lua_pushvalue()</span></tt>) or push nil if the reference is empty. <tt class="docutils literal"><span class="pre">to(L,</span>
 <span class="pre">idx)</span></tt> will just construct a <tt class="docutils literal"><span class="pre">stack_reference</span></tt> with these arguments. Thus,
 <a class="reference internal" href="converter-basics.html#f-is-convertible"><em>is_convertible()</em></a> is always true for <tt class="docutils literal"><span class="pre">stack_reference</span></tt>.</p>
 </div>

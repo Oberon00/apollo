@@ -58,35 +58,35 @@
             
   <div class="section" id="basic-usage">
 <h1>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="core-primitives-push-from-stack-friends">
-<span id="sec-basic-converters"></span><h2>Core primitives: <tt class="docutils literal"><span class="pre">push</span></tt>, <tt class="docutils literal"><span class="pre">from_stack</span></tt> &amp; friends<a class="headerlink" href="#core-primitives-push-from-stack-friends" title="Permalink to this headline">¶</a></h2>
-<p>apollo&#8217;s core functions are <tt class="docutils literal"><span class="pre">push</span></tt> and <tt class="docutils literal"><span class="pre">from_stack</span></tt>, defined in the
+<div class="section" id="core-primitives-push-to-friends">
+<span id="sec-basic-converters"></span><h2>Core primitives: <tt class="docutils literal"><span class="pre">push</span></tt>, <tt class="docutils literal"><span class="pre">to</span></tt> &amp; friends<a class="headerlink" href="#core-primitives-push-to-friends" title="Permalink to this headline">¶</a></h2>
+<p>apollo&#8217;s core functions are <tt class="docutils literal"><span class="pre">push</span></tt> and <tt class="docutils literal"><span class="pre">to</span></tt>, defined in the
 <tt class="docutils literal"><span class="pre">&lt;converters.hpp&gt;</span></tt> header:</p>
 <div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="k">typename</span><span class="p">...</span> <span class="n">MoreTs</span><span class="o">&gt;</span>
-<span class="kt">void</span> <span class="n">push</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">v</span><span class="p">,</span> <span class="n">MoreTs</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">more</span><span class="p">);</span>
-
+<span class="kt">int</span> <span class="n">push</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">T</span><span class="o">&amp;&amp;</span> <span class="n">v</span><span class="p">,</span> <span class="n">MoreTs</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">more</span><span class="p">);</span>
 
 <span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="n">T</span> <span class="n">from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+<span class="n">T</span> <span class="n">to</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>That is, <tt class="docutils literal"><span class="pre">push</span></tt> takes an arbitrary number of values (at least one) and pushes
-them on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> in order. <tt class="docutils literal"><span class="pre">from_stack</span></tt> takes an explicit template
-type parameter <tt class="docutils literal"><span class="pre">T</span></tt> and converts the value at the stack of <tt class="docutils literal"><span class="pre">L</span></tt> at the index
-<tt class="docutils literal"><span class="pre">idx</span></tt> to the type <tt class="docutils literal"><span class="pre">T</span></tt>. If the given element is not convertible to <tt class="docutils literal"><span class="pre">T</span></tt>, a
+them on the stack of <tt class="docutils literal"><span class="pre">L</span></tt> in order, returning how many values were pushed on
+the Lua stack. <tt class="docutils literal"><span class="pre">to</span></tt> takes an explicit template type parameter <tt class="docutils literal"><span class="pre">T</span></tt>
+and converts the value at the stack of <tt class="docutils literal"><span class="pre">L</span></tt> at the index <tt class="docutils literal"><span class="pre">idx</span></tt> to the type
+<tt class="docutils literal"><span class="pre">T</span></tt>. If the given element is not convertible to <tt class="docutils literal"><span class="pre">T</span></tt>, a
 <tt class="docutils literal"><span class="pre">to_cpp_conversion_error</span></tt> is thrown. To check if some stack element is
 convertible, apollo provides the <tt class="docutils literal"><span class="pre">is_convertible</span></tt> function:</p>
 <div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
 <span class="kt">bool</span> <span class="n">is_convertible</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>Since after checking for convertibility the additional check by <tt class="docutils literal"><span class="pre">from_stack</span></tt>
-is a unnecessary performance hit, <tt class="docutils literal"><span class="pre">unchecked_from_stack</span></tt> can be used:</p>
+<p>Since after checking for convertibility the additional check by <tt class="docutils literal"><span class="pre">to</span></tt>
+is a unnecessary performance hit, <tt class="docutils literal"><span class="pre">unchecked_to</span></tt> can be used:</p>
 <div class="highlight-c++"><div class="highlight"><pre><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="n">T</span> <span class="n">unchecked_from_stack</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
+<span class="n">T</span> <span class="n">unchecked_to</span><span class="p">(</span><span class="n">lua_State</span><span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>This function is like <tt class="docutils literal"><span class="pre">from_stack</span></tt>, but has undefined behavior if the given
+<p>This function is like <tt class="docutils literal"><span class="pre">to</span></tt>, but has undefined behavior if the given
 element is not convertible to <tt class="docutils literal"><span class="pre">T</span></tt>.</p>
 <p>To make these functions actually work, you need to include headers for the types
 you want to use (each of these includes <tt class="docutils literal"><span class="pre">converters.hpp</span></tt> already, so there is
@@ -136,7 +136,7 @@ no need to do this manually):</p>
     <span class="n">luaL_openlibs</span><span class="p">(</span><span class="n">L</span><span class="p">);</span>
 
     <span class="n">apollo</span><span class="o">::</span><span class="n">push</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">42</span><span class="p">);</span> <span class="c1">// Same as lua_pushinteger(L, 42)</span>
-    <span class="n">assert</span><span class="p">(</span><span class="n">apollo</span><span class="o">::</span><span class="n">from_stack</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">42</span><span class="p">);</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">apollo</span><span class="o">::</span><span class="n">to</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">42</span><span class="p">);</span>
     <span class="n">lua_pop</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
 
     <span class="n">apollo</span><span class="o">::</span><span class="n">push</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">is_odd</span><span class="p">);</span> <span class="c1">// Functions can be pushed just like other types.</span>
@@ -145,13 +145,13 @@ no need to do this manually):</p>
 
     <span class="c1">// Pushed functions can be retrieved back:</span>
     <span class="n">lua_getglobal</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;is_odd&quot;</span><span class="p">);</span>
-    <span class="n">assert</span><span class="p">(</span><span class="n">apollo</span><span class="o">::</span><span class="n">from_stack</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">int</span><span class="p">)</span><span class="o">&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">is_odd</span><span class="p">);</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">apollo</span><span class="o">::</span><span class="n">to</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">int</span><span class="p">)</span><span class="o">&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">is_odd</span><span class="p">);</span>
 
 
     <span class="c1">// Lua functions can be retrieved as boost:: or std::function</span>
     <span class="n">luaL_dostring</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;function is_even(n) return n % 2 == 0 end&quot;</span><span class="p">);</span>
     <span class="n">lua_getglobal</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="s">&quot;is_even&quot;</span><span class="p">);</span>
-    <span class="k">auto</span> <span class="n">is_even</span> <span class="o">=</span> <span class="n">apollo</span><span class="o">::</span><span class="n">from_stack</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+    <span class="k">auto</span> <span class="n">is_even</span> <span class="o">=</span> <span class="n">apollo</span><span class="o">::</span><span class="n">to</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">);</span>
     <span class="n">assert</span><span class="p">(</span><span class="n">is_even</span><span class="p">(</span><span class="mi">4</span><span class="p">));</span>
     <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">is_even</span><span class="p">(</span><span class="mi">5</span><span class="p">));</span>
 <span class="p">}</span>
@@ -250,11 +250,11 @@ access and change using <tt class="docutils literal"><span class="pre">push_clas
 metatable that is preset is the <tt class="docutils literal"><span class="pre">__gc</span></tt> field that unsets the userdata&#8217;s
 metatable (to prevent access to the destroyed object) and calls <tt class="docutils literal"><span class="pre">T</span></tt>&#8216;s
 destructor. Otherwise you can use classes together with <tt class="docutils literal"><span class="pre">push</span></tt>,
-<tt class="docutils literal"><span class="pre">from_stack</span></tt>, <tt class="docutils literal"><span class="pre">rawset_table</span></tt>, etc. like any other type. There&#8217;s one gotcha
+<tt class="docutils literal"><span class="pre">to</span></tt>, <tt class="docutils literal"><span class="pre">rawset_table</span></tt>, etc. like any other type. There&#8217;s one gotcha
 though: For efficiency reasons (and to implement implicit constructors)
-<tt class="docutils literal"><span class="pre">from_stack&lt;T</span> <span class="pre">const&amp;&gt;</span></tt> and <tt class="docutils literal"><span class="pre">from_stack&lt;T&gt;</span></tt> do not return the specified type
+<tt class="docutils literal"><span class="pre">to&lt;T</span> <span class="pre">const&amp;&gt;</span></tt> and <tt class="docutils literal"><span class="pre">to&lt;T&gt;</span></tt> do not return the specified type
 for classes but instead a implementation defined reference wrapper object. Use
-it&#8217;s <tt class="docutils literal"><span class="pre">get()</span></tt> member function or <tt class="docutils literal"><span class="pre">apollo::unwrap_bound_ref()</span></tt> to obtain the
+it&#8217;s <tt class="docutils literal"><span class="pre">get()</span></tt> member function or <tt class="docutils literal"><span class="pre">apollo::unwrap_ref()</span></tt> to obtain the
 underlying reference. Note that when using implicit constructors, the lifetime
 of the underlying class can be bound to the reference wrapper, so better keep it
 alive as long as you use the object.</p>
@@ -340,7 +340,7 @@ a function taht returns a <tt class="docutils literal"><span class="pre">T</span
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Basic usage</a><ul>
-<li><a class="reference internal" href="#core-primitives-push-from-stack-friends">Core primitives: <tt class="docutils literal"><span class="pre">push</span></tt>, <tt class="docutils literal"><span class="pre">from_stack</span></tt> &amp; friends</a></li>
+<li><a class="reference internal" href="#core-primitives-push-to-friends">Core primitives: <tt class="docutils literal"><span class="pre">push</span></tt>, <tt class="docutils literal"><span class="pre">to</span></tt> &amp; friends</a></li>
 <li><a class="reference internal" href="#syntactic-sugar-new-table-and-rawset-table">Syntactic sugar: <tt class="docutils literal"><span class="pre">new_table</span></tt> and <tt class="docutils literal"><span class="pre">rawset_table</span></tt></a></li>
 <li><a class="reference internal" href="#the-basics-of-using-classes">The basics of using classes</a></li>
 </ul>

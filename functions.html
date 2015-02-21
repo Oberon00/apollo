@@ -79,13 +79,13 @@ operators and public data member getters and setters.</p>
 <li><tt class="docutils literal"><span class="pre">std::function</span></tt></li>
 </ul>
 </div></blockquote>
-<p>Arguments will be retrieved using <a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a> and the return value
+<p>Arguments will be retrieved using <a class="reference internal" href="converter-basics.html#f-to"><em>to()</em></a> and the return value
 is pushed using <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a>. Exceptions are converted to Lua errors using
 <a class="reference internal" href="utilities.html#f-exceptions-to-lua-errors"><em>exceptions_to_lua_errors()</em></a>. The <tt class="docutils literal"><span class="pre">this</span></tt> argument for member functions
 of a class <tt class="docutils literal"><span class="pre">C</span></tt> is retrieved as <tt class="docutils literal"><span class="pre">C&amp;</span></tt> for non-const member functions and as
 <tt class="docutils literal"><span class="pre">C</span> <span class="pre">const&amp;</span></tt> for const member functions (see <a class="reference internal" href="classes.html#sec-classes"><em>Classes (user-defined types)</em></a>).</p>
 <p>Additionally, function pointers pushed with apollo can be retrieved back using
-<a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a> as the exact same type they were pushed. A <tt class="docutils literal"><span class="pre">boost::</span></tt> or
+<a class="reference internal" href="converter-basics.html#f-to"><em>to()</em></a> as the exact same type they were pushed. A <tt class="docutils literal"><span class="pre">boost::</span></tt> or
 <tt class="docutils literal"><span class="pre">std::function</span></tt> can be obtained from any Lua function or other value that has
 a <tt class="docutils literal"><span class="pre">__call</span></tt> metamethod.  If the value was pushed as the exact same function
 object type or as a pointer to a compatible free function, invoking the function
@@ -113,7 +113,7 @@ accessed as an additional overhead. However, all of this can be avoided by using
 </div>
 <p>Sometimes, you want to just directly push a raw <tt class="docutils literal"><span class="pre">lua_CFunction</span></tt> to Lua using
 <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a>. However, if you just do that, apollo will try to use
-<tt class="docutils literal"><span class="pre">from_stack</span></tt> for the <tt class="docutils literal"><span class="pre">lua_State*</span></tt> and <tt class="docutils literal"><span class="pre">push</span></tt> a single <tt class="docutils literal"><span class="pre">int</span></tt> back. To
+<tt class="docutils literal"><span class="pre">to</span></tt> for the <tt class="docutils literal"><span class="pre">lua_State*</span></tt> and <tt class="docutils literal"><span class="pre">push</span></tt> a single <tt class="docutils literal"><span class="pre">int</span></tt> back. To
 inform apollo that it should just use <tt class="docutils literal"><span class="pre">lua_pushcfunction()</span></tt>, you need to wrap
 your function into an <tt class="docutils literal"><span class="pre">apollo::raw_function</span></tt> (defined in the
 <tt class="docutils literal"><span class="pre">&lt;apollo/builtin_types.hpp&gt;</span></tt> header):</p>
@@ -148,7 +148,7 @@ the implicit conversion operator returns it. The static member function
 </div>
 <p>Takes a function pointer type and value as explicit template arguments and
 returns a raw function that wraps it, converting arguments using
-<a class="reference internal" href="converter-basics.html#f-from-stack"><em>from_stack()</em></a> and the return value using <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a>.</p>
+<a class="reference internal" href="converter-basics.html#f-to"><em>to()</em></a> and the return value using <a class="reference internal" href="converter-basics.html#f-push"><em>push()</em></a>.</p>
 <p>Note that a function pushed this way cannot be really retrieved back as it does
 not contain any type information (which is the advantage at the same time: zero
 upvalues). It can however be retrieved as <tt class="docutils literal"><span class="pre">boost::</span></tt> or <tt class="docutils literal"><span class="pre">std::function</span></tt>, but
