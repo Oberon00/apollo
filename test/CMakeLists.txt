@@ -27,7 +27,7 @@ set (TESTS
     ward_ptr
 )
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     add_definitions("-Wno-global-constructors" "-Wno-exit-time-destructors")
 endif()
 
