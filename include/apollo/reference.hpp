@@ -45,7 +45,7 @@ private:
 };
 
 template<>
-struct converter<registry_reference>: converter_base<registry_reference> {
+struct converter<registry_reference>: converter_base<converter<registry_reference>> {
 
     static int push(lua_State* L, registry_reference const& r)
     {
@@ -93,7 +93,7 @@ private:
 };
 
 template<>
-struct converter<stack_reference>: converter_base<stack_reference> {
+struct converter<stack_reference>: converter_base<converter<stack_reference>> {
 
     static int push(lua_State* L, stack_reference const& r)
     {

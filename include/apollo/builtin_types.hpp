@@ -21,7 +21,7 @@ template<typename T>
 struct converter<T, typename std::enable_if<
         !std::is_enum<T>::value
         && detail::lua_type_id<T>::value == LUA_TNUMBER>::type
-    >: converter_base<T> {
+    >: converter_base<converter<T>> {
 private:
     static bool const is_integral = std::is_integral<T>::value;
     static bool const is_safe_integral = is_integral &&
@@ -125,7 +125,7 @@ struct converter<T,
 
 // Boolean converter //
 template<>
-struct converter<bool>: converter_base<bool> {
+struct converter<bool>: converter_base<converter<bool>> {
 
     static int push(lua_State* L, bool b)
     {
@@ -149,7 +149,7 @@ struct converter<bool>: converter_base<bool> {
 
 // void converter //
 template<>
-struct converter<void>: converter_base<void> {
+struct converter<void>: converter_base<converter<void>> {
     static unsigned n_conversion_steps(lua_State*, int)
     {
         return no_conversion - 1;
@@ -251,8 +251,8 @@ struct APOLLO_API string_conversion_steps<char> {
 
 template <typename T>
 struct converter<T, typename std::enable_if<
-        detail::lua_type_id<T>::value == LUA_TSTRING>::type>: converter_base<T> {
-    using to_type = typename detail::to_string<T>::type;
+        detail::lua_type_id<T>::value == LUA_TSTRING>::type
+    >: converter_base<converter<T>, typename detail::to_string<T>::type> {
 
     static int push(lua_State* L, T const& s)
     {
@@ -265,14 +265,14 @@ struct converter<T, typename std::enable_if<
        return detail::string_conversion_steps<T>::get(L, idx);
     }
 
-    static to_type to(lua_State* L, int idx)
+    static typename detail::to_string<T>::type to(lua_State* L, int idx)
     {
         return detail::to_string<T>::to(L, idx);
     }
 };
 
 template <>
-struct converter<void*>: converter_base<void*> {
+struct converter<void*>: converter_base<converter<void*>> {
     static int push(lua_State* L, void* p)
     {
         lua_pushlightuserdata(L, p);

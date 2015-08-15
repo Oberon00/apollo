@@ -33,7 +33,7 @@ struct raw_function {
 };
 
 template <>
-struct converter<raw_function>: converter_base<raw_function> {
+struct converter<raw_function>: converter_base<converter<raw_function>> {
     static int push(lua_State* L, raw_function const& rf)
     {
         lua_pushcfunction(L, rf.f);

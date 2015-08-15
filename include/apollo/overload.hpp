@@ -127,7 +127,7 @@ private:
 } // namespace detail
 
 template <>
-struct converter<detail::overloadset>: converter_base<detail::overloadset> {
+struct converter<detail::overloadset>: converter_base<converter<detail::overloadset>> {
     static int push(lua_State* L, detail::overloadset&& ovls)
     {
         ovls.push(L);

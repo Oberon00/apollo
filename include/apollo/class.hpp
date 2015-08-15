@@ -66,7 +66,7 @@ struct object_converter: object_converter<T const&>
 template <typename T>
 struct object_converter<T const&, typename std::enable_if<
         !detail::pointer_traits<T>::is_valid
-    >::type>: converter_base<T const&> {
+    >::type>: converter_base<converter<T const&>, ref_binder<T const>> {
 private:
     static implicit_ctor* get_ctor_opt(lua_State* L, int idx)
     {
@@ -77,8 +77,6 @@ private:
         return i_ctor == ctors.end() ? nullptr : i_ctor->second.get();
     }
 public:
-    using to_type = ref_binder<T const>;
-
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
         auto n_steps = object_converter<T const*>::n_conversion_steps(L, idx);
@@ -106,7 +104,7 @@ template <typename T>
 struct object_converter<T&, typename std::enable_if<
            !detail::pointer_traits<T>::is_valid
         && !std::is_const<T>::value
-    >::type>: converter_base<T&> {
+    >::type>: converter_base<converter<T&>> {
 public:
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
@@ -130,7 +128,7 @@ template <typename Ptr>
 struct object_converter<
         Ptr,
         typename std::enable_if<pointer_traits<Ptr>::is_smart>::type
-    >: converter_base<Ptr> {
+    >: converter_base<converter<Ptr>> {
 private:
     using ptr_t = typename remove_qualifiers<Ptr>::type;
     using is_ref = std::is_reference<Ptr>;
@@ -185,7 +183,7 @@ template <typename Ptr>
 struct object_converter<
         Ptr,
         typename std::enable_if<std::is_pointer<Ptr>::value>::type
-    >: converter_base<Ptr> {
+    >: converter_base<converter<Ptr>> {
 private:
     using ptr_traits = pointer_traits<Ptr>;
     using pointee_t = typename ptr_traits::pointee_type;

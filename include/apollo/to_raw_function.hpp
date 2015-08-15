@@ -50,8 +50,8 @@ template<
     typename ResultConverter, typename... Converters>
 struct converter<detail::light_converted_function<
         F, FVal, ResultConverter, Converters...>>
-    : converter_base<detail::light_converted_function<
-        F, FVal, ResultConverter, Converters...>> {
+    : converter_base<converter<detail::light_converted_function<
+        F, FVal, ResultConverter, Converters...>>> {
 public:
     using type = detail::light_converted_function<
         F, FVal, ResultConverter, Converters...>;

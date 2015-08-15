@@ -116,7 +116,7 @@ private:
 template<typename T>
 struct converter<T, typename std::enable_if<
         detail::lua_type_id<T>::value == LUA_TFUNCTION>::type>
-    : converter_base<T> {
+    : converter_base<converter<T>> {
 
 private:
     // Work around a MSVC 12 (2013) bug, where

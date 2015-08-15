@@ -129,43 +129,11 @@ int push(lua_State* L, T&& v, MoreTs&&... more)
         std::forward<T>(v), std::forward<MoreTs>(more)...);
 }
 
-namespace detail {
-
-    failure_t converter_has_idx_param_impl(...);
-
-    template <typename Converter>
-    auto converter_has_idx_param_impl(Converter conv)
-        -> decltype(conv.n_conversion_steps(
-            std::declval<lua_State*>(), 0, std::declval<int*>()));
-
-    template <typename Converter>
-    struct converter_has_idx_param: std::integral_constant<bool, !has_failed<
-            decltype(converter_has_idx_param_impl(std::declval<Converter>()))
-        >::value>
-    {};
-}
-
 template <typename Converter>
-typename std::enable_if<
-    !detail::converter_has_idx_param<Converter>::value,
-    to_type_of<Converter>>::type
-unchecked_to_with(
+to_type_of<Converter> unchecked_to_with(
     Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
-    (void)conv; // Silence MSVC.
-    if (next_idx)
-        *next_idx = idx + conv.n_consumed;
-    return conv.to(L, idx);
-}
-
-template <typename Converter>
-typename std::enable_if<
-    detail::converter_has_idx_param<Converter>::value,
-    to_type_of<Converter>>::type
-unchecked_to_with(
-    Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
-{
-    return conv.to(L, idx, next_idx);
+    return conv.idx_to(L, idx, next_idx);
 }
 
 template <typename T>
@@ -174,27 +142,12 @@ to_type_of<pull_converter_for<T>> unchecked_to(lua_State* L, int idx)
     return unchecked_to_with(pull_converter_for<T>(), L, idx);
 }
 
-template <typename Converter>
-typename std::enable_if<
-    !detail::converter_has_idx_param<Converter>::value,
-    unsigned>::type
-n_conversion_steps_with(
-    Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
-{
-    (void)conv;
-    if (next_idx)
-        *next_idx = idx + conv.n_consumed;
-    return conv.n_conversion_steps(L, idx);
-}
 
 template <typename Converter>
-typename std::enable_if<
-    detail::converter_has_idx_param<Converter>::value,
-    unsigned>::type
-n_conversion_steps_with(
+unsigned n_conversion_steps_with(
     Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
-    return conv.n_conversion_steps(L, idx, next_idx);
+    return conv.idx_n_conversion_steps(L, idx, next_idx);
 }
 
 

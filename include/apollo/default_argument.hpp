@@ -27,7 +27,7 @@ public:
         : m_default(default_)
     {}
 
-    unsigned n_conversion_steps(lua_State* L, int idx, int* next_idx) const
+    unsigned idx_n_conversion_steps(lua_State* L, int idx, int* next_idx) const
     {
         if (lua_isnone(L, idx)) {
             // Do not increase next_idx.
@@ -37,7 +37,7 @@ public:
                 L, idx, next_idx);
     }
 
-    typename Base::to_type to(lua_State* L, int idx, int* next_idx) const
+    typename Base::to_type idx_to(lua_State* L, int idx, int* next_idx) const
     {
         if (lua_isnone(L, idx)) {
             // Do not increase next_idx.

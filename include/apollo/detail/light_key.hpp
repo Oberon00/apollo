@@ -23,7 +23,7 @@ struct light_key {
 } // namespace detail
 
 template<>
-struct converter<detail::light_key>: converter_base<detail::light_key> {
+struct converter<detail::light_key>: converter_base<converter<detail::light_key>> {
 
     static int push(lua_State* L, detail::light_key const& lk)
     {
