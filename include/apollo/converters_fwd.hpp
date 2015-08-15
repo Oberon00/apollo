@@ -5,6 +5,8 @@
 #ifndef APOLLO_CONVERTERS_FWD_HPP_INCLUDED
 #define APOLLO_CONVERTERS_FWD_HPP_INCLUDED APOLLO_CONVERTERS_FWD_HPP_INCLUDED
 
+#include <apollo/error.hpp>
+#include <boost/throw_exception.hpp>
 #include <apollo/detail/lua_state.hpp>
 
 #include <boost/config.hpp>
@@ -54,25 +56,39 @@ public:
     to_type idx_to(lua_State* L, int idx, int* next_idx) const
     {
         advance_idx(idx, next_idx);
-        return derived()->to(L, idx);
+        return derived().to(L, idx);
+    }
+
+    to_type idx_safe_to(lua_State* L, int idx, int* next_idx) const
+    {
+        advance_idx(idx, next_idx);
+        return derived().safe_to(L, idx);
+    }
+
+    to_type safe_to(lua_State* L, int idx) const
+    {
+        auto const n_steps = derived().idx_n_conversion_steps(L, idx, nullptr);
+        if (n_steps == apollo::no_conversion)
+            BOOST_THROW_EXCEPTION(to_cpp_conversion_error());
+        return derived().idx_to(L, idx, nullptr);
     }
 
     unsigned idx_n_conversion_steps(lua_State* L, int idx, int* next_idx) const
     {
         advance_idx(idx, next_idx);
-        return derived()->n_conversion_steps(L, idx);
+        return derived().n_conversion_steps(L, idx);
     }
 
 private:
-    Derived const* derived() const
+    Derived const& derived() const
     {
-        return static_cast<Derived const*>(this);
+        return *static_cast<Derived const*>(this);
     }
 
     void advance_idx(int idx, int* next_idx) const
     {
         if (next_idx)
-            *next_idx = idx + derived()->n_consumed;
+            *next_idx = idx + derived().n_consumed;
     }
 };
 

@@ -15,6 +15,8 @@ private:
     typename detail::remove_qualifiers<T>::type m_default;
 
 public:
+    using to_type = typename Base::to_type;
+
     default_argument():
         m_default()
     {}
@@ -33,18 +35,31 @@ public:
             // Do not increase next_idx.
             return no_conversion - 1;
         }
-        return n_conversion_steps_with(*static_cast<Base const*>(this),
-                L, idx, next_idx);
+        return n_conversion_steps_with(base(), L, idx, next_idx);
     }
 
-    typename Base::to_type idx_to(lua_State* L, int idx, int* next_idx) const
+    to_type idx_to(lua_State* L, int idx, int* next_idx) const
     {
         if (lua_isnone(L, idx)) {
             // Do not increase next_idx.
-            return static_cast<typename Base::to_type>(m_default);
+            return static_cast<to_type>(m_default);
         }
-        return unchecked_to_with(*static_cast<Base const*>(this),
-            L, idx, next_idx);
+        return unchecked_to_with(base(), L, idx, next_idx);
+    }
+
+    to_type idx_safe_to(lua_State* L, int idx, int* next_idx) const
+    {
+        if (lua_isnone(L, idx)) {
+            // Do not increase next_idx.
+            return static_cast<to_type>(m_default);
+        }
+        return to_with(base(), L, idx, next_idx);
+    }
+
+private:
+    Base const& base() const
+    {
+        return *static_cast<Base const*>(this);
     }
 };
 

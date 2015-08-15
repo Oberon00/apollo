@@ -11,6 +11,7 @@
 #include <boost/exception/exception.hpp>
 #include <boost/exception/errinfo_type_info_name.hpp>
 #include <apollo/lua_include.hpp>
+#include <apollo/detail/meta_util.hpp>
 
 #include <exception>
 #include <string>
@@ -27,6 +28,15 @@ ERRINFO(int, lua_error_code);
 ERRINFO(char const*, source_typeid_name);
 #undef ERRINFO
 } // namespace error_info
+
+template <typename ErrInfo>
+boost::exception& err_supplement(boost::exception& e, ErrInfo&& info)
+{
+    using info_t = typename detail::remove_qualifiers<ErrInfo>::type;
+    if (!boost::get_error_info<info_t>(e))
+        e << std::forward<ErrInfo>(info);
+    return e;
+}
 
 struct error: virtual std::exception, boost::exception {};
 

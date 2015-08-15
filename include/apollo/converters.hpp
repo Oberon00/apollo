@@ -174,16 +174,17 @@ template <typename Converter>
 to_type_of<Converter> to_with(
     Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
-    if (!is_convertible_with(conv, L, idx)) {
-        BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
-            << boost::errinfo_type_info_name(
-                boost::typeindex::type_id<to_type_of<Converter>>()
-                .pretty_name())
-            << errinfo::msg("conversion from Lua to C++ failed")
-            << errinfo::stack_index(idx)
-            << errinfo::lua_state(L));
+    try {
+        return std::forward<Converter>(conv).idx_safe_to(L, idx, next_idx);
+    } catch (to_cpp_conversion_error& e) {
+        err_supplement(e, boost::errinfo_type_info_name(
+            boost::typeindex::type_id<to_type_of<Converter>>()
+            .pretty_name()));
+        err_supplement(e, errinfo::msg("conversion from Lua to C++ failed"));
+        err_supplement(e, errinfo::stack_index(idx));
+        err_supplement(e, errinfo::lua_state(L));
+        throw;
     }
-    return unchecked_to_with(conv, L, idx, next_idx);
 }
 
 template <typename T>
