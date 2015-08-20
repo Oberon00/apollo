@@ -25,7 +25,7 @@ struct converter<T, typename std::enable_if<
 private:
     static bool const is_integral = std::is_integral<T>::value;
     static bool const is_safe_integral = is_integral &&
-        sizeof(T) <= sizeof(lua_Integer) &&
+        sizeof(T) <= sizeof(lua_Integer) && // TODO heap allocated?!
         std::is_signed<T>::value == std::is_signed<lua_Integer>::value;
 
 public:
@@ -54,7 +54,7 @@ public:
     {
         if (lua_type(L, idx) == LUA_TNUMBER) { // Actual number.
 #if LUA_VERSION_NUM >= 503
-            if ((lua_isinteger(L, idx) ? true : false) == is_integral)
+            if ((lua_isinteger(L, idx) ? true : false) == is_integral) // TODO make outer
                 return 0;
             return 1;
 #else // LUA_VERSION_NUM >= 503
@@ -81,6 +81,28 @@ public:
 #endif
         return static_cast<T>(lua_tonumber(L, idx));
     }
+
+#if LUA_VERSION_NUM >= 502 // lua_tonumerx() is only available since 5.2
+    static T safe_to(lua_State* L, int idx)
+    {
+#   if LUA_VERSION_NUM >= 503
+#       ifdef BOOST_MSVC
+#           pragma warning(push)
+#           pragma warning(disable:4127) // Conditional expression is constant.
+#       endif
+        if (is_integral && lua_isinteger(L, idx))
+            return static_cast<T>(lua_tointeger(L, idx));
+#       ifdef BOOST_MSVC
+#           pragma warning(pop)
+#       endif
+#   endif
+        int isnum;
+        auto n = lua_tonumberx(L, idx, &isnum);
+        if (!isnum)
+            BOOST_THROW_EXCEPTION(to_cpp_conversion_error());
+        return static_cast<T>(n);
+    }
+#endif
 
 private:
     // Inspired by http://stackoverflow.com/a/17251989.
@@ -145,6 +167,11 @@ struct converter<bool>: converter_base<converter<bool>> {
         // ternary operator.
         return lua_toboolean(L, idx) ? true : false;
     }
+
+    static bool safe_to(lua_State* L, int idx)
+    {
+        return to(L, idx);
+    }
 };
 
 // void converter //
@@ -201,6 +228,13 @@ struct to_string { // char*, char const*, char[N]
     {
         return lua_tostring(L, idx);
     }
+
+    static type safe_to(lua_State* L, int idx)
+    {
+        if (char const* s = lua_tostring(L, idx))
+            return s;
+        BOOST_THROW_EXCEPTION(to_cpp_conversion_error());
+    }
 };
 
 template <>
@@ -212,6 +246,14 @@ struct to_string<std::string> {
         char const* s = lua_tolstring(L, idx, &len);
         return std::string(s, len);
     }
+
+    static type safe_to(lua_State* L, int idx)
+    {
+        std::size_t len;
+        if (char const* s = lua_tolstring(L, idx, &len))
+            return std::string(s, len);
+        BOOST_THROW_EXCEPTION(to_cpp_conversion_error());
+    }
 };
 
 template <>
@@ -222,6 +264,19 @@ struct to_string<char> {
         std::size_t len;
         char const* s = lua_tolstring(L, idx, &len);
         BOOST_ASSERT(len == 1);
+        return s[0];
+    }
+
+    static type safe_to(lua_State* L, int idx)
+    {
+        std::size_t len;
+        char const* s = lua_tolstring(L, idx, &len);
+        if (!s)
+            BOOST_THROW_EXCEPTION(to_cpp_conversion_error());
+        if (len != 1) {
+            BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
+                << errinfo::msg("the string must be one byte long"));
+        }
         return s[0];
     }
 };
@@ -269,6 +324,11 @@ struct converter<T, typename std::enable_if<
     {
         return detail::to_string<T>::to(L, idx);
     }
+
+    static typename detail::to_string<T>::type safe_to(lua_State* L, int idx)
+    {
+        return detail::to_string<T>::safe_to(L, idx);
+    }
 };
 
 template <>
@@ -287,6 +347,13 @@ struct converter<void*>: converter_base<converter<void*>> {
     static void* to(lua_State* L, int idx)
     {
         return lua_touserdata(L, idx);
+    }
+
+    static void* safe_to(lua_State* L, int idx)
+    {
+        if (void* ud = lua_touserdata(L, idx))
+            return ud;
+        BOOST_THROW_EXCEPTION(to_cpp_conversion_error());
     }
 };
 
