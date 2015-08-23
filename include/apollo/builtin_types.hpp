@@ -286,12 +286,12 @@ struct string_conversion_steps {
     static unsigned get(lua_State* L, int idx)
     {
         switch(lua_type(L, idx)) {
-        case LUA_TSTRING:
-            return 0;
-        case LUA_TNUMBER:
-            return 1;
-        default:
-            return no_conversion;
+            case LUA_TSTRING:
+                return 0;
+            case LUA_TNUMBER:
+                return 1;
+            default:
+                return no_conversion;
         }
         BOOST_UNREACHABLE_RETURN(no_conversion);
     }
