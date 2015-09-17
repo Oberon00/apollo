@@ -125,67 +125,69 @@ endfunction(set_lua_version_vars)
 set_lua_version_vars()
 
 find_path(LUA_INCLUDE_DIR lua.h
-  HINTS
-    ENV LUA_DIR
-  PATH_SUFFIXES ${_lua_include_subdirs} include/lua include
-  PATHS
-  ~/Library/Frameworks
-  /Library/Frameworks
-  /sw # Fink
-  /opt/local # DarwinPorts
-  /opt/csw # Blastwave
-  /opt
+    HINTS
+        ENV LUA_DIR
+    PATH_SUFFIXES ${_lua_include_subdirs} include/lua include
+    PATHS
+    ~/Library/Frameworks
+    /Library/Frameworks
+    /sw # Fink
+    /opt/local # DarwinPorts
+    /opt/csw # Blastwave
+    /opt
 )
 unset(_lua_include_subdirs)
 
 find_library(_LUA_LIBRARY_RELEASE
-  NAMES ${_lua_library_names} lua
-  HINTS
-    ENV LUA_DIR
-  PATH_SUFFIXES lib
-  PATHS
-  ~/Library/Frameworks
-  /Library/Frameworks
-  /sw
-  /opt/local
-  /opt/csw
-  /opt
+    NAMES ${_lua_library_names} lua
+    HINTS
+        ENV LUA_DIR
+    PATH_SUFFIXES lib
+    PATHS
+    ~/Library/Frameworks
+    /Library/Frameworks
+    /sw
+    /opt/local
+    /opt/csw
+    /opt
 )
 
 find_library(_LUA_LIBRARY_DEBUG
-  NAMES ${_lua_library_names_debug} lua-d
-  HINTS
-    ENV LUA_DIR
-  PATH_SUFFIXES lib
-  PATHS
-  ~/Library/Frameworks
-  /Library/Frameworks
-  /sw
-  /opt/local
-  /opt/csw
-  /opt
+    NAMES ${_lua_library_names_debug} lua-d
+    HINTS
+        ENV LUA_DIR
+    PATH_SUFFIXES lib
+    PATHS
+    ~/Library/Frameworks
+    /Library/Frameworks
+    /sw
+    /opt/local
+    /opt/csw
+    /opt
 )
 
 unset(_lua_library_names)
 unset(_lua_library_names_debug)
 
 IF(_LUA_LIBRARY_RELEASE AND _LUA_LIBRARY_DEBUG)
-  SET(LUA_LIBRARY optimized ${_LUA_LIBRARY_RELEASE}
-                  debug     ${_LUA_LIBRARY_DEBUG})
+    SET(LUA_LIBRARY optimized ${_LUA_LIBRARY_RELEASE}
+                    debug     ${_LUA_LIBRARY_DEBUG})
 ELSEIF(_LUA_LIBRARY_RELEASE)
-  SET(LUA_LIBRARY ${_LUA_LIBRARY_RELEASE})
+    SET(LUA_LIBRARY ${_LUA_LIBRARY_RELEASE})
 ELSE()
-  SET(LUA_LIBRARY ${_LUA_LIBRARY_DEBUG})
+    SET(LUA_LIBRARY ${_LUA_LIBRARY_DEBUG})
 ENDIF()
 
 if (LUA_LIBRARY)
+    set(LUA_LIBRARIES "${LUA_LIBRARY}")
     # include the math library for Unix
     if (UNIX AND NOT APPLE AND NOT BEOS)
         find_library(LUA_MATH_LIBRARY m)
-        set(LUA_LIBRARIES "${LUA_LIBRARY};${LUA_MATH_LIBRARY}")
+        list(APPEND LUA_LIBRARIES ${LUA_MATH_LIBRARY})
+        if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+            list(APPEND LUA_LIBRARIES ${CMAKE_DL_LIBS})
+        endif()
     # For Windows and Mac, don't need to explicitly include the math library
-    else ()
-        set(LUA_LIBRARIES "${LUA_LIBRARY}")
     endif ()
 endif ()
 
