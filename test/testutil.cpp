@@ -6,9 +6,10 @@
 
 #include <apollo/stack_balance.hpp>
 
+#include <boost/exception/diagnostic_information.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_monitor.hpp>
-#include <boost/exception/diagnostic_information.hpp>
+#include <boost/version.hpp>
 
 #include <exception> // std::terminate()
 #include <iostream>  // std::cerr
@@ -31,6 +32,9 @@ struct boost_exception_fixture {
 };
 
 BOOST_GLOBAL_FIXTURE(boost_exception_fixture)
+#if BOOST_VERSION >= 105900
+    ;
+#endif
 
 } // anonymous namespace
 
