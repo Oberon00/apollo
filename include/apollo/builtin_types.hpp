@@ -10,6 +10,7 @@
 
 #include <boost/assert.hpp>
 
+#include <cstdint>
 #include <limits>
 #include <string>
 
@@ -22,7 +23,6 @@ struct converter<T, typename std::enable_if<
         && detail::lua_type_id<T>::value == LUA_TNUMBER>::type
     >: converter_base<T> {
 private:
-    using llimits = std::numeric_limits<lua_Integer>;
     static bool const is_integral = std::is_integral<T>::value;
     static bool const is_safe_integral = is_integral &&
         sizeof(T) <= sizeof(lua_Integer) &&
@@ -37,7 +37,7 @@ public:
 #endif
         if (is_integral && (is_safe_integral
 #if LUA_VERSION_NUM >= 503 // Not worth the effort on < 5.3.
-            || (n >= llimits::min() && n <= llimits::max())
+            || fits_in_lua_integer(n)
 #endif // LUA_VERSION_NUM >= 503
         )) {
 #ifdef BOOST_MSVC
@@ -80,6 +80,19 @@ public:
 #   endif
 #endif
         return static_cast<T>(lua_tonumber(L, idx));
+    }
+
+private:
+    // Inspired by http://stackoverflow.com/a/17251989.
+    static bool fits_in_lua_integer(T n) {
+        using llimits = std::numeric_limits<lua_Integer>;
+        using tlimits = std::numeric_limits<T>;
+        auto const l_lo = static_cast<std::intmax_t>(llimits::min());
+        auto const t_lo = static_cast<std::intmax_t>(tlimits::min());
+        auto const l_hi = static_cast<std::uintmax_t>(llimits::max());
+        auto const t_hi = static_cast<std::uintmax_t>(tlimits::max());
+        return (l_lo <= t_lo || n >= static_cast<T>(l_lo))  // Check underflow.
+            && (l_hi >= t_hi || n <= static_cast<T>(l_hi)); // Check overflow.
     }
 };
 
