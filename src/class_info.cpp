@@ -79,18 +79,32 @@ APOLLO_API void*
 apollo::detail::cast_class(
     void* obj, class_info const& from, std::size_t to)
 {
-    if (from.static_id == to)
+    char const* err;
+    void* result = try_cast_class(obj, from, to, err);
+    if (BOOST_UNLIKELY(err != nullptr)) {
+        BOOST_THROW_EXCEPTION(apollo::class_conversion_error()
+            << apollo::errinfo::msg(err)
+            << apollo::errinfo::source_typeid_name(
+                from.rtti_type->name()));
+    }
+    return result;
+}
+
+APOLLO_API void*
+apollo::detail::try_cast_class(
+    void* obj, class_info const& from, std::size_t to, char const*& err)
+{
+    err = nullptr;
+    if (BOOST_LIKELY(from.static_id == to))
         return obj;
     auto i_base_relation = from.bases.find(to);
     if (i_base_relation == from.bases.end()) {
-        BOOST_THROW_EXCEPTION(apollo::class_conversion_error()
-            << apollo::errinfo::msg("Requested type is no base class.")
-            << apollo::errinfo::source_typeid_name(from.rtti_type->name()));
+        err = "Requested type is no base class.";
+        return nullptr;
     }
     if (i_base_relation->second.offset == error_ambiguous_base) {
-        BOOST_THROW_EXCEPTION(apollo::ambiguous_base_error()
-            << apollo::errinfo::msg("Requested type is ambigous base class.")
-            << apollo::errinfo::source_typeid_name(from.rtti_type->name()));
+        err = "Requested type is ambigous base class.";
+        return nullptr;
     }
     return static_cast<char*>(obj) + i_base_relation->second.offset;
 }
@@ -98,7 +112,7 @@ apollo::detail::cast_class(
 APOLLO_API unsigned apollo::detail::n_class_conversion_steps(
     class_info const& from, std::size_t to)
 {
-    if (from.static_id == to)
+    if (BOOST_LIKELY(from.static_id == to))
         return 0;
     auto i_base_relation = from.bases.find(to);
     if (i_base_relation == from.bases.end())

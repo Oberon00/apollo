@@ -40,7 +40,7 @@ public:
 
     ~ref_binder()
     {
-        if (m_is_owner)
+        if (BOOST_UNLIKELY(m_is_owner))
             delete m_ptr;
     }
 

@@ -49,7 +49,10 @@ APOLLO_API void apollo::detail::push_instance_metatable(
 
 APOLLO_API bool apollo::detail::is_apollo_instance(lua_State* L, int idx)
 {
-    if (lua_type(L, idx) != LUA_TUSERDATA || !lua_getmetatable(L, idx))
+    // We don't have to check for type == userdata, as the object metatables get
+    // a __metatable field by default, blocking Lua code from geting hold of the
+    // object_tag.
+    if (!lua_getmetatable(L, idx))
         return false;
 
     lua_rawgeti(L, -1, 1);

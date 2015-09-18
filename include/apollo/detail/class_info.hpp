@@ -120,6 +120,8 @@ using class_info_map = std::unordered_map<
 
 APOLLO_API void* cast_class(
     void* obj, class_info const& cls, std::size_t to);
+APOLLO_API void* try_cast_class(
+    void* obj, class_info const& cls, std::size_t to, char const*& err);
 APOLLO_API unsigned n_class_conversion_steps(
     class_info const& from, std::size_t to);
 

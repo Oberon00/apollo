@@ -18,6 +18,7 @@
 namespace apollo {
 
 namespace detail {
+
 APOLLO_API void push_instance_metatable(
     lua_State* L,
     class_info const& cls) BOOST_NOEXCEPT;
@@ -55,9 +56,13 @@ APOLLO_API bool is_apollo_instance(lua_State* L, int idx);
 
 inline instance_holder* as_holder(lua_State* L, int idx)
 {
-    BOOST_ASSERT(is_apollo_instance(L, idx));
+    BOOST_ASSERT(lua_isnil(L, idx) || is_apollo_instance(L, idx));
     return static_cast<instance_holder*>(lua_touserdata(L, idx));
 }
+
+
+static char const* err_noinst
+    = "Value is neither nil nor an apollo instance userdata.";
 
 template <typename T, typename Enable=void>
 struct object_converter: object_converter<T const&>
@@ -76,6 +81,7 @@ private:
         auto i_ctor = ctors.find(ltypeid(L, idx));
         return i_ctor == ctors.end() ? nullptr : i_ctor->second.get();
     }
+
 public:
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
@@ -90,13 +96,31 @@ public:
 
     static ref_binder<T const> to(lua_State* L, int idx)
     {
-        auto n_steps = object_converter<T const*>::n_conversion_steps(L, idx);
-        if (n_steps == no_conversion) {
+        char const* err;
+        auto ptr = object_converter<T const*>::detail_try_safe_to(L, idx, err);
+        if (BOOST_UNLIKELY(err != nullptr)) {
             return {
                 static_cast<T*>(get_ctor_opt(L, idx)->to(L, idx)),
                 true};
         }
-        return {object_converter<T const*>::to(L, idx), false};
+        return {ptr, false};
+    }
+
+    static ref_binder<T const> safe_to(lua_State* L, int idx)
+    {
+        char const* err;
+        auto ptr = object_converter<T const*>::detail_try_safe_to(L, idx, err);
+        if (BOOST_UNLIKELY(err != nullptr)) {
+            auto ctor = get_ctor_opt(L, idx);
+            if (!ctor) {
+                BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
+                    << errinfo::msg(err));
+            }
+            return {
+                static_cast<T*>(ctor->to(L, idx)),
+                true};
+        }
+        return {ptr, false};
     }
 };
 
@@ -122,6 +146,16 @@ public:
     {
         return *object_converter<T*>::to(L, idx);
     }
+
+    static T& safe_to(lua_State* L, int idx)
+    {
+        auto ptr = object_converter<T*>::safe_to(L, idx);
+        if (!ptr) {
+            BOOST_THROW_EXCEPTION(to_cpp_conversion_error() << errinfo::msg(
+                "Attempt to convert nullptr to reference."));
+        }
+        return *ptr;
+    }
 };
 
 template <typename Ptr>
@@ -134,9 +168,9 @@ private:
     using is_ref = std::is_reference<Ptr>;
 
     static Ptr make_nil_smart_ptr(std::true_type) {
-        BOOST_ASSERT(false);
-        BOOST_THROW_EXCEPTION(
-            std::logic_error("attempt to convert nil to smart pointer ref"));
+        BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
+                << errinfo::msg(
+                    "Attempt to convert nil to smart pointer ref."));
     }
 
     static Ptr make_nil_smart_ptr(std::false_type) {
@@ -177,6 +211,35 @@ public:
         return static_cast<ptr_instance_holder<ptr_t>*>(
             lua_touserdata(L, idx))->get_outer_ptr();
     }
+
+    static Ptr safe_to(lua_State* L, int idx)
+    {
+        if (BOOST_LIKELY(is_apollo_instance(L, idx))) {
+            auto holder = as_holder(L, idx);
+            if (boost::typeindex::type_id<ptr_instance_holder<ptr_t>>()
+                != boost::typeindex::type_id_runtime(*holder)
+            ) {
+                BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
+                    << errinfo::msg(
+                        "Invalid pointer type (when casting to smart pointers,"
+                        " conversion to base or const variants"
+                        " are not supported)."));
+            }
+            return static_cast<ptr_instance_holder<ptr_t>*>(
+                lua_touserdata(L, idx))->get_outer_ptr();
+        }
+#ifdef BOOST_MSVC
+#   pragma warning(push)
+#   pragma warning(disable:4127) // conditional expression is constant
+#endif
+        if (lua_isnil(L, idx))
+            return make_nil_smart_ptr(is_ref());
+#ifdef BOOST_MSVC
+#   pragma warning(pop)
+#endif
+        BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
+            << errinfo::msg(err_noinst));
+    }
 };
 
 template <typename Ptr>
@@ -202,7 +265,7 @@ public:
 #   pragma warning(push)
 #   pragma warning(disable:4127) // conditional expression is constant
 #endif
-        if (!ptr_traits::is_const && holder->is_const())
+        if (!is_const_correct(holder))
             return no_conversion;
 #ifdef BOOST_MSVC
 #   pragma warning(pop)
@@ -214,13 +277,62 @@ public:
 
     static Ptr to(lua_State* L, int idx)
     {
-        if (lua_isnil(L, idx))
-            return nullptr;
         auto holder = as_holder(L, idx);
+        if (!holder) // This means not a userdata, so assume nil.
+            return nullptr;
         return static_cast<Ptr>(cast_class(
             holder->get(),
             holder->type(),
             static_class_id<obj_t>::id));
+    }
+
+    static Ptr safe_to(lua_State* L, int idx)
+    {
+        char const* err;
+        Ptr result = detail_try_safe_to(L, idx, err);
+        if (BOOST_UNLIKELY(err != nullptr)) {
+            BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
+                << errinfo::msg(err));
+        }
+        return result;
+    }
+
+    // For use by object_converter<T const&>.
+    static Ptr detail_try_safe_to(lua_State* L, int idx, char const*& err)
+    {
+        err = nullptr;
+        if (BOOST_LIKELY(is_apollo_instance(L, idx))) {
+            auto holder = as_holder(L, idx);
+#ifdef BOOST_MSVC
+#   pragma warning(push)
+#   pragma warning(disable:4127) // conditional expression is constant
+#endif
+            if (!is_const_correct(holder)) {
+#ifdef BOOST_MSVC
+#   pragma warning(pop)
+#endif
+                err = "Class conversion loses const.";
+                return nullptr;
+            }
+
+            return static_cast<Ptr>(try_cast_class(
+                holder->get(),
+                holder->type(),
+                static_class_id<obj_t>::id,
+                err));
+        }
+        if (lua_isnil(L, idx)) {
+            return nullptr;
+        }
+
+        err = err_noinst;
+        return nullptr;
+    }
+
+private:
+    static bool is_const_correct(instance_holder const* holder)
+    {
+        return ptr_traits::is_const || !holder->is_const();
     }
 };
 
