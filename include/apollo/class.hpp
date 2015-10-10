@@ -180,15 +180,11 @@ private:
 public:
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-#   pragma warning(disable:4127) // conditional expression is constant
-#endif
+        APOLLO_DETAIL_CONSTCOND_BEGIN
         if (!is_ref::value && lua_isnil(L, idx))
             return no_conversion - 1;
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
+        APOLLO_DETAIL_CONSTCOND_END
+
         if (!is_apollo_instance(L, idx))
             return no_conversion;
         if (boost::typeindex::type_id<ptr_instance_holder<ptr_t>>()
@@ -199,15 +195,9 @@ public:
 
     static Ptr to(lua_State* L, int idx)
     {
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-#   pragma warning(disable:4127) // conditional expression is constant
-#endif
         if (lua_isnil(L, idx))
             return make_nil_smart_ptr(is_ref());
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
+
         return static_cast<ptr_instance_holder<ptr_t>*>(
             lua_touserdata(L, idx))->get_outer_ptr();
     }
@@ -228,15 +218,10 @@ public:
             return static_cast<ptr_instance_holder<ptr_t>*>(
                 lua_touserdata(L, idx))->get_outer_ptr();
         }
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-#   pragma warning(disable:4127) // conditional expression is constant
-#endif
+
         if (lua_isnil(L, idx))
             return make_nil_smart_ptr(is_ref());
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
+
         BOOST_THROW_EXCEPTION(to_cpp_conversion_error()
             << errinfo::msg(err_noinst));
     }
@@ -261,15 +246,8 @@ public:
 
         auto holder = as_holder(L, idx);
 
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-#   pragma warning(disable:4127) // conditional expression is constant
-#endif
         if (!is_const_correct(holder))
             return no_conversion;
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
 
         return n_class_conversion_steps(
             holder->type(), static_class_id<obj_t>::id);
@@ -303,14 +281,7 @@ public:
         err = nullptr;
         if (BOOST_LIKELY(is_apollo_instance(L, idx))) {
             auto holder = as_holder(L, idx);
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-#   pragma warning(disable:4127) // conditional expression is constant
-#endif
             if (!is_const_correct(holder)) {
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
                 err = "Class conversion loses const.";
                 return nullptr;
             }
@@ -332,6 +303,8 @@ public:
 private:
     static bool is_const_correct(instance_holder const* holder)
     {
+        // MSVC complains that holder is unused if ptr_traits::is_const is true.
+        (void)holder;
         return ptr_traits::is_const || !holder->is_const();
     }
 };

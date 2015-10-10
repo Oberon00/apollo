@@ -125,14 +125,9 @@ struct function_dipatcher {
 
     static tuple_t* push_converters(lua_State* L, tuple_t&& converters)
     {
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-#   pragma warning(disable:4127) // Conditional expression is constant.
-#endif
+        APOLLO_DETAIL_CONSTCOND_BEGIN
         if (stores_converters) {
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
+        APOLLO_DETAIL_CONSTCOND_END
             return push_gc_object(L, std::move(converters));
         }
         return nullptr;

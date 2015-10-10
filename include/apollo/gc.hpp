@@ -10,6 +10,7 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <apollo/lua_include.hpp>
+#include <apollo/config.hpp>
 
 #include <type_traits>
 
@@ -54,14 +55,9 @@ push_gc_object(lua_State* L, T&& o)
 {
     using obj_t = typename detail::remove_qualifiers<T>::type;
     void* uf = push_bare_udata(L, std::forward<T>(o));
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-#   pragma warning(disable:4127) // Conditional expression is constant.
-#endif
+    APOLLO_DETAIL_CONSTCOND_BEGIN
     if (!std::is_trivially_destructible<obj_t>::value) {
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
+    APOLLO_DETAIL_CONSTCOND_END
         lua_createtable(L, 0, 1); // 0 sequence entries, 1 dictionary entry
         lua_pushcfunction(L, &gc_object<obj_t>);
         lua_setfield(L, -2, "__gc");

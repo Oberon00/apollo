@@ -34,5 +34,17 @@
 #   endif
 #endif
 
+#ifdef BOOST_MSVC
+#   define APOLLO_DETAIL_PUSHMSWARN(id) \
+        __pragma(warning(push))         \
+        __pragma(warning(disable:id))
+#   define APOLLO_DETAIL_POPMSWARN __pragma(warning(pop))
+#else
+#   define APOLLO_DETAIL_PUSHMSWARN(id)
+#   define APOLLO_DETAIL_POPMSWARN
+#endif
+
+#define APOLLO_DETAIL_CONSTCOND_BEGIN APOLLO_DETAIL_PUSHMSWARN(4127)
+#define APOLLO_DETAIL_CONSTCOND_END APOLLO_DETAIL_POPMSWARN
 
 #endif // APOLLO_CONFIG_HPP_INCLUDED

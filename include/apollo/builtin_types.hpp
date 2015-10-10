@@ -31,18 +31,13 @@ private:
 public:
     static int push(lua_State* L, T n)
     {
-#ifdef BOOST_MSVC
-#   pragma warning(push)
-#   pragma warning(disable:4127) // Conditional expression is constant.
-#endif
+        APOLLO_DETAIL_CONSTCOND_BEGIN
         if (is_integral && (is_safe_integral
 #if LUA_VERSION_NUM >= 503 // Not worth the effort on < 5.3.
             || fits_in_lua_integer(n)
 #endif // LUA_VERSION_NUM >= 503
         )) {
-#ifdef BOOST_MSVC
-#   pragma warning(pop)
-#endif
+        APOLLO_DETAIL_CONSTCOND_END
             lua_pushinteger(L, static_cast<lua_Integer>(n));
         } else {
             lua_pushnumber(L, static_cast<lua_Number>(n));
@@ -69,15 +64,10 @@ public:
     static T to(lua_State* L, int idx)
     {
 #if LUA_VERSION_NUM >= 503
-#   ifdef BOOST_MSVC
-#       pragma warning(push)
-#       pragma warning(disable:4127) // Conditional expression is constant.
-#   endif
+        APOLLO_DETAIL_CONSTCOND_BEGIN
         if (is_integral && lua_isinteger(L, idx))
             return static_cast<T>(lua_tointeger(L, idx));
-#   ifdef BOOST_MSVC
-#       pragma warning(pop)
-#   endif
+        APOLLO_DETAIL_CONSTCOND_END
 #endif
         return static_cast<T>(lua_tonumber(L, idx));
     }
@@ -86,15 +76,10 @@ public:
     static T safe_to(lua_State* L, int idx)
     {
 #   if LUA_VERSION_NUM >= 503
-#       ifdef BOOST_MSVC
-#           pragma warning(push)
-#           pragma warning(disable:4127) // Conditional expression is constant.
-#       endif
+        APOLLO_DETAIL_CONSTCOND_BEGIN
         if (is_integral && lua_isinteger(L, idx))
             return static_cast<T>(lua_tointeger(L, idx));
-#       ifdef BOOST_MSVC
-#           pragma warning(pop)
-#       endif
+        APOLLO_DETAIL_CONSTCOND_END
 #   endif
         int isnum;
         auto n = lua_tonumberx(L, idx, &isnum);
@@ -107,14 +92,32 @@ public:
 private:
     // Inspired by http://stackoverflow.com/a/17251989.
     static bool fits_in_lua_integer(T n) {
+        // MSVC complains that n is unreferenced if it can determine the
+        // result of the function at compile-time.
+        (void)n;
+
         using llimits = std::numeric_limits<lua_Integer>;
         using tlimits = std::numeric_limits<T>;
+
+        // C4309 'static_cast': truncation of constant value
+        // Is emited for unsigned char and unsigned int here, but I have no
+        // idea why -- after all min() in these cases is 0 for T.
+        APOLLO_DETAIL_PUSHMSWARN(4309)
         auto const l_lo = static_cast<std::intmax_t>(llimits::min());
         auto const t_lo = static_cast<std::intmax_t>(tlimits::min());
+        APOLLO_DETAIL_POPMSWARN
+
         auto const l_hi = static_cast<std::uintmax_t>(llimits::max());
         auto const t_hi = static_cast<std::uintmax_t>(tlimits::max());
+
+        // C4309 again, but this time it might very well be that the
+        // static_cast really truncates a value. However, in this case the
+        // static_cast won't be evaluated because the first part of the || will
+        // evaluate to true.
+        APOLLO_DETAIL_PUSHMSWARN(4309)
         return (l_lo <= t_lo || n >= static_cast<T>(l_lo))  // Check underflow.
             && (l_hi >= t_hi || n <= static_cast<T>(l_hi)); // Check overflow.
+        APOLLO_DETAIL_POPMSWARN
     }
 };
 
