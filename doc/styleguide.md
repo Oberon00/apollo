@@ -65,9 +65,10 @@ private:
 - You must not leave trailing whitespace (including whitespace on otherwise
   empty lines that continues the indentation from the line above). This
   overrules all other rules about the placement of spaces.
-- Lines must not be longer than 80 characters. This is so that at least two
-  files can be viewed side-by-side. Additionally, reading long lines is tiresome
-  for our human eyes (count how many characters there are in books!).
+- <a name="maxlinelen" />Lines must not be longer than 80 characters. This is so
+  that at least two files can be viewed side-by-side. Additionally, reading long
+  lines is tiresome for our human eyes (count how many characters there are in
+  books!).
 - Do not put multiple statements on the same line.
 - Use assertions using [`BOOST_ASSERT` or `BOOST_ASSERT_MSG`][boost-assert]
   freely. Also make yourself familiar with the great [`BOOST_VERIFY` and
@@ -214,6 +215,9 @@ private:
 - Annotate functions that never return (e.g. because they always call
   `lua_error`, `abort`, `terminate`, etc. or always throw exceptions) with
   [`BOOST_NORETURN`][boost-noreturn].
+- For empty functions, either put a comment `// NOP` (for “No OPeration”) inside
+  the braces or put the closing brace on the same line as the opening one,
+  without a space in between.
 
 ## Types
 
@@ -227,8 +231,8 @@ private:
 - The above two rules may be ignored if it is necessary for compiler
   compatibility (MSVC).
 - Consider using a `_t` suffix for `using`-aliases if they describe some traits
-  of a class that are derived from a template parameter (but not of the template
-  parameter!).
+  of the template that are derived from a template parameter (but not traits of
+  the template parameter!).
 - Use the `_t` alias for a `using`-alias template if an equivalent C++03 style
   nested typedef withouth the `_t` suffix exists.
 - Do not use the `_t` suffix for anything else.
@@ -238,6 +242,27 @@ private:
 - Put `public` members first, then `protected` and at the end `private`.
 - Do not use default accessibility for `class` and avoid non-default visibility
   for `struct`, except for implementation details for metafunctions.
+- Begin a constructors initialization list in a new line, with colon `:` at the
+  beginning of the line, indented. If [possible](#maxlinelen), put everything on one line,
+  otherwise put each initialization on its own line with the `,` at the
+  beginning of the line, e.g.:
+
+  ```c++
+
+  class foo {
+  public:
+      foo(int i, int j)
+          : m_i(i), m_j(j)
+      {}
+
+      foo(int some_long_name, some_long_type_name const& some_other_long_name)
+        : m_some_long_name(some_long_name)
+        , m_some_other_long_name(some_other_long_name)
+      {}
+  // ...
+  };
+
+  ```
 
 ### Declarators
 - All declarators (`&`, `&&`, `*`) are considered part of the type, not the
@@ -412,10 +437,9 @@ private:
 - Catch by reference. Use mutable references only if you need to modify the
   exception.
 - Annotate functions that may not throw with [`BOOST_NOEXCEPT`][boost-noexcept].
-- Annotate functions that always throw with
-  [`BOOST_NORETURN`][`boost-noreturn`].
+- Annotate functions that always throw with [`BOOST_NORETURN`][boost-noreturn].
 
-[boost-noexpect]: http://www.boost.org/doc/libs/release/libs/config/doc/html/boost_config/boost_macro_reference.html#boost_config.boost_macro_reference.macros_that_allow_use_of_c__11_features_with_c__03_compilers
+[boost-noexcept]: http://www.boost.org/doc/libs/release/libs/config/doc/html/boost_config/boost_macro_reference.html#boost_config.boost_macro_reference.macros_that_allow_use_of_c__11_features_with_c__03_compilers
 [boost-noreturn]: http://www.boost.org/doc/libs/release/libs/config/doc/html/boost_config/boost_macro_reference.html#boost_config.boost_macro_reference.boost_helper_macros
 [boost-throw]: http://www.boost.org/doc/libs/release/libs/exception/doc/BOOST_THROW_EXCEPTION.html
 [boost-virtual-exc]: http://www.boost.org/doc/libs/release/libs/exception/doc/using_virtual_inheritance_in_exception_types.html
@@ -425,10 +449,10 @@ private:
 - Prefer self-explaining code to comments.
 - Whenever it is not clear why you had to do something in a certain way, use a
   comment to explain it, especially if another way exists that *seems* to be
-  better -- without a comment, this is a ticking time-bomb..
+  better – without a comment, this is a ticking time-bomb.
 - Only use C++-style line-comments (`//`, not ~~`/* */`~~).
 - Put a space between the `//` and the comments content.
-- Avoid commented-out code -- we have git! But if you do comment out code, do
+- Avoid commented-out code – we have git! But if you do comment out code, do
   not use a space between the `//` and the commented-out code.
 - If a comment fits on the same single line as the thing it comments, place it
   there.
@@ -437,3 +461,59 @@ private:
   before the thing.
 - Consider using `// Some region //` (slashes before and after comment) to mark
   regions of code.
+
+## Breaking long lines
+
+- Do not break lines if not necessary to keep their length below the [limit of 80
+  characters](#maxlinelen). However, if you broke the line once, you can freely
+  add more line breaks than necessary if it improves readability.
+- Before breaking a long statement line, consider splitting the statement into
+  multiple ones, e.g. by using intermediate variables.
+- Before breaking a long declaration line, consider making the line shorter,
+  e.g. by using `using` aliases instead of `typename Foo<T>::type` syntax, by
+  using a trailing return type instead of `std::declval`, by introducing a new
+  type for a group of parameters or by introducing a new metafunction for a
+  complicated SFINAE predicate.
+- Break before binary operators, e.g.
+
+  ```c++
+  auto sum
+      = some_number
+      + some_other_number
+
+  someobj
+      .as_otherobj()
+      .create_foo()
+      ->signal_bar(true);
+
+  return sum < maxsum
+      && sum > minsum;
+  ```
+
+  The absence of a semicolon at the end of a line should be enough of an
+  indication that the statement continues in the next line.
+- When breaking the condition of an `if`, `while` or `for` then put the closing
+  parenthesis on the same line as the opening brace, and always use braces
+  then.
+- When breaking function call statements or function definitions, use one of the
+  following formats:
+    + Prefer parameters / arguments all on the same line after the function name:
+
+      ```c++
+      do_something(
+          some_arg, another_arg, yet_another_arg, a_fourth_arg);
+      ```
+    + If the parameters / arguments do not fit on the same line, place each
+      parameter / argument on its own line:
+
+      ```c++
+      do_something(
+        some_arg,
+        another_arg,
+        yet_another_arg,
+        a_fourth_arg,
+        a_fifth_arg_so_that_it_does_not_fit_on_one_line);
+      ```
+- When the contents of parentheses or (angle) brackets do not fit on a single
+  line, break after the opening bracket and indent the contents. Put the closing
+  bracket on the same line as the last part of the content.
