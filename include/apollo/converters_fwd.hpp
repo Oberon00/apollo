@@ -29,7 +29,7 @@ add_conversion_step(unsigned n_steps) BOOST_NOEXCEPT
 namespace detail {
 
 template <typename Converter>
-struct default_converter_traits;
+struct default_converter_traits {};
 
 template <template<class...> class ConverterTpl, typename T, typename... Other>
 struct default_converter_traits<ConverterTpl<T, Other...>> {
