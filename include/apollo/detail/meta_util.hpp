@@ -9,11 +9,11 @@
 
 namespace apollo { namespace detail {
 
-// Helper type function remove_qualifiers
+// Helper type function remove_cvr
 template <typename T>
-struct remove_qualifiers {
+struct remove_cvr {
     typedef typename std::remove_cv<
-    typename std::remove_reference<T>::type
+        typename std::remove_reference<T>::type
     >::type type;
 };
 
@@ -25,7 +25,7 @@ struct is_const_reference: std::integral_constant<bool,
 
 template <typename F>
 using is_mem_fn = std::is_member_function_pointer<
-        typename detail::remove_qualifiers<F>::type>;
+        typename detail::remove_cvr<F>::type>;
 
 struct failure_t;
 

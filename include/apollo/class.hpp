@@ -26,9 +26,9 @@ APOLLO_API void push_instance_metatable(
 template <typename Ptr>
 void push_instance_ptr(lua_State* L, Ptr&& ptr)
 {
-    using ptr_t = typename remove_qualifiers<Ptr>::type;
+    using ptr_t = typename remove_cvr<Ptr>::type;
     using holder_t = ptr_instance_holder<ptr_t>;
-    using cls_t = typename remove_qualifiers<
+    using cls_t = typename remove_cvr<
         typename pointer_traits<ptr_t>::pointee_type>::type;
 
     class_info const& cls = registered_class(L,
@@ -44,7 +44,7 @@ void push_instance_val(lua_State* L, T&& val)
     using obj_t = typename std::remove_reference<T>::type;
     using holder_t = value_instance_holder<obj_t>;
 
-    using cls_t = typename remove_qualifiers<obj_t>::type;
+    using cls_t = typename remove_cvr<obj_t>::type;
     class_info const& cls = registered_class(L,
         boost::typeindex::type_id<cls_t>().type_info());
     emplace_bare_udata<holder_t>(L, std::forward<T>(val), cls);
@@ -164,7 +164,7 @@ struct object_converter<
         typename std::enable_if<pointer_traits<Ptr>::is_smart>::type
     >: converter_base<converter<Ptr>> {
 private:
-    using ptr_t = typename remove_qualifiers<Ptr>::type;
+    using ptr_t = typename remove_cvr<Ptr>::type;
     using is_ref = std::is_reference<Ptr>;
 
     static Ptr make_nil_smart_ptr(std::true_type) {
@@ -235,7 +235,7 @@ struct object_converter<
 private:
     using ptr_traits = pointer_traits<Ptr>;
     using pointee_t = typename ptr_traits::pointee_type;
-    using obj_t = typename remove_qualifiers<pointee_t>::type;
+    using obj_t = typename remove_cvr<pointee_t>::type;
 public:
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
@@ -323,7 +323,7 @@ void emplace_object(lua_State* L, Args&&... args)
 {
     using obj_t = typename std::remove_reference<T>::type;
     using holder_t = detail::value_instance_holder<obj_t>;
-    using cls_t = typename detail::remove_qualifiers<obj_t>::type;
+    using cls_t = typename detail::remove_cvr<obj_t>::type;
 
     detail::class_info const& cls = detail::registered_class(L,
         boost::typeindex::type_id<cls_t>().type_info());
@@ -344,7 +344,7 @@ push_object(lua_State* L, Ptr&& p)
 template <typename T>
 void push_class_metatable(lua_State* L)
 {
-    using obj_t = typename detail::remove_qualifiers<T>::type;
+    using obj_t = typename detail::remove_cvr<T>::type;
     detail::push_instance_metatable(L, detail::registered_class(L,
         boost::typeindex::type_id<obj_t>().type_info()));
 }
@@ -374,7 +374,7 @@ struct converter: detail::object_converter<T>
     static int push(lua_State* L, U&& v)
     {
         static_assert(std::is_same<
-            typename detail::remove_qualifiers<U>::type , T>::value, "");
+            typename detail::remove_cvr<U>::type , T>::value, "");
         push_object(L, std::forward<U>(v));
         return 1;
     }

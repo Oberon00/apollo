@@ -18,7 +18,7 @@ struct member_ptr_traits;
 template <typename C, typename T>
 struct member_ptr_traits<T C::*> {
 private:
-    using ql_member_t = typename remove_qualifiers<T>::type;
+    using ql_member_t = typename remove_cvr<T>::type;
     using is_ptr_t = std::integral_constant<bool,
         pointer_traits<ql_member_t>::is_valid>;
     static bool const is_ptr = is_ptr_t::value;

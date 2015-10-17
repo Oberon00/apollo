@@ -79,10 +79,10 @@ template <
     typename F, F FVal,
     typename ResultConverter, typename... ArgConverters>
 detail::light_converted_function<
-    typename detail::remove_qualifiers<F>::type,
+    typename detail::remove_cvr<F>::type,
     FVal,
-    typename detail::remove_qualifiers<ResultConverter>::type,
-    typename detail::remove_qualifiers<ArgConverters>::type...>
+    typename detail::remove_cvr<ResultConverter>::type,
+    typename detail::remove_cvr<ArgConverters>::type...>
 make_light_funtion_with(
     ResultConverter&& rconv, ArgConverters&&... aconvs)
 {

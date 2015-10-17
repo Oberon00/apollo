@@ -23,7 +23,7 @@ namespace apollo {
 struct raw_function;
 
 template <typename Converter>
-using to_type_of = typename detail::remove_qualifiers<Converter>::type::to_type;
+using to_type_of = typename detail::remove_cvr<Converter>::type::to_type;
 
 
 namespace detail {
@@ -35,7 +35,7 @@ struct lua_type_id: std::integral_constant<int, LUA_TUSERDATA> {};
 template <typename T> // Any arithmetic type except bool is a number.
 struct lua_type_id<T,
         typename std::enable_if<
-            std::is_same<T, typename detail::remove_qualifiers<T>::type>::value
+            std::is_same<T, typename detail::remove_cvr<T>::type>::value
             && (
                 std::is_arithmetic<T>::value
                 || std::is_enum<T>::value)>::type>
@@ -90,7 +90,7 @@ struct convert_cref_by_val: std::integral_constant<bool,
 
 template <typename T>
 using push_converter_for = converter<
-    typename detail::remove_qualifiers<T>::type>;
+    typename detail::remove_cvr<T>::type>;
 
 // pull_converter_for is implemented via helper struct to not overexert MSVC.
 namespace detail {
@@ -100,8 +100,8 @@ namespace detail {
         using transformed_t = typename std::conditional<
             detail::is_const_reference<T>::value
             && convert_cref_by_val<
-                typename detail::remove_qualifiers<T>::type>::value,
-            typename detail::remove_qualifiers<T>::type,
+                typename detail::remove_cvr<T>::type>::value,
+            typename detail::remove_cvr<T>::type,
             typename std::remove_cv<T>::type>::type;
     public:
         using type = converter<transformed_t>;

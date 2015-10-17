@@ -32,7 +32,7 @@ ERRINFO(char const*, source_typeid_name);
 template <typename ErrInfo>
 boost::exception& err_supplement(boost::exception& e, ErrInfo&& info)
 {
-    using info_t = typename detail::remove_qualifiers<ErrInfo>::type;
+    using info_t = typename detail::remove_cvr<ErrInfo>::type;
     if (!boost::get_error_info<info_t>(e))
         e << std::forward<ErrInfo>(info);
     return e;

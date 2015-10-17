@@ -207,9 +207,9 @@ private:
 
 template <typename F, typename ResultConverter, typename... ArgConverters>
 detail::converted_function<
-    typename detail::remove_qualifiers<F>::type,
-    typename detail::remove_qualifiers<ResultConverter>::type,
-    typename detail::remove_qualifiers<ArgConverters>::type...>
+    typename detail::remove_cvr<F>::type,
+    typename detail::remove_cvr<ResultConverter>::type,
+    typename detail::remove_cvr<ArgConverters>::type...>
 make_function_with(
     F&& f, ResultConverter&& rconv, ArgConverters&&... aconvs)
 {
