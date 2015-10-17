@@ -32,8 +32,7 @@ template <typename Converter>
 struct default_converter_traits;
 
 template <template<class...> class ConverterTpl, typename T, typename... Other>
-struct default_converter_traits<ConverterTpl<T, Other...>>
-{
+struct default_converter_traits<ConverterTpl<T, Other...>> {
     using converter = ConverterTpl<T, Other...>;
 
     // converter may be incomplete, so we cannot use member typedefs.
@@ -45,7 +44,8 @@ struct default_converter_traits<ConverterTpl<T, Other...>>
 
 template <
     typename Derived,
-    typename ToType = typename detail::default_converter_traits<Derived>::type>
+    typename ToType =
+        typename detail::default_converter_traits<Derived>::to_type>
 struct converter_base {
 public:
     using type = typename detail::default_converter_traits<Derived>::type;
