@@ -88,21 +88,28 @@ struct convert_cref_by_val: std::integral_constant<bool,
     detail::lua_type_id<T>::value != LUA_TUSERDATA>
 {};
 
-// Const references to primitive types are handled as non-references.
-template<typename T>
-struct converter<T, typename std::enable_if<
-        detail::is_const_reference<T>::value &&
-        convert_cref_by_val<typename detail::remove_qualifiers<T>::type>::value
-    >::type
->: converter<typename detail::remove_qualifiers<T>::type>
-{};
-
 template <typename T>
 using push_converter_for = converter<
     typename detail::remove_qualifiers<T>::type>;
 
+// pull_converter_for is implemented via helper struct to not overexert MSVC.
+namespace detail {
+    template <typename T>
+    struct pull_converter_for_impl {
+    private:
+        using transformed_t = typename std::conditional<
+            detail::is_const_reference<T>::value
+            && convert_cref_by_val<
+                typename detail::remove_qualifiers<T>::type>::value,
+            typename detail::remove_qualifiers<T>::type,
+            typename std::remove_cv<T>::type>::type;
+    public:
+        using type = converter<transformed_t>;
+    };
+}
+
 template <typename T>
-using pull_converter_for = converter<typename std::remove_cv<T>::type>;
+using pull_converter_for = typename detail::pull_converter_for_impl<T>::type;
 
 namespace detail {
 
