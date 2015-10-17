@@ -248,8 +248,8 @@ auto make_function(F&& f)
 
 template<typename F, typename ResultConverter, typename... Converters>
 struct converter<detail::converted_function<F, ResultConverter, Converters...>>
-    : converter_base<
-        detail::converted_function<F, ResultConverter, Converters...>> {
+    : converter_base<converter<
+        detail::converted_function<F, ResultConverter, Converters...>>> {
 public:
     using type = detail::converted_function<F, ResultConverter, Converters...>;
 
