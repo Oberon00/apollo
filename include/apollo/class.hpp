@@ -357,7 +357,8 @@ void register_class(lua_State* L)
     if (registry.find(index) != registry.end()) {
         BOOST_ASSERT_MSG(false, "Class already registered!");
     }
-    registry.insert({index, detail::make_class_info<T, Bases...>(registry)});
+    registry.insert(std::make_pair(
+        index, detail::make_class_info<T, Bases...>(registry)));
 }
 
 
