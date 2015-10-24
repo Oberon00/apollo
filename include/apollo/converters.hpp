@@ -144,9 +144,10 @@ to_type_of<Converter> unchecked_to_with(
 }
 
 template <typename T>
-to_type_of<pull_converter_for<T>> unchecked_to(lua_State* L, int idx)
+to_type_of<pull_converter_for<T>> unchecked_to(
+    lua_State* L, int idx, int* next_idx = nullptr)
 {
-    return unchecked_to_with(pull_converter_for<T>(), L, idx);
+    return unchecked_to_with(pull_converter_for<T>(), L, idx, next_idx);
 }
 
 
@@ -160,16 +161,18 @@ unsigned n_conversion_steps_with(
 
 
 template <typename T>
-unsigned n_conversion_steps(lua_State* L, int idx)
+unsigned n_conversion_steps(lua_State* L, int idx, int* next_idx = nullptr)
 {
-    return n_conversion_steps_with(pull_converter_for<T>(), L, idx);
+    return n_conversion_steps_with(pull_converter_for<T>(), L, idx, next_idx);
 }
 
 template <typename Converter>
-bool is_convertible_with(Converter&& conv, lua_State* L, int idx)
+bool is_convertible_with(
+    Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
     (void)conv; // Silence MSVC.
-    return n_conversion_steps_with(std::forward<Converter>(conv), L, idx)
+    return n_conversion_steps_with(
+        std::forward<Converter>(conv), L, idx, next_idx)
         != no_conversion;
 }
 
@@ -197,9 +200,9 @@ to_type_of<Converter> to_with(
 }
 
 template <typename T>
-to_type_of<pull_converter_for<T>> to(lua_State* L, int idx)
+to_type_of<pull_converter_for<T>> to(lua_State* L, int idx, int* next_idx = nullptr)
 {
-    return to_with(pull_converter_for<T>(), L, idx);
+    return to_with(pull_converter_for<T>(), L, idx, next_idx);
 }
 
 // Cannot use function here, it would potentially return a reference to local.
