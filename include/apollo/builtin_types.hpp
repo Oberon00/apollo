@@ -32,11 +32,7 @@ public:
     static int push(lua_State* L, T n)
     {
         APOLLO_DETAIL_CONSTCOND_BEGIN
-        if (is_integral && (is_safe_integral
-#if LUA_VERSION_NUM >= 503 // Not worth the effort on < 5.3.
-            || fits_in_lua_integer(n)
-#endif // LUA_VERSION_NUM >= 503
-        )) {
+        if (is_integral && (is_safe_integral || fits_in_lua_integer(n))) {
         APOLLO_DETAIL_CONSTCOND_END
             lua_pushinteger(L, static_cast<lua_Integer>(n));
         } else {
@@ -92,6 +88,7 @@ public:
 private:
     // Inspired by http://stackoverflow.com/a/17251989.
     static bool fits_in_lua_integer(T n) {
+#if LUA_VERSION_NUM >= 503
         // MSVC complains that n is unreferenced if it can determine the
         // result of the function at compile-time.
         (void)n;
@@ -118,6 +115,10 @@ private:
         return (l_lo <= t_lo || n >= static_cast<T>(l_lo))  // Check underflow.
             && (l_hi >= t_hi || n <= static_cast<T>(l_hi)); // Check overflow.
         APOLLO_DETAIL_POPMSWARN
+#else
+        (void)n;
+        return false; // Not worth the effort on Lua w/o integer support.
+#endif
     }
 };
 
