@@ -15,8 +15,7 @@ namespace detail {
 template <typename F, F FVal, typename... Converters>
 int static_entry_point(lua_State* L) BOOST_NOEXCEPT
 {
-    return invoke_with(
-        L, FVal, std::move(detail::default_constructed<Converters>())...);
+    return invoke_with(L, FVal, Converters()...);
 }
 
 template <
@@ -102,9 +101,8 @@ BOOST_CONSTEXPR raw_function to_raw_function_impl(
     iseq<Is...>) BOOST_NOEXCEPT
 {
     using cvts = decltype(default_converters(FVal));
-    return to_raw_function_with_ts<F, FVal,
-        // MSVC fails recognizing Is as compile time constant with tuple_element
-        decltype(std::get<Is>(std::declval<cvts>()))...>();
+    return to_raw_function_with_ts<
+        F, FVal, typename std::tuple_element<Is, cvts>::type...>();
 }
 
 } // namespace detail

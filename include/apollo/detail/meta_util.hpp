@@ -33,13 +33,7 @@ template <typename T>
 using has_failed = std::is_same<T, failure_t>;
 
 template <typename T>
-typename std::remove_reference<T>::type default_constructed()
-{
-    return {};
-}
-
-template <typename T>
-T msvc_decltype_helper(T);
+T msvc_decltype_helper(T); // Intentionally not implemented.
 
 }} // namespace apollo::detail
 

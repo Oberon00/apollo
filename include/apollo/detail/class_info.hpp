@@ -64,36 +64,6 @@ struct class_info {
         , static_id(static_id_)
     { }
 
-    // Explicit move and copy operations for MSVC
-
-    class_info(class_info&& rhs)
-        : bases(std::move(rhs.bases))
-        , rtti_type(std::move(rhs.rtti_type))
-        , static_id(std::move(rhs.static_id))
-    {}
-
-    class_info(class_info const& rhs)
-        : bases(rhs.bases)
-        , rtti_type(rhs.rtti_type)
-        , static_id(rhs.static_id)
-    {}
-
-    class_info& operator= (class_info&& rhs)
-    {
-        bases = std::move(rhs.bases);
-        rtti_type = std::move(rhs.rtti_type);
-        static_id = std::move(rhs.static_id);
-        return *this;
-    }
-
-    class_info& operator= (class_info const& rhs)
-    {
-        bases = rhs.bases;
-        rtti_type = rhs.rtti_type;
-        static_id = rhs.static_id;
-        return *this;
-    }
-
     // Contains all casts, including indirect bases.
     struct base_relation {
         std::ptrdiff_t offset;

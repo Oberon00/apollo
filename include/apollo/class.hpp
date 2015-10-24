@@ -361,7 +361,7 @@ void register_class(lua_State* L)
 }
 
 
-// Userdata converterers //
+// Userdata converters //
 
 template<typename T, typename Enable>
 struct converter: detail::object_converter<T>

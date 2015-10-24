@@ -73,7 +73,7 @@ int call_with_stack_args_and_push(
 template <typename F, typename ResultConverter, typename... Converters>
 int invoke_with(
     lua_State* L, F&& f,
-    ResultConverter&& rconverter, Converters&&... converters)  BOOST_NOEXCEPT
+    ResultConverter&& rconverter, Converters&&... converters) BOOST_NOEXCEPT
 {
     return exceptions_to_lua_errors_L(
         L, &call_with_stack_args_and_push<F, ResultConverter, Converters...>,
@@ -137,8 +137,7 @@ private:
     static int call_with_stored_converters( // No stored convertes:
         lua_State* L, F& f, int, std::false_type)
     {
-        return invoke_with(
-            L, f, ResultConverter(), default_constructed<ArgConverters>()...);
+        return invoke_with(L, f, ResultConverter(), ArgConverters()...);
     }
 
     static int call_with_stored_converters( // Stored convertes:

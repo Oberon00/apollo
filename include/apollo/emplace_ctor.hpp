@@ -24,8 +24,7 @@ int emplace_ctor_wrapper_impl(lua_State* L, ArgTuple& args, iseq<Is...>)
 template <typename T, typename... Args>
 int emplace_ctor_wrapper(lua_State* L)
 {
-    auto args = to_tuple(L, 1,
-        default_constructed<pull_converter_for<Args>>()...);
+    auto args = to_tuple(L, 1, pull_converter_for<Args>()...);
     return emplace_ctor_wrapper_impl<T>(L, args, tuple_seq<decltype(args)>());
 }
 
