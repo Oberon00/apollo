@@ -140,7 +140,7 @@ template <typename Converter>
 to_type_of<Converter> unchecked_to_with(
     Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
-    return conv.idx_to(L, idx, next_idx);
+    return std::forward<Converter>(conv).idx_to(L, idx, next_idx);
 }
 
 template <typename T>
@@ -154,7 +154,8 @@ template <typename Converter>
 unsigned n_conversion_steps_with(
     Converter&& conv, lua_State* L, int idx, int* next_idx = nullptr)
 {
-    return conv.idx_n_conversion_steps(L, idx, next_idx);
+    return std::forward<Converter>(conv).idx_n_conversion_steps(
+        L, idx, next_idx);
 }
 
 
@@ -165,10 +166,11 @@ unsigned n_conversion_steps(lua_State* L, int idx)
 }
 
 template <typename Converter>
-bool is_convertible_with(Converter const& conv, lua_State* L, int idx)
+bool is_convertible_with(Converter&& conv, lua_State* L, int idx)
 {
     (void)conv; // Silence MSVC.
-    return n_conversion_steps_with(conv, L, idx) != no_conversion;
+    return n_conversion_steps_with(std::forward<Converter>(conv), L, idx)
+        != no_conversion;
 }
 
 template <typename T>
