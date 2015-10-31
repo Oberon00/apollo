@@ -12,6 +12,7 @@ target_link_libraries(testutil
 needs_apollo_dll(testutil)
 
 set (TESTS
+    call_by_ref
     create_class
     create_table
     default_argument
