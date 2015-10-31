@@ -55,7 +55,7 @@ public:
 
     int invoke(lua_State* L) override
     {
-        return invoke_with_tuple(L, m_f.fn(), m_f.converters);
+        return call_with_stack_args_and_push_tpl(L, m_f.fn(), m_f.converters);
     }
 
     void push_signature(lua_State* L) override

@@ -9,6 +9,7 @@
 #include <apollo/error.hpp>
 #include <apollo/function_primitives.hpp>
 #include <apollo/gc.hpp>
+#include <apollo/raw_function.hpp>
 
 namespace apollo {
 
@@ -70,33 +71,22 @@ int call_with_stack_args_and_push(
         std::forward<Converters>(converters)...);
 }
 
-template <typename F, typename ResultConverter, typename... Converters>
-int invoke_with(
-    lua_State* L, F&& f,
-    ResultConverter&& rconverter, Converters&&... converters) BOOST_NOEXCEPT
-{
-    return exceptions_to_lua_errors_L(
-        L, &call_with_stack_args_and_push<F, ResultConverter, Converters...>,
-        std::forward<F>(f),
-        std::forward<ResultConverter>(rconverter),
-        std::forward<Converters>(converters)...);
-}
-
 template <typename F, typename ConverterTuple, int... Is>
-int invoke_with_tuple_impl(
+int call_with_stack_args_and_push_tpl_impl(
     lua_State* L, F&& f,
     ConverterTuple&& converters,
-    iseq<Is...>)  BOOST_NOEXCEPT
+    iseq<Is...>)
 {
-    return invoke_with(L, std::forward<F>(f), std::get<Is>(converters)...);
+    return call_with_stack_args_and_push(
+        L, std::forward<F>(f), std::get<Is>(converters)...);
 }
 
 template <typename F, typename ConverterTuple>
-int invoke_with_tuple(
+int call_with_stack_args_and_push_tpl(
     lua_State* L, F&& f,
-    ConverterTuple&& converters)  BOOST_NOEXCEPT
+    ConverterTuple&& converters)
 {
-    return invoke_with_tuple_impl(
+    return call_with_stack_args_and_push_tpl_impl(
         L, std::forward<F>(f),
         std::forward<ConverterTuple>(converters),
         tuple_seq<ConverterTuple>());
@@ -117,7 +107,7 @@ struct function_dipatcher {
         typename std::conditional<
             is_plain_function<F>::value || is_mem_fn<F>::value,
             F, F&>::type f,
-        int cvt_up_idx) BOOST_NOEXCEPT
+        int cvt_up_idx)
     {
         return call_with_stored_converters(
             L, f, cvt_up_idx, stores_converters_t());
@@ -137,7 +127,8 @@ private:
     static int call_with_stored_converters( // No stored convertes:
         lua_State* L, F& f, int, std::false_type)
     {
-        return invoke_with(L, f, ResultConverter(), ArgConverters()...);
+        return call_with_stack_args_and_push(
+            L, f, ResultConverter(), ArgConverters()...);
     }
 
     static int call_with_stored_converters( // Stored convertes:
@@ -145,7 +136,7 @@ private:
     {
         auto& stored_converters = *static_cast<tuple_t*>(
             lua_touserdata(L, lua_upvalueindex(up_idx)));
-        return invoke_with_tuple(L, f, stored_converters);
+        return call_with_stack_args_and_push_tpl(L, f, stored_converters);
     }
 };
 
@@ -169,7 +160,7 @@ public:
         , m_f(std::forward<FArg>(f_))
     {}
 
-    static int entry_point(lua_State* L) BOOST_NOEXCEPT
+    static int entry_point(lua_State* L)
     {
         return entry_point_impl(L, is_light_function<F>());
     }
@@ -180,7 +171,7 @@ private:
     F m_f;
 
     // Non-light function:
-    static int entry_point_impl(lua_State* L, std::false_type) BOOST_NOEXCEPT
+    static int entry_point_impl(lua_State* L, std::false_type)
     {
         auto& f = *static_cast<F*>(
             lua_touserdata(L, lua_upvalueindex(fn_upval_fn)));
@@ -188,14 +179,14 @@ private:
     }
 
     // Light function:
-    static int entry_point_impl(lua_State* L, std::true_type) BOOST_NOEXCEPT
+    static int entry_point_impl(lua_State* L, std::true_type)
     {
         auto voidholder = lua_touserdata(L, lua_upvalueindex(fn_upval_fn));
         auto f = reinterpret_cast<light_function_holder<F>&>(voidholder).f;
         return call(L, f);
     }
 
-    static int call(lua_State* L, F& f) BOOST_NOEXCEPT
+    static int call(lua_State* L, F& f)
     {
         return dispatch_t::call(L, f, fn_upval_converters);
     }
@@ -267,7 +258,7 @@ public:
         if (type::dispatch_t::push_converters(L, std::move(f.converters)))
             ++nups;
 
-        lua_pushcclosure(L, &f.entry_point, nups);
+        lua_pushcclosure(L, raw_function::caught<&type::entry_point>(), nups);
         return 1;
     }
 

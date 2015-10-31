@@ -131,5 +131,5 @@ static int dispatch_overload(lua_State* L)
 APOLLO_API void apollo::detail::overloadset::push(lua_State* L)
 {
     push_gc_object(L, std::move(m_overloads));
-    lua_pushcclosure(L, &dispatch_overload, 1);
+    lua_pushcclosure(L, raw_function::caught<&dispatch_overload>(), 1);
 }

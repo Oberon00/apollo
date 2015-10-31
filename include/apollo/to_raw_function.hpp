@@ -13,9 +13,9 @@ namespace apollo {
 namespace detail {
 
 template <typename F, F FVal, typename... Converters>
-int static_entry_point(lua_State* L) BOOST_NOEXCEPT
+int static_entry_point(lua_State* L)
 {
-    return invoke_with(L, FVal, Converters()...);
+    return call_with_stack_args_and_push(L, FVal, Converters()...);
 }
 
 template <
@@ -34,7 +34,7 @@ public:
         : converters(std::forward<AllConverters>(converters_)...)
     {}
 
-    static int entry_point(lua_State* L) BOOST_NOEXCEPT
+    static int entry_point(lua_State* L)
     {
         return dispatch_t::call(L, FVal, 1);
     }
@@ -59,7 +59,7 @@ public:
     {
         lua_pushcclosure(
             L,
-            &f.entry_point,
+            raw_function::caught<&type::entry_point>(),
             type::dispatch_t::push_converters(L, std::move(f.converters)) ?
                 1 : 0);
         return 1;
@@ -67,11 +67,11 @@ public:
 };
 
 template <
-    typename F, F FVal,
-    typename ResultConverter, typename... ArgConverters>
+    typename F, F FVal, typename ResultConverter, typename... ArgConverters>
 BOOST_CONSTEXPR raw_function to_raw_function_with_ts() BOOST_NOEXCEPT
 {
-    return &detail::static_entry_point<F, FVal, ResultConverter, ArgConverters...>;
+    return raw_function::caught<&detail::static_entry_point<
+        F, FVal, ResultConverter, ArgConverters... >> ();
 }
 
 template <
