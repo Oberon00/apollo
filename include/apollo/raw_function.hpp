@@ -8,7 +8,38 @@
 #include <apollo/converters_fwd.hpp>
 #include <apollo/error.hpp>
 
+
 namespace apollo {
+
+namespace detail {
+
+// It seems that although MSVC can inline function pointers passed as
+// template arguments it only does so when they are called directly
+// through the template argument. When passing the pointer on to another
+// function as an ordinary function argument, MSVC seems unable to recognize
+// that the function pointer is fixed at compile-time and refuses to inline.
+//
+// This helper struct calls FVal directly through the template argument
+// and MSVC has no problem with inlining operator() of a function
+// object of known type.
+template <typename F, F FVal>
+struct msvc_inlining_helper {
+    template <typename... Args> // Function object or pointer.
+    auto operator() (Args&&... args)
+        -> decltype(FVal(std::forward<Args>(args)...))
+    {
+        return FVal(std::forward<Args>(args)...);
+    }
+
+    template <typename Cls, typename... Args> // Member function pointer.
+    auto operator() (Cls&& instance, Args&&... args)
+        -> decltype((instance.*FVal)(std::forward<Args>(args)...))
+    {
+        return (instance.*FVal)(std::forward<Args>(args)...);
+    }
+};
+
+} // namespace detail
 
 struct raw_function {
     /* implicit */ BOOST_CONSTEXPR
@@ -19,7 +50,8 @@ struct raw_function {
     static BOOST_CONSTEXPR raw_function caught() BOOST_NOEXCEPT
     {
         return static_cast<lua_CFunction>([](lua_State* L) -> int {
-            return exceptions_to_lua_errors_L(L, FVal);
+            return exceptions_to_lua_errors_L(
+                L, detail::msvc_inlining_helper<lua_CFunction, FVal>());
         });
     }
 

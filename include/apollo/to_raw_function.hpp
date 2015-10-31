@@ -15,7 +15,8 @@ namespace detail {
 template <typename F, F FVal, typename... Converters>
 int static_entry_point(lua_State* L)
 {
-    return call_with_stack_args_and_push(L, FVal, Converters()...);
+    return call_with_stack_args_and_push(
+        L, msvc_inlining_helper<F, FVal>(), Converters()...);
 }
 
 template <

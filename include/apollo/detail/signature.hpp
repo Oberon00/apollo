@@ -29,6 +29,12 @@ template <class C, typename R,  typename... Args>
 std::tuple<R, C const&, Args...> signature_tuple_of_impl(
     R(C::*)(Args...) const);
 
+// msvc_decltype_helper
+template <typename F, F FVal> struct msvc_inlining_helper;
+
+template <typename F, F FVal>
+decltype(signature_tuple_of_impl(FVal)) signature_tuple_of_impl(
+    msvc_inlining_helper<F, FVal>);
 
 template <typename SignatureTuple>
 using arg_idxs_seq = iseq_n_t<std::tuple_size<
