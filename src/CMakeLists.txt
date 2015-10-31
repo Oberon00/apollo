@@ -55,6 +55,7 @@ set(apollo_SRCS
     "builtin_types.cpp"
     "class.cpp"
     "class_info.cpp"
+    "error.cpp"
     "function.cpp"
     "lapi.cpp"
     "lua51compat.cpp"

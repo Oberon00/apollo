@@ -12,6 +12,7 @@
 #include <boost/exception/errinfo_type_info_name.hpp>
 #include <apollo/lua_include.hpp>
 #include <apollo/detail/meta_util.hpp>
+#include <apollo/config.hpp>
 
 #include <exception>
 #include <string>
@@ -50,6 +51,12 @@ struct to_cpp_conversion_error: virtual conversion_error {};
 struct class_conversion_error: virtual to_cpp_conversion_error {};
 struct ambiguous_base_error: virtual class_conversion_error {};
 
+namespace detail {
+APOLLO_API int push_current_exception_string(lua_State* L) BOOST_NOEXCEPT;
+APOLLO_API BOOST_NORETURN void error_from_pushed_exception_string(
+    lua_State* L, int arg) BOOST_NOEXCEPT;
+} // namespace detail
+
 template <typename F, typename... Args>
 auto exceptions_to_lua_errors(lua_State* L, F&& f, Args&&... args)
     BOOST_NOEXCEPT -> decltype(f(std::forward<Args>(args)...))
@@ -57,22 +64,10 @@ auto exceptions_to_lua_errors(lua_State* L, F&& f, Args&&... args)
     int arg = 0;
     try {
         return f(std::forward<Args>(args)...);
-    } catch(to_cpp_conversion_error const& e) {
-        // TODO: Check for nullptr.
-        arg = *boost::get_error_info<errinfo::stack_index>(e);
-        lua_pushfstring(L, "%s [%s -> %s]",
-            boost::get_error_info<errinfo::msg>(e)->c_str(),
-            luaL_typename(L, arg),
-            boost::get_error_info<boost::errinfo_type_info_name>(e)->c_str());
-    } catch(std::exception const& e) {
-        lua_pushfstring(L, "exception: %s", e.what());
     } catch(...) {
-        lua_pushliteral(L, "unknown exception");
+        arg = detail::push_current_exception_string(L);
     }
-    if (arg)
-        luaL_argerror(L, arg, lua_tostring(L, -1));
-    lua_error(L);
-    std::abort(); // Should never be reached.
+    detail::error_from_pushed_exception_string(L, arg);
 }
 
 template <typename F, typename... Args>
