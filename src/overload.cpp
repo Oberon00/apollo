@@ -6,6 +6,8 @@
 
 //#include <iostream>
 
+namespace {
+
 using apollo::detail::overload;
 using apollo::detail::overload_base;
 using apollo::detail::overload_quality;
@@ -84,7 +86,7 @@ static std::vector<ovl_with_quality> select_best_overloads(
     return best;
 }
 
-static int dispatch_overload(lua_State* L)
+int dispatch_overload(lua_State* L)
 {
     overload_base* f = nullptr;
     {
@@ -127,6 +129,7 @@ static int dispatch_overload(lua_State* L)
     return lua_error(L);
 }
 
+} // anonymous namespace
 
 APOLLO_API void apollo::detail::overloadset::push(lua_State* L)
 {

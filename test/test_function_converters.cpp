@@ -9,20 +9,22 @@
 #include <boost/function.hpp>
 #include <boost/test/test_tools.hpp>
 
+namespace {
+
 static unsigned g_n_calls = 0;
 
-static void proc0()
+void proc0()
 {
     ++g_n_calls;
 }
 
-static void proc1(int a)
+void proc1(int a)
 {
     BOOST_CHECK_EQUAL(a, 42);
     ++g_n_calls;
 }
 
-static void proc4(int a, std::string const& s, double d, bool b)
+void proc4(int a, std::string const& s, double d, bool b)
 {
     BOOST_CHECK_EQUAL(a, 42);
     BOOST_CHECK_EQUAL(s, "foo");
@@ -31,19 +33,19 @@ static void proc4(int a, std::string const& s, double d, bool b)
     ++g_n_calls;
 }
 
-static unsigned func0()
+unsigned func0()
 {
     return ++g_n_calls;
 }
 
-static char const* func1(int a)
+char const* func1(int a)
 {
     ++g_n_calls;
     BOOST_CHECK_EQUAL(a, 42);
     return "foo";
 }
 
-static bool func4(int a, std::string const& s, double d, bool b)
+bool func4(int a, std::string const& s, double d, bool b)
 {
     ++g_n_calls;
     BOOST_CHECK_EQUAL(a, 42);
@@ -53,7 +55,6 @@ static bool func4(int a, std::string const& s, double d, bool b)
     return b;
 }
 
-namespace {
 struct test_struct {
     void memproc0() { proc0(); }
     void memproc0c() const { proc0(); }

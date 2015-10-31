@@ -11,16 +11,18 @@
 #include <apollo/emplace_ctor.hpp>
 #include <apollo/create_table.hpp>
 
+namespace {
+
 struct A {};
 
 // luabind function
-static float f1(int, float, const char*, A*)
+float f1(int, float, const char*, A*)
 {
     return 3.14f;
 }
 
 // empty function
-static int f2(lua_State*)
+int f2(lua_State*)
 {
     return 0;
 }
@@ -29,6 +31,8 @@ inline double clocks_to_seconds(std::clock_t c)
 {
     return static_cast<double>(c) / CLOCKS_PER_SEC;
 }
+
+} // anonymous namespace
 
 
 int main()
