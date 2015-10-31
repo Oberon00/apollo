@@ -61,7 +61,7 @@ inline instance_holder* as_holder(lua_State* L, int idx)
 }
 
 
-static char const* err_noinst
+char const err_noinst[]
     = "Value is neither nil nor an apollo instance userdata.";
 
 template <typename T, typename Enable=void>
