@@ -89,12 +89,9 @@ default_converters(R(C::*)(Args...) const)
 
 // Plain function pointer or function object:
 template <typename F, int... Is, typename... Converters>
-typename std::enable_if<!detail::is_mem_fn<F>::value, return_type_of<F>>::type
+typename std::enable_if<!is_mem_fn<F>::value, return_type_of<F>>::type
 call_with_stack_args_impl(
-    lua_State* L, F&& f,
-    detail::iseq<Is...>,
-    Converters&&... convs
-)
+    lua_State* L, F&& f, iseq<Is...>, Converters&&... convs)
 {
     auto args = to_tuple(L, 1, std::forward<Converters>(convs)...);
     static_assert(std::tuple_size<decltype(args)>::value == sizeof...(Is), "");
@@ -104,21 +101,19 @@ call_with_stack_args_impl(
 // (Const) member function pointer:
 template <
     typename ThisConverter, typename... Converters, int... Is, typename F>
-typename std::enable_if<detail::is_mem_fn<F>::value, return_type_of<F>>::type
+typename std::enable_if<is_mem_fn<F>::value, return_type_of<F>>::type
 call_with_stack_args_impl(
     lua_State* L, F&& f,
-    detail::iseq<Is...>,
+    iseq<Is...>,
     ThisConverter&& this_conv,
     Converters&&... convs
 )
 {
     int i0;
-    to_type_of<ThisConverter> instance = to_with(
-        this_conv, L, 1, &i0);
+    to_type_of<ThisConverter> instance = to_with(this_conv, L, 1, &i0);
     auto args = to_tuple(L, i0, std::forward<Converters>(convs)...);
     (void)args; // Silence gcc's -Wunused-but-set-variable
-    return (unwrap_ref(instance).*f)(
-        unwrap_ref(std::get<Is>(args))...);
+    return (unwrap_ref(instance).*f)(unwrap_ref(std::get<Is>(args))...);
 }
 
 } // namespace detail

@@ -52,7 +52,7 @@ int call_with_stack_args_and_push_impl(
     ResultConverter&& rconverter, Converters&&... converters)
 {
     (void)rconverter; // Avoid MSVC warning if push is static.
-     return rconverter.push(L, call_with_stack_args_with(
+    return rconverter.push(L, call_with_stack_args_with(
         L, std::forward<F>(f),
         std::forward<Converters>(converters)...));
 }
