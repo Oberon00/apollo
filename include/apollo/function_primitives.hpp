@@ -27,7 +27,9 @@ template<bool... Bs> // http://stackoverflow.com/a/24687161/2128694
 struct bool_and: std::is_same<iseq<Bs...>, iseq<(Bs || true)... >> {};
 
 template <typename... Ts>
-struct all_empty: bool_and<std::is_empty<Ts>::value...> {};
+struct all_stateless: bool_and<
+    (std::is_empty<Ts>::value
+        && std::is_default_constructible<Ts>::value)...> {};
 
 inline std::tuple<> to_tuple(lua_State*, int)
 {

@@ -97,7 +97,7 @@ struct init_fn_tag {}; // To avoid being as for move/copy ctor.
 template <typename F, typename ResultConverter, typename... ArgConverters>
 struct function_dipatcher {
     using stores_converters_t = std::integral_constant<bool,
-        !all_empty<ResultConverter, ArgConverters...>::value>;
+        !all_stateless<ResultConverter, ArgConverters...>::value>;
     static bool const stores_converters = stores_converters_t::value;
 
     using tuple_t = std::tuple<ResultConverter, ArgConverters...>;
