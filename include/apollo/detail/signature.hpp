@@ -38,7 +38,7 @@ decltype(signature_tuple_of_impl(FVal)) signature_tuple_of_impl(
 
 template <typename SignatureTuple>
 using arg_idxs_seq = iseq_n_t<std::tuple_size<
-    typename detail::remove_cvr<SignatureTuple>::type>::value - 1, 1>;
+    detail::remove_cvr<SignatureTuple>>::value - 1, 1>;
 
 template <typename F>
 using signature_tuple_of = decltype(signature_tuple_of_impl(std::declval<F>()));

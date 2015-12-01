@@ -25,10 +25,10 @@ int gc_object(lua_State* L) BOOST_NOEXCEPT
 }
 
 template <typename T, typename... Args>
-inline typename detail::remove_cvr<T>::type*
+inline detail::remove_cvr<T>*
 emplace_bare_udata(lua_State* L, Args&&... ctor_args)
 {
-    using obj_t = typename detail::remove_cvr<T>::type;
+    using obj_t = detail::remove_cvr<T>;
     void* uf = lua_newuserdata(L, sizeof(obj_t));
     try {
         return new(uf) obj_t(std::forward<Args>(ctor_args)...);
@@ -39,7 +39,7 @@ emplace_bare_udata(lua_State* L, Args&&... ctor_args)
 }
 
 template <typename T>
-inline typename detail::remove_cvr<T>::type*
+inline detail::remove_cvr<T>*
 push_bare_udata(lua_State* L, T&& o)
 {
     return emplace_bare_udata<T>(L, std::forward<T>(o));
@@ -50,10 +50,10 @@ push_bare_udata(lua_State* L, T&& o)
 // Note: __gc will not unset metatable.
 // Use for objects that cannot be retrieved from untrusted Lua code only.
 template <typename T>
-typename detail::remove_cvr<T>::type*
+detail::remove_cvr<T>*
 push_gc_object(lua_State* L, T&& o)
 {
-    using obj_t = typename detail::remove_cvr<T>::type;
+    using obj_t = detail::remove_cvr<T>;
     void* uf = push_bare_udata(L, std::forward<T>(o));
     APOLLO_DETAIL_CONSTCOND_BEGIN
     if (!std::is_trivially_destructible<obj_t>::value) {

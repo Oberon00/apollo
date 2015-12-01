@@ -12,7 +12,7 @@ namespace apollo {
 template <typename T, typename Base=pull_converter_for<T>>
 struct default_argument: Base {
 private:
-    typename detail::remove_cvr<T>::type m_default;
+    detail::remove_cvr<T> m_default;
 
 public:
     using to_type = typename Base::to_type;
@@ -64,11 +64,10 @@ private:
 };
 
 template <typename T>
-default_argument<typename detail::remove_cvr<T>::type>
+default_argument<detail::remove_cvr<T>>
 make_default_arg(T&& default_)
 {
-    return default_argument<typename detail::remove_cvr<T>::type>(
-        std::forward<T>(default_));
+    return default_argument<detail::remove_cvr<T>>(std::forward<T>(default_));
 }
 
 } // namespace apollo

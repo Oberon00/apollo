@@ -97,8 +97,7 @@ private:
 template <typename ConvertedF>
 std::unique_ptr<overload_base> make_overload(ConvertedF&& f)
 {
-    using overload_t = overload<
-        typename detail::remove_cvr<ConvertedF>::type>;
+    using overload_t = overload<detail::remove_cvr<ConvertedF>>;
     return std::unique_ptr<overload_base>(
         new overload_t(std::forward<ConvertedF>(f)));
 }

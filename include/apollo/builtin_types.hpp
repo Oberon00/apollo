@@ -213,7 +213,7 @@ void push_string(lua_State* L, char const (&s)[N])
 template <typename T>
 inline void push_string(lua_State* L, T s)
 {
-    using T2 = typename remove_cvr<T>::type;
+    using T2 = remove_cvr<T>;
     static_assert(
         std::is_same<T2, char*>::value || std::is_same<T2, char const*>::value,
         "push_string called with non-string");
