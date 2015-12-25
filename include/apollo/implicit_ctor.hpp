@@ -19,8 +19,8 @@ class implicit_ctor_impl: public implicit_ctor {
     // Non-pointer to_t
     void* to_impl(lua_State* L, int idx, std::false_type)
     {
-         return new to_t(std::move(m_ctor(
-            unwrap_ref(apollo::to<from_t>(L, idx)))));
+         return new to_t(m_ctor(
+            unwrap_ref(apollo::to<from_t>(L, idx))));
     }
 
     // Pointer to_t
