@@ -211,22 +211,26 @@ void push_string(lua_State* L, char const (&s)[N])
 // the appropriate cases. Also can't make it const T* because otherwise the
 // call would be ambigous.
 template <typename T>
-inline void push_string(lua_State* L, T s)
+inline typename std::enable_if<
+    std::is_convertible<T, char const*>::value
+    >::type push_string(lua_State* L, T s)
 {
-    using T2 = remove_cvr<T>;
-    static_assert(
-        std::is_same<T2, char*>::value || std::is_same<T2, char const*>::value,
-        "push_string called with non-string");
     lua_pushstring(L, s);
 }
+
 
 inline void push_string(lua_State* L, std::string const& s)
 {
     lua_pushlstring(L, s.c_str(), s.size());
 }
 
+template <typename T, typename Enable = void>
+struct to_string;
+
 template <typename T>
-struct to_string { // char*, char const*, char[N]
+struct to_string<T, typename std::enable_if<
+    std::is_convertible<T, char const*>::value>::type
+>{ // char*, char const*, char[N]
     using type = char const*;
     static type to(lua_State* L, int idx)
     {
@@ -285,15 +289,21 @@ struct to_string<char> {
     }
 };
 
-template <typename>
-struct string_conversion_steps {
+template <typename T, typename Enable = void>
+struct string_conversion_steps;
+
+template <typename T>
+struct string_conversion_steps<T, typename std::enable_if<
+    std::is_convertible<T, char const*>::value
+    || std::is_same<T, std::string>::value
+>::type> {
     static unsigned get(lua_State* L, int idx)
     {
         switch(lua_type(L, idx)) {
             case LUA_TSTRING:
                 return 0;
             case LUA_TNUMBER:
-                return 1;
+                return 2;
             default:
                 return no_conversion;
         }
@@ -312,6 +322,10 @@ template <typename T>
 struct converter<T, typename std::enable_if<
         detail::lua_type_id<T>::value == LUA_TSTRING>::type
     >: converter_base<converter<T>, typename detail::to_string<T>::type> {
+private:
+    using dt = typename std::decay<T>::type;
+
+public:
 
     static int push(lua_State* L, T const& s)
     {
@@ -321,17 +335,17 @@ struct converter<T, typename std::enable_if<
 
     static unsigned n_conversion_steps(lua_State* L, int idx)
     {
-       return detail::string_conversion_steps<T>::get(L, idx);
+       return detail::string_conversion_steps<dt>::get(L, idx);
     }
 
     static typename detail::to_string<T>::type to(lua_State* L, int idx)
     {
-        return detail::to_string<T>::to(L, idx);
+        return detail::to_string<dt>::to(L, idx);
     }
 
     static typename detail::to_string<T>::type safe_to(lua_State* L, int idx)
     {
-        return detail::to_string<T>::safe_to(L, idx);
+        return detail::to_string<dt>::safe_to(L, idx);
     }
 };
 

@@ -15,7 +15,7 @@ unsigned apollo::detail::string_conversion_steps<char>::get(
         case LUA_TNUMBER: {
             lua_Number n = lua_tonumber(L, idx);
             return n >= 0 && n < 10 && n == std::floor(n) ?
-                    1 : no_conversion;
+                    2 : no_conversion;
         }
         default:
             return no_conversion;

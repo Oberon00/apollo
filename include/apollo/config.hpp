@@ -34,6 +34,10 @@
 #   endif
 #endif
 
+#if defined(BOOST_NO_INTRINSIC_WCHAR_T) && !defined(APOLLO_NO_WSTR)
+#   define APOLLO_NO_WSTR
+#endif
+
 #ifdef BOOST_MSVC
 #   define APOLLO_DETAIL_PUSHMSWARN(id) \
         __pragma(warning(push))         \

@@ -57,6 +57,15 @@ template <> struct lua_type_id<char>: lua_type_id<char*> {};
 template <std::size_t N> struct lua_type_id<char[N]>: lua_type_id<char*> {};
 template <> struct lua_type_id<std::string>: lua_type_id<char*> {};
 
+// wide string
+#ifndef APOLLO_NO_WSTRING
+template <>
+struct lua_type_id<wchar_t*>: std::integral_constant<int, LUA_TSTRING> {};
+template <> struct lua_type_id<wchar_t const*>: lua_type_id<wchar_t*> {};
+template <> struct lua_type_id<wchar_t>: lua_type_id<wchar_t*> {};
+template <std::size_t N> struct lua_type_id<wchar_t[N]>: lua_type_id<wchar_t*> {};
+template <> struct lua_type_id<std::wstring>: lua_type_id<wchar_t*> {};
+#endif
 
 template <> // thread (lua_State*)
 struct lua_type_id<lua_State*>: std::integral_constant<int, LUA_TTHREAD> {};

@@ -68,6 +68,11 @@ T& unwrap_ref(detail::ref_binder<T>& rv) { return rv.get(); }
 template <typename T>
 T& unwrap_ref(detail::ref_binder<T>&& rv) { return rv.get(); }
 
+#ifndef APOLLO_NO_WSTRING
+namespace detail { class wcstr_holder; }
+wchar_t* unwrap_ref(detail::wcstr_holder&& wh);
+#endif
+
 } // namespace apollo
 
 #endif // APOLLO_DETAIL_REF_BINDER_HPP_INCLUDED

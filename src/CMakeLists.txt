@@ -31,6 +31,7 @@ set(apollo_HDRS_PUBLIC
     "to_raw_function.hpp"
     "typeid.hpp"
     "ward_ptr.hpp"
+    "wstring.hpp"
 )
 set(apollo_HDRS_DETAIL
     "class_info.hpp"
@@ -63,6 +64,7 @@ set(apollo_SRCS
     "reference.cpp"
     "stack_balance.cpp"
     "typeid.cpp"
+    "wstring.cpp"
 )
 
 set(CMAKE_DEBUG_POSTFIX "-d")
