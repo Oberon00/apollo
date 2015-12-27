@@ -55,6 +55,12 @@ struct derived_cls: foo_cls, bar_cls {
     }
 };
 
+foo_cls&& take_foo()
+{
+    static foo_cls foo(0);
+    return std::move(foo);
+}
+
 } // anonymous namespace
 
 BOOST_AUTO_TEST_CASE(object_converter)
@@ -244,4 +250,18 @@ BOOST_AUTO_TEST_CASE(fromnil)
     lua_pop(L, 1);
 }
 
+BOOST_AUTO_TEST_CASE(rvalue_return)
+{
+    apollo::register_class<foo_cls>(L);
+    apollo::push(L, &take_foo);
+    apollo::pcall(L, 0, 1);
+    foo_cls* pfoo = apollo::to<foo_cls*>(L, -1);
+    foo_cls&& origfoo = take_foo();
+    BOOST_CHECK_NE(pfoo, &origfoo);
+    BOOST_CHECK_EQUAL(pfoo->i, 0);
+    BOOST_CHECK_EQUAL(pfoo->n_copies, 0u);
+    BOOST_CHECK_EQUAL(pfoo->n_moves, 1u);
+
+    lua_pop(L, 1);
+}
 #include "test_suffix.hpp"
