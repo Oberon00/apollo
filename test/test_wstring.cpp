@@ -2,6 +2,10 @@
 // This file is subject to the terms of the BSD 2-Clause License.
 // See LICENSE.txt or http://opensource.org/licenses/BSD-2-Clause
 
+#include <apollo/config.hpp>
+
+#ifndef APOLLO_NO_WSTRING
+
 #include <apollo/builtin_types.hpp>
 #include <apollo/raw_function.hpp>
 #include <apollo/stack_balance.hpp>
@@ -46,3 +50,7 @@ BOOST_AUTO_TEST_CASE(from_wstring_backend)
 }
 
 #include "test_suffix.hpp"
+
+#else // APOLLO_NO_WSTRING
+int main() { }
+#endif // APOLLO_NO_WSTRING / else
