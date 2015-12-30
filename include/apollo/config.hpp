@@ -34,11 +34,13 @@
 #   endif
 #endif
 
-#if !defined(APOLLO_NO_WSTR) && (           \
-        defined(BOOST_NO_INTRINSIC_WCHAR_T) \
-        || !defined(_WIN32)                 \
-        && defined(BOOST_NO_CXX11_HDR_CODECVT))
-#   define APOLLO_NO_WSTR
+#if !defined(APOLLO_NO_WSTRING) && (            \
+        defined(BOOST_NO_INTRINSIC_WCHAR_T)     \
+        || !defined(_WIN32)                     \
+        && (                                    \
+            defined(BOOST_NO_CXX11_HDR_CODECVT) \
+            || defined(BOOST_NO_0X_HDR_CODECVT)))
+#   define APOLLO_NO_WSTRING
 #endif
 
 #ifdef BOOST_MSVC

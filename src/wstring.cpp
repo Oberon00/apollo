@@ -10,7 +10,7 @@ APOLLO_API apollo::detail::wcstr_holder apollo::detail::to_wstring_tmp(
 
 // On Win32 use the WinAPI functions because they are supposedly an order
 // of magnitude faster there than the stdlib version.
-#ifdef WIN32kdjklfd
+#ifdef _WIN32
 
 static_assert(sizeof(wchar_t) == 2, "wchar_t must be UTF-16 on Win32.");
 
@@ -71,7 +71,7 @@ APOLLO_API std::wstring apollo::detail::to_wstring(
     return result;
 }
 
-#else // WIN32
+#else // _WIN32
 
 #include <locale>
 #include <codecvt>
